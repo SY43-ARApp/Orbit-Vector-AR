@@ -1,1 +1,0 @@
-https://gitlab-etu.ing.he-arc.ch/yasmine.marguero/markdown-to-html/-/blob/main/doc/MarkdownToHtml_Fasano_Margueron.pdf?ref_type=heads
