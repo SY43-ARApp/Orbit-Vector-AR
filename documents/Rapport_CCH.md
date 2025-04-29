@@ -26,7 +26,7 @@ Le développement de **Gravity Arrow** s'appuiera sur un ensemble de technologie
 - **Android Studio** avec **Kotlin** pour le développement natif Android.
 - **Google ARCore** pour la gestion de la réalité augmentée.
 - **Jetpack Compose** pour la construction d’interfaces utilisateur fluides, réactives et modulaires.
-- Base de données locale et distante (**SQLite / API PHP + SQL**) pour :
+- Base de données locale et distante (**API PHP + MySQL**) pour :
   - la gestion des comptes utilisateurs (connexion, score, progression),
   - le support multijoueur asynchrone (classements en ligne, enregistrement des données).
 - Outils graphiques (**Photoshop/Figma**) pour la conception des écrans et assets visuels.
@@ -37,48 +37,49 @@ Cette stack technique permet de viser une bonne expérience utilisateur tout en 
 
 ## 1. Interface Jetpack Compose Kotlin pour les Menus
 
-### 1. Main Screen
-- **Title**: The game title is displayed prominently at the top of the screen.
-- **Play Button**: A large button in the center of the screen to start the game.
-- **Background**: The background can either be:
-  - A static image representing the game theme.
-  - A live camera feed using ARCore to show the surroundings.
+### 1. Écran Principal (Main Screen)
+- **Titre** : Le titre du jeu est affiché de manière proéminente en haut de l'écran.
+- **Bouton Jouer** : Un grand bouton au centre de l'écran pour démarrer le jeu.
+- **Arrière-plan** : L'arrière-plan peut être :
+  - Une image statique représentant le thème du jeu.
+  - Un flux vidéo en direct utilisant ARCore pour afficher les environs.
 
-### 2. Login Screen
-- **Google Play Services Login**: A button to authenticate using Google Play Services.
-- **Custom Account Login**:
-  - Input fields for username and password.
-  - A "Login" button.
-- **Register Option**: A button to navigate to a registration screen for creating a new account.
+### 2. Écran de Connexion (Login Screen)
+- **Connexion via Google Play Services** : Un bouton permettant de s'authentifier avec Google Play Services.
+- **Connexion avec un Compte Personnel** :
+  - Champs de saisie pour le nom d'utilisateur et le mot de passe.
+  - Un bouton "Se Connecter".
+- **Option d'Inscription** : Un bouton pour naviguer vers un écran d'inscription afin de créer un nouveau compte.
 
-### 3. Menu Screen
-- **Play Button**: Navigates to the game screen.
-- **Leaderboard Button**: Navigates to the leaderboard screen to view scores.
-- **Other Options**: Placeholder for additional features like settings or profile.
+### 3. Écran de Menu (Menu Screen)
+- **Bouton Jouer** : Permet de naviguer vers l'écran de jeu.
+- **Bouton Classement** : Permet de naviguer vers l'écran des classements pour consulter les scores.
+- **Bouton Paramètres** : Permet de naviguer vers un écran de paramètres pour ajuster les préférences du jeu (son, langue, etc.).
+- **Bouton Profil** : Permet de consulter et modifier les informations du profil utilisateur (nom, avatar, etc.).
 
-### 4. Shop Screen
-- **Currency Display**: Shows the player's coin balance at the top of the screen.
-- **Item List**: A scrollable list or grid displaying items with their name, price, and a "Buy" button.
-- **Back Button**: A back button at the top-left corner for navigation.
+### 4. Écran de Boutique (Shop Screen)
+- **Affichage de la Monnaie** : Affiche le solde de pièces du joueur en haut de l'écran.
+- **Liste des Articles** : Une liste ou une grille défilante affichant les articles avec leur nom, leur prix et un bouton "Acheter".
+- **Bouton Retour** : Un bouton de retour en haut à gauche pour naviguer.
 
-### 5. Leaderboard and Game History
-- **Leaderboard Page**:
-  - Displays top scores fetched from the `get_global_scores.php` API.
-  - Includes options to filter scores by time or other criteria.
-- **Game History Page**:
-  - Displays the user's score history fetched from the `get_user_scores.php` API.
-  - Includes sorting options by score or time.
+### 5. Classement et Historique des Parties (Leaderboard and Game History)
+- **Page de Classement** :
+  - Affiche les meilleurs scores récupérés via l'API `get_global_scores.php`.
+  - Inclut des options pour filtrer les scores par période ou d'autres critères.
+- **Page d'Historique des Parties** :
+  - Affiche l'historique des scores du joueur récupéré via l'API `get_user_scores.php`.
+  - Inclut des options de tri par score ou par date.
 
-### 6. Game Screen
-- **Controls**:
-  - **Joystick**: Positioned at the bottom-left to control arrow direction.
-  - **Slider**: Positioned at the bottom-right to adjust arrow mass.
-- **Fixed Player Position**: The player remains stationary, interacting with the environment through controls and the phones camera.
-- **UI Elements**:
-  - **Score Display**: Positioned at the top-center to show the current score.
-  - **Arrow Count**: Displayed at the top-right to indicate remaining arrows.
-  - **Pause Button**: A small button at the top-left to pause the game.
-  - **Camera Interaction**: The game utilizes the phone's camera for augmented reality.
+### 6. Écran de Jeu (Game Screen)
+- **Commandes** :
+  - **Joystick** : Positionné en bas à gauche pour contrôler la direction des flèches.
+  - **Curseur** : Positionné en bas à droite pour ajuster la masse des flèches.
+- **Position Fixe du Joueur** : Le joueur reste immobile et interagit avec l'environnement via les commandes et la caméra du téléphone.
+- **Éléments de l'Interface Utilisateur (UI)** :
+  - **Affichage du Score** : Positionné en haut au centre pour montrer le score actuel.
+  - **Nombre de Flèches Restantes** : Affiché en haut à droite pour indiquer le nombre de flèches restantes.
+  - **Bouton Pause** : Un petit bouton en haut à gauche pour mettre le jeu en pause.
+  - **Interaction avec la Caméra** : Le jeu utilise la caméra du téléphone pour la réalité augmentée.
 
 ## 2. Interaction avec la Base de Données Serveur
 
@@ -87,7 +88,7 @@ Cette stack technique permet de viser une bonne expérience utilisateur tout en 
 #### 1. **Base de Données MySQL**
 - **Pourquoi MySQL ?**
   - MySQL est un système de gestion de base de données relationnelle robuste, largement utilisé et bien documenté.
-  - Il offre des performances élevées pour les opérations de lecture/écriture, ce qui est essentiel pour gérer les scores et les utilisateurs dans un jeu compétitif.
+  - Il offre des performances élevées pour les opérations de lecture/écriture, ce qui est essentiel pour gérer les scores et les utilisateurs pour l'aspect compétitif du jeu.
   - La compatibilité avec PHP permet une intégration fluide avec les APIs.
 
 - **Structure de la Base de Données :**
@@ -104,7 +105,7 @@ Cette stack technique permet de viser une bonne expérience utilisateur tout en 
   - Il est compatible avec MySQL et permet une gestion facile des requêtes HTTP.
   - Sa simplicité permet un développement rapide et une maintenance aisée.
 
-- **Fonctionnalités Implémentées :**
+- **Fonctionnalités à **Implémenter** :**
   - **`login.php` :** Authentifie les utilisateurs en récupérant leur `uuid` à partir de leur nom.
   - **`register.php` :** Permet l'enregistrement de nouveaux utilisateurs avec un `uuid` unique.
   - **`send_score.php` :** Enregistre les scores des utilisateurs et met à jour leur meilleur score si nécessaire.
