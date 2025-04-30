@@ -169,7 +169,7 @@ table {
 </style>
 <h1>Cahier des Charges – Orbit Vector AR</h1>
 <p><strong>Auteurs</strong> BEAUJARD Traïan, RAMALLO Alex - <strong>Date</strong> 29/04/2025 - <strong>Version</strong> 1.0.1</p>
-<img src="img/app_title.png" alt="apptitle" style="max-width: 200px; width: 100%; height: auto;">
+<img src="file:///c:\Users\spare\Documents\SY43\Android AR game\Orbit-Vector-AR\docs\img\app_title.png" alt="apptitle" style="max-width: 200px; width: 100%; height: auto;">
 <ul>
 <li><a href="#1-introduction">1. Introduction</a></li>
 <li><a href="#2-objectifs">2. Objectifs</a>
@@ -353,10 +353,10 @@ table {
 <li>Adaptation AR : Concevoir une interface ergonomique malgré les contraintes de la réalité augmentée.</li>
 </ul>
 <h3 id="52-les-menus-et-la-navigation">5.2 Les menus et la navigation</h3>
-<img src="img/ui_navigation_uml.png" alt="ui_navigation_uml" style="width: 100%; height: auto;">
+<img src="file:///c:\Users\spare\Documents\SY43\Android AR game\Orbit-Vector-AR\docs\img\ui_navigation_uml.png" alt="ui_navigation_uml" style="width: 100%; height: auto;">
 <br>
 <h3 id="53-prototype-de-la-scène-de-jeu">5.3 Prototype de la scène de jeu</h3>
-<img src="img/game_screen.jpg" alt="Game Screen" width="48%" />
+<img src="file:///c:\Users\spare\Documents\SY43\Android AR game\Orbit-Vector-AR\docs\img\game_screen.jpg" alt="Game Screen" width="48%" />
 <h2 id="6-spécifications-techniques">6. Spécifications techniques</h2>
 <h3 id="61-outils-de-développement">6.1 Outils de développement</h3>
 <h4 id="611-outils-de-programmation">6.1.1 Outils de programmation</h4>
@@ -380,7 +380,48 @@ table {
 <li>Le serveur sera hébergé sur une raspiberry pi 4b sous Ubuntu Server.</li>
 </ul>
 <h2 id="7-plan-de-travail">7. Plan de travail</h2>
-<p>Faut faire cours je crois que j'ai dépassé les 2 pages</p>
+<h3 id="répartition-des-tâches">Répartition des tâches</h3>
+<ul>
+<li><strong>Alex Ramallo</strong> : interfaces utilisateur (menus, navigation, écrans de connexion, boutique) via Jetpack Compose, intégration des interactions utilisateur (joystick, slider).</li>
+<li><strong>Beaujard Traïan</strong> : logique du jeu (gestion des flèches, collisions, score, génération procédurale), intégration des systèmes de scores et leaderboard.</li>
+<li><strong>Ensemble</strong> : base de données, API PHP, intégration SQL (authentification, leaderboard), tests et corrections de bugs.</li>
+</ul>
+<h3 id="étapes-du-projet">Étapes du projet</h3>
+<h4 id="phase-1--préparation-jusquau-30-avril">Phase 1 : Préparation (jusqu'au 30 avril)</h4>
+<ul>
+<li>Rédaction et dépôt du CCH (finalisé).</li>
+<li>Installation des environnements de travail (Android Studio, dépôt Git).</li>
+<li>Début du développement :
+<ul>
+<li>Prototypes d’écrans.</li>
+<li>Début de la logique du jeu.</li>
+</ul>
+</li>
+</ul>
+<h4 id="phase-2--développement-initial-1-14-mai">Phase 2 : Développement initial (1-14 mai)</h4>
+<ul>
+<li>Avancement sur la logique de jeu (gravité, flèches, collisions).</li>
+<li>Développement et intégration des premiers écrans (titre, menu principal).</li>
+<li>Maquettes Figma finalisées pour tous les écrans clés.</li>
+<li>Génération procédurale des niveaux avec placement de planètes.</li>
+<li>Connexion aux premiers scripts de base de données (compte utilisateur).</li>
+</ul>
+<h4 id="phase-3--intégration-et-ajustements-15-28-mai">Phase 3 : Intégration et ajustements (15-28 mai)</h4>
+<ul>
+<li>Tests d’usage et ajustements IHM selon observations.</li>
+<li>Intégration des interactions utilisateur : joystick, slider.</li>
+<li>Intégration du système de scores, leaderboard et feedback visuel.</li>
+<li>Préparation et rédaction du rapport intermédiaire sur les choix IHM (à rendre fin mai).</li>
+</ul>
+<h4 id="phase-4--finalisation-29-mai---14-juin">Phase 4 : Finalisation (29 mai - 14 juin)</h4>
+<ul>
+<li>Finalisation graphique des interfaces (thèmes, animations, assets).</li>
+<li>Intégration complète des écrans secondaires (boutique, victoire, défaite).</li>
+<li>Revue technique globale, validation des fonctionnalités clés.</li>
+<li>Finalisation des tests, corrections de bugs.</li>
+<li>Optimisation des performances et polissage du jeu.</li>
+<li>Préparation de la soutenance (slides, démo, livrable).</li>
+</ul>
 
             
             
