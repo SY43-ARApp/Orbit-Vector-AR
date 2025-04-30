@@ -156,6 +156,16 @@ h1, h2, h3, h4, h5, h6 {
 }
 ul, ol {
   margin-left: 2em;
+  margin-top: 0.2em;   
+  margin-bottom: 0.2em;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+li {
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 table {
   margin-left: auto;
@@ -167,68 +177,75 @@ table {
   }
 }
 </style>
-<h1>Cahier des Charges – Orbit Vector AR</h1>
+<h3><u>Cahier des Charges – Orbit Vector AR</u></h3>
 <p><strong>Auteurs</strong> BEAUJARD Traïan, RAMALLO Alex - <strong>Date</strong> 29/04/2025 - <strong>Version</strong> 1.0.1</p>
-<img src="file:///c:\Users\spare\Documents\SY43\Android AR game\Orbit-Vector-AR\docs\img\app_title.png" alt="apptitle" style="max-width: 200px; width: 100%; height: auto;">
+<img src="img/app_title.png" alt="apptitle" style="max-width: 200px; width: 100%; height: auto;">
+<div style="font-size:1.05em; line-height:1.3; margin-bottom:1em;">
 <ul>
 <li><a href="#1-introduction">1. Introduction</a></li>
 <li><a href="#2-objectifs">2. Objectifs</a>
 <ul>
-<li><a href="#21-objectifs-du-projet">2.1 Objectifs du projet</a>
+<li><a href="#21-objectifs-du-projet">2.1. Objectifs du projet</a>
 <ul>
-<li><a href="#22-objectifs-principaux">2.2 Objectifs Principaux</a></li>
-<li><a href="#23-objectifs-secondaires">2.3 Objectifs Secondaires</a></li>
+<li><a href="#22-objectifs-principaux">2.2. Objectifs Principaux</a></li>
+<li><a href="#23-objectifs-secondaires">2.3. Objectifs Secondaires</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li><a href="#3-analyse-centr%C3%A9e-utilisateur">3. Analyse centrée utilisateur</a>
 <ul>
-<li><a href="#31-personas">3.1 Personas</a></li>
-<li><a href="#32-sc%C3%A9narios-dutilisation">3.2 Scénarios d'utilisation</a></li>
+<li><a href="#31-personas">3.1. Personas</a></li>
+<li><a href="#32-sc%C3%A9narios-dutilisation">3.2. Scénarios d'utilisation</a></li>
 </ul>
 </li>
 <li><a href="#4-exigences-fonctionnelles">4. Exigences fonctionnelles</a>
 <ul>
-<li><a href="#41-c%C5%93ur-du-gameplay-core">4.1 Cœur du Gameplay &quot;Core&quot;</a></li>
-<li><a href="#42-r%C3%A9alit%C3%A9-augment%C3%A9e">4.2 Réalité Augmentée</a></li>
-<li><a href="#43-g%C3%A9n%C3%A9ration-proc%C3%A9durale-des-niveaux">4.3 Génération Procédurale des Niveaux</a></li>
-<li><a href="#44-syst%C3%A8me-de-contr%C3%B4le">4.4 Système de Contrôle</a></li>
-<li><a href="#45-syst%C3%A8me-de-score">4.5 Système de Score</a></li>
-<li><a href="#46-gestion-des-ressources-fl%C3%A8ches">4.6 Gestion des Ressources (Flèches)</a></li>
-<li><a href="#47-conditions-de-victoire-et-de-d%C3%A9faite">4.7 Conditions de Victoire et de Défaite</a></li>
-<li><a href="#48-%C3%A9conomie-interne-pi%C3%A8ces">4.8 Économie Interne (Pièces)</a></li>
-<li><a href="#49-leaderboard">4.9 Leaderboard</a></li>
-<li><a href="#410-authentification-utilisateur">4.10 Authentification Utilisateur</a></li>
+<li><a href="#41-c%C5%93ur-du-gameplay-core">4.1. Cœur du Gameplay &quot;Core&quot;</a></li>
+<li><a href="#42-r%C3%A9alit%C3%A9-augment%C3%A9e">4.2. Réalité Augmentée</a></li>
+<li><a href="#43-g%C3%A9n%C3%A9ration-proc%C3%A9durale-des-niveaux">4.3. Génération Procédurale des Niveaux</a></li>
+<li><a href="#44-syst%C3%A8me-de-contr%C3%B4le">4.4. Système de Contrôle</a></li>
+<li><a href="#45-syst%C3%A8me-de-score">4.5. Système de Score</a></li>
+<li><a href="#46-gestion-des-ressources-fl%C3%A8ches">4.6. Gestion des Ressources (Flèches)</a></li>
+<li><a href="#47-conditions-de-victoire-et-de-d%C3%A9faite">4.7. Conditions de Victoire et de Défaite</a></li>
+<li><a href="#48-%C3%A9conomie-interne-pi%C3%A8ces">4.8. Économie Interne (Pièces)</a></li>
+<li><a href="#49-leaderboard">4.9. Leaderboard</a></li>
+<li><a href="#410-authentification-utilisateur">4.10. Authentification Utilisateur</a></li>
 </ul>
 </li>
 <li><a href="#5-interfaces-utilisateur">5. Interfaces utilisateur</a>
 <ul>
-<li><a href="#51-objectifs">5.1 Objectifs</a></li>
-<li><a href="#52-les-menus-et-la-navigation">5.2 Les menus et la navigation</a></li>
-<li><a href="#53-prototype-de-la-sc%C3%A8ne-de-jeu">5.3 Prototype de la scène de jeu</a></li>
+<li><a href="#51-objectifs">5.1. Objectifs</a></li>
+<li><a href="#52-les-menus-et-la-navigation">5.2. Les menus et la navigation</a></li>
+<li><a href="#53-prototype-de-la-sc%C3%A8ne-de-jeu">5.3. Prototype de la scène de jeu</a></li>
 </ul>
 </li>
 <li><a href="#6-sp%C3%A9cifications-techniques">6. Spécifications techniques</a>
 <ul>
-<li><a href="#61-outils-de-d%C3%A9veloppement">6.1 Outils de développement</a>
+<li><a href="#61-outils-de-d%C3%A9veloppement">6.1. Outils de développement</a>
 <ul>
-<li><a href="#611-outils-de-programmation">6.1.1 Outils de programmation</a></li>
-<li><a href="#612-outils-de-conception">6.1.2 Outils de conception</a></li>
+<li><a href="#611-outils-de-programmation">6.1.1. Outils de programmation</a></li>
+<li><a href="#612-outils-de-conception">6.1.2. Outils de conception</a></li>
 </ul>
 </li>
-<li><a href="#62-mat%C3%A9riel">6.2 Matériel</a></li>
+<li><a href="#62-mat%C3%A9riel">6.2. Matériel</a></li>
 </ul>
 </li>
-<li><a href="#7-plan-de-travail">7. Plan de travail</a></li>
+<li><a href="#7-plan-de-travail">7. Plan de travail</a>
+<ul>
+<li><a href="#71-r%C3%A9partition-des-t%C3%A2ches">7.1. Répartition des tâches</a></li>
+<li><a href="#72-%C3%A9tapes-du-projet">7.2 Étapes du projet</a></li>
 </ul>
+</li>
+</ul>
+</div>
 <div style="page-break-before: always;"></div>
 <h2 id="1-introduction">1. Introduction</h2>
 <p>Nous proposons de développer un jeu mobile sur Android en réalité augmentée. Le jeu est un jeu de puzzle où le joueur doit tirer des flèches sur des cibles en utilisant la gravité des planètes procéduralement placées dans le décor réel.</p>
 <h2 id="2-objectifs">2. Objectifs</h2>
-<h3 id="21-objectifs-du-projet">2.1 Objectifs du projet</h3>
+<h3 id="21-objectifs-du-projet">2.1. Objectifs du projet</h3>
 <p>Le but de ce projet est d'avoir un jeu créant une expérience unique et originale.</p>
-<h4 id="22-objectifs-principaux">2.2 Objectifs Principaux</h4>
+<h4 id="22-objectifs-principaux">2.2. Objectifs Principaux</h4>
 <ul>
 <li>Développer un jeu mobile sur Android utilisant la Réalité Augmentée.
 <ul>
@@ -247,7 +264,7 @@ table {
 </li>
 <li>Réaliser une interface utilisateur (UI) intuitive et adaptée au contexte d'un jeu mobile et de l'AR.</li>
 </ul>
-<h4 id="23-objectifs-secondaires">2.3 Objectifs Secondaires</h4>
+<h4 id="23-objectifs-secondaires">2.3. Objectifs Secondaires</h4>
 <ul>
 <li>Mettre en place un système de score et de classement multijoueur.
 <ul>
@@ -262,13 +279,12 @@ table {
 </li>
 </ul>
 <h2 id="3-analyse-centrée-utilisateur">3. Analyse centrée utilisateur</h2>
-<h3 id="31-personas">3.1 Personas</h3>
+<h3 id="31-personas">3.1. Personas</h3>
 <p>Voir projet personnas <em>(powerpoint)</em> <a href="https://utbm-my.sharepoint.com/:p:/g/personal/traian_beaujard_utbm_fr/EfwHXCU6JulKsMv6bCm5jg0BrzGHbsWQG08oOuYsqQJGIA?e=Gw7FAO">ici</a>.</p>
-<h3 id="32-scénarios-dutilisation">3.2 Scénarios d'utilisation</h3>
+<h3 id="32-scénarios-dutilisation">3.2. Scénarios d'utilisation</h3>
 <p>Voir projet scénarios <em>(powerpoint)</em> <a href="https://utbm-my.sharepoint.com/:p:/g/personal/traian_beaujard_utbm_fr/EQRIgrvpSblNs-On_Nu7bM0B8ksACpy1QWDIH7FZ6Lmtkw?e=afNBla">ici</a>.</p>
-<div style="page-break-before: always;"></div>
 <h2 id="4-exigences-fonctionnelles">4. Exigences fonctionnelles</h2>
-<h3 id="41-cœur-du-gameplay-core">4.1 Cœur du Gameplay &quot;Core&quot;</h3>
+<h3 id="41-cœur-du-gameplay-core">4.1. Cœur du Gameplay &quot;Core&quot;</h3>
 <ul>
 <li>Le jeu doit permettre au joueur de lancer des projectiles depuis une position fixe.
 <ul>
@@ -287,7 +303,7 @@ table {
 </ul>
 </li>
 </ul>
-<h3 id="42-réalité-augmentée">4.2 Réalité Augmentée</h3>
+<h3 id="42-réalité-augmentée">4.2. Réalité Augmentée</h3>
 <ul>
 <li>L'application doit :
 <ul>
@@ -297,33 +313,32 @@ table {
 </li>
 <li>L'application doit gérer les conditions de tracking AR (Progression cartographie, ...).</li>
 </ul>
-<h3 id="43-génération-procédurale-des-niveaux">4.3 Génération Procédurale des Niveaux</h3>
+<h3 id="43-génération-procédurale-des-niveaux">4.3. Génération Procédurale des Niveaux</h3>
 <ul>
 <li>L'application doit générer procéduralement la disposition des planètes (nombre, position, masse/taille) et de la cible pour chaque nouveau niveau.</li>
 <li>La difficulté des niveaux doit augmenter progressivement.</li>
 <li>L'algorithme de génération doit s'assurer que chaque niveau généré est solvable.</li>
 </ul>
-<h3 id="44-système-de-contrôle">4.4 Système de Contrôle</h3>
+<h3 id="44-système-de-contrôle">4.4. Système de Contrôle</h3>
 <ul>
 <li>Le joueur doit pouvoir contrôler la direction et la force de tir de la flèche.</li>
 </ul>
-<h3 id="45-système-de-score">4.5 Système de Score</h3>
+<h3 id="45-système-de-score">4.5. Système de Score</h3>
 <ul>
 <li>Le joueur gagne des points à chaque niveau réussi.</li>
 <li>Le score du joueur est sauegardé en ligne à la fin de chaque session de jeu.</li>
 </ul>
-<h3 id="46-gestion-des-ressources-flèches">4.6 Gestion des Ressources (Flèches)</h3>
+<h3 id="46-gestion-des-ressources-flèches">4.6. Gestion des Ressources (Flèches)</h3>
 <ul>
 <li>Le joueur commence une session avec un nombre défini de flèches.</li>
 <li>Chaque tir consomme une flèche.</li>
 <li>Le joueur gagne des flèches à chaque niveau réussi.</li>
 </ul>
-<br>
-<h3 id="47-conditions-de-victoire-et-de-défaite">4.7 Conditions de Victoire et de Défaite</h3>
+<h3 id="47-conditions-de-victoire-et-de-défaite">4.7. Conditions de Victoire et de Défaite</h3>
 <ul>
 <li>Le jeu se termine lorsque le joueur n'a plus de flèches.</li>
 </ul>
-<h3 id="48-économie-interne-pièces">4.8 Économie Interne (Pièces)</h3>
+<h3 id="48-économie-interne-pièces">4.8. Économie Interne (Pièces)</h3>
 <ul>
 <li>À la fin d'une session de jeu, le score est converti en Pièces (formule à définir).</li>
 <li>Le joueur peut utiliser les Pièces pour acheter des skins cosmétiques (flèches, cibles, planètes).
@@ -334,32 +349,32 @@ table {
 </ul>
 </li>
 </ul>
-<h3 id="49-leaderboard">4.9 Leaderboard</h3>
+<h3 id="49-leaderboard">4.9. Leaderboard</h3>
 <ul>
 <li>L'application doit intégrer un classement des meilleurs scores.</li>
 <li>Le classement doit être accessible depuis le menu principal.</li>
 <li>Il doit afficher le pseudo du joueur et son score.</li>
 </ul>
-<h3 id="410-authentification-utilisateur">4.10 Authentification Utilisateur</h3>
+<h3 id="410-authentification-utilisateur">4.10. Authentification Utilisateur</h3>
 <ul>
 <li>L'application permet à l'utilisateur de s'authentifier via son uiid et un pseudo.</li>
 </ul>
 <h2 id="5-interfaces-utilisateur">5. Interfaces utilisateur</h2>
-<h3 id="51-objectifs">5.1 Objectifs</h3>
+<h3 id="51-objectifs">5.1. Objectifs</h3>
 <ul>
 <li>Cohérence : Maintenir un style visuel à travers tous les menus.</li>
 <li>Simplicité : Éviter la surcharge d'informations, privilégier des indications visuelles, claires et intuitives.</li>
 <li>Feedback : Fournir des retours visuels et sonores lors des interactions.</li>
 <li>Adaptation AR : Concevoir une interface ergonomique malgré les contraintes de la réalité augmentée.</li>
 </ul>
-<h3 id="52-les-menus-et-la-navigation">5.2 Les menus et la navigation</h3>
-<img src="file:///c:\Users\spare\Documents\SY43\Android AR game\Orbit-Vector-AR\docs\img\ui_navigation_uml.png" alt="ui_navigation_uml" style="width: 100%; height: auto;">
-<br>
-<h3 id="53-prototype-de-la-scène-de-jeu">5.3 Prototype de la scène de jeu</h3>
-<img src="file:///c:\Users\spare\Documents\SY43\Android AR game\Orbit-Vector-AR\docs\img\game_screen.jpg" alt="Game Screen" width="48%" />
+<div style="page-break-before: always;"></div>
+<h3 id="52-les-menus-et-la-navigation">5.2. Les menus et la navigation</h3>
+<img src="img/ui_navigation_uml.png" alt="ui_navigation_uml" style="width: 100%; height: auto;">
+<h3 id="53-prototype-de-la-scène-de-jeu">5.3. Prototype de la scène de jeu</h3>
+<img src="img/game_screen.jpg" alt="Game Screen" width="48%" />
 <h2 id="6-spécifications-techniques">6. Spécifications techniques</h2>
-<h3 id="61-outils-de-développement">6.1 Outils de développement</h3>
-<h4 id="611-outils-de-programmation">6.1.1 Outils de programmation</h4>
+<h3 id="61-outils-de-développement">6.1. Outils de développement</h3>
+<h4 id="611-outils-de-programmation">6.1.1. Outils de programmation</h4>
 <ul>
 <li>Plateforme : Android</li>
 <li>Langage : Kotlin</li>
@@ -370,27 +385,30 @@ table {
 <li>IDE : Android Studio/Visual Studio Code</li>
 <li>Assistant de développement : Github Copilot</li>
 </ul>
-<h4 id="612-outils-de-conception">6.1.2 Outils de conception</h4>
+<h4 id="612-outils-de-conception">6.1.2. Outils de conception</h4>
 <ul>
 <li>Logiciel modélisation 3D : Blender</li>
 <li>Logiciel graphique : Photopea</li>
 </ul>
-<h3 id="62-matériel">6.2 Matériel</h3>
+<h3 id="62-matériel">6.2. Matériel</h3>
 <ul>
 <li>Le serveur sera hébergé sur une raspiberry pi 4b sous Ubuntu Server.</li>
 </ul>
 <h2 id="7-plan-de-travail">7. Plan de travail</h2>
-<h3 id="répartition-des-tâches">Répartition des tâches</h3>
+<p>Le projet sera réalisé pour 2 matières (SY43 x HM40), ainsi les tâches seront réparties entre les deux matières avec un appui sur l'interface homme-machine pour l'UV H40 et la logique et technologie de jeu pour l'UV SY43.</p>
+<h3 id="71-répartition-des-tâches">7.1. Répartition des tâches</h3>
+<p>Projet à 4 élèves, <em>2 des personnes du groupe ne sont pas dans l'UV HM40.</em></p>
 <ul>
-<li><strong>Alex Ramallo</strong> : interfaces utilisateur (menus, navigation, écrans de connexion, boutique) via Jetpack Compose, intégration des interactions utilisateur (joystick, slider).</li>
-<li><strong>Beaujard Traïan</strong> : logique du jeu (gestion des flèches, collisions, score, génération procédurale), intégration des systèmes de scores et leaderboard.</li>
-<li><strong>Ensemble</strong> : base de données, API PHP, intégration SQL (authentification, leaderboard), tests et corrections de bugs.</li>
+<li><strong>Alex Ramallo</strong> &amp; <strong>Elève 3</strong> : interfaces utilisateur (menus, navigation, boutique) via Jetpack Compose.</li>
+<li><strong>Beaujard Traïan</strong> : logique du jeu, intégrationd de la réalité augmentée, interface utilisateur en réalité augmentée, intégration des systèmes leaderboard, paramétrage du serveur, ...</li>
+<li><strong>Elève 4</strong> : base de données, API PHP, intégration SQL (authentification, leaderboard).</li>
 </ul>
-<h3 id="étapes-du-projet">Étapes du projet</h3>
-<h4 id="phase-1--préparation-jusquau-30-avril">Phase 1 : Préparation (jusqu'au 30 avril)</h4>
+<h3 id="72-étapes-du-projet">7.2 Étapes du projet</h3>
+<h4>Étape 1. : Préparation (jusqu'au 30 avril)</h4>
 <ul>
-<li>Rédaction et dépôt du CCH (finalisé).</li>
-<li>Installation des environnements de travail (Android Studio, dépôt Git).</li>
+<li>Rédaction cahier des charges et game design document.</li>
+<li>Préparation des environnements de développement (repos git, serveur, librairies, ...).</li>
+<li>Tests sur le développement de l'AR.</li>
 <li>Début du développement :
 <ul>
 <li>Prototypes d’écrans.</li>
@@ -398,29 +416,25 @@ table {
 </ul>
 </li>
 </ul>
-<h4 id="phase-2--développement-initial-1-14-mai">Phase 2 : Développement initial (1-14 mai)</h4>
+<h4>Étape 2. : Développement prototype (1-19 mai)</h4>
 <ul>
-<li>Avancement sur la logique de jeu (gravité, flèches, collisions).</li>
-<li>Développement et intégration des premiers écrans (titre, menu principal).</li>
-<li>Maquettes Figma finalisées pour tous les écrans clés.</li>
-<li>Génération procédurale des niveaux avec placement de planètes.</li>
-<li>Connexion aux premiers scripts de base de données (compte utilisateur).</li>
+<li>Core gameplay AR (physique, tir de flèches, gravité des planètes).</li>
+<li>Boucle de jeu complète (menu principal, jeu, fin de niveau).</li>
+<li>Maquettes finalisées pour tous les écrans + Intégration dans le jeu.</li>
+<li>Intéraction API PHP et base de données (authentification).</li>
 </ul>
-<h4 id="phase-3--intégration-et-ajustements-15-28-mai">Phase 3 : Intégration et ajustements (15-28 mai)</h4>
+<p>→ L'objectif est d'avoir un Minimum Viable Prototype (MVP) jouable à la fin de cette phase.</p>
+<h4>Étape 3 : Intégration et ajustements (20-28 mai)</h4>
 <ul>
-<li>Tests d’usage et ajustements IHM selon observations.</li>
-<li>Intégration des interactions utilisateur : joystick, slider.</li>
-<li>Intégration du système de scores, leaderboard et feedback visuel.</li>
-<li>Préparation et rédaction du rapport intermédiaire sur les choix IHM (à rendre fin mai).</li>
+<li>Tests d’usage et ajustements IHM.</li>
+<li>Intégration du système audio.</li>
+<li>Rédaction du rapport sur les choix IHM.</li>
 </ul>
-<h4 id="phase-4--finalisation-29-mai---14-juin">Phase 4 : Finalisation (29 mai - 14 juin)</h4>
+<h4>Étape 4 : Améliorations & Finalisation (29 mai - 14 juin)</h4>
 <ul>
-<li>Finalisation graphique des interfaces (thèmes, animations, assets).</li>
-<li>Intégration complète des écrans secondaires (boutique, victoire, défaite).</li>
-<li>Revue technique globale, validation des fonctionnalités clés.</li>
-<li>Finalisation des tests, corrections de bugs.</li>
-<li>Optimisation des performances et polissage du jeu.</li>
-<li>Préparation de la soutenance (slides, démo, livrable).</li>
+<li>Itération auprès d'utilisateurs variés pour récupérer feedback utilisateur.</li>
+<li>Corrections de bugs, optimisation des performances et polissage du jeu.</li>
+<li>Préparation de la soutenance (slides, démos, livrables).</li>
 </ul>
 
             
