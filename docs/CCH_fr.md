@@ -195,4 +195,37 @@ Voir projet scénarios *(powerpoint)* [ici](https://utbm-my.sharepoint.com/:p:/g
 
 ## 7. Plan de travail
 
-Faut faire cours je crois que j'ai dépassé les 2 pages
+### Répartition des tâches
+- **Alex Ramallo** : interfaces utilisateur (menus, navigation, écrans de connexion, boutique) via Jetpack Compose, intégration des interactions utilisateur (joystick, slider).
+- **Beaujard Traïan** : logique du jeu (gestion des flèches, collisions, score, génération procédurale), intégration des systèmes de scores et leaderboard.
+- **Ensemble** : base de données, API PHP, intégration SQL (authentification, leaderboard), tests et corrections de bugs.
+
+### Étapes du projet
+
+#### Phase 1 : Préparation (jusqu'au 30 avril)
+- Rédaction et dépôt du CCH (finalisé).
+- Installation des environnements de travail (Android Studio, dépôt Git).
+- Début du développement :
+  - Prototypes d’écrans.
+  - Début de la logique du jeu.
+
+#### Phase 2 : Développement initial (1-14 mai)
+- Avancement sur la logique de jeu (gravité, flèches, collisions).
+- Développement et intégration des premiers écrans (titre, menu principal).
+- Maquettes Figma finalisées pour tous les écrans clés.
+- Génération procédurale des niveaux avec placement de planètes.
+- Connexion aux premiers scripts de base de données (compte utilisateur).
+
+#### Phase 3 : Intégration et ajustements (15-28 mai)
+- Tests d’usage et ajustements IHM selon observations.
+- Intégration des interactions utilisateur : joystick, slider.
+- Intégration du système de scores, leaderboard et feedback visuel.
+- Préparation et rédaction du rapport intermédiaire sur les choix IHM (à rendre fin mai).
+
+#### Phase 4 : Finalisation (29 mai - 14 juin)
+- Finalisation graphique des interfaces (thèmes, animations, assets).
+- Intégration complète des écrans secondaires (boutique, victoire, défaite).
+- Revue technique globale, validation des fonctionnalités clés.
+- Finalisation des tests, corrections de bugs.
+- Optimisation des performances et polissage du jeu.
+- Préparation de la soutenance (slides, démo, livrable).
