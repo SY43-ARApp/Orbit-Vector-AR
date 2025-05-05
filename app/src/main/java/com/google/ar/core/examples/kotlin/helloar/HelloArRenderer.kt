@@ -49,6 +49,104 @@ import com.google.ar.core.exceptions.NotYetAvailableException
 import java.io.IOException
 import java.nio.ByteBuffer
 
+// --- GAME STATE DATA CLASSES ---
+data class Planet(val position: FloatArray, val mass: Float)
+data class Arrow(var position: FloatArray, var velocity: FloatArray, val mass: Float, var active: Boolean = true)
+data class Apple(var position: FloatArray)
+enum class PuzzleState { PLAYING, VICTORY, DEFEAT }
+data class GameState(
+    var level: Int = 1,
+    var arrowsLeft: Int = 5,
+    var score: Int = 0,
+    var state: PuzzleState = PuzzleState.PLAYING
+)
+
+// --- GAME STATE FIELDS ---
+private var gameState = GameState()
+private var planets: MutableList<Planet> = mutableListOf()
+private var arrows: MutableList<Arrow> = mutableListOf()
+private var apple: Apple? = null
+private val gravityConstant = 0.5f // Tunable for gameplay feel
+private val arrowRadius = 0.05f // meters
+private val appleRadius = 0.1f // meters
+private val planetRadius = 0.15f // meters
+
+// --- GAME LOOP HELPERS ---
+private fun resetLevel() {
+    // Simple procedural placement
+    planets.clear()
+    val planetCount = gameState.level
+    for (i in 0 until planetCount) {
+        val angle = (2 * Math.PI * i / planetCount).toFloat()
+        val dist = 0.5f + 0.5f * i // spread out
+        planets.add(Planet(floatArrayOf(dist * Math.cos(angle.toDouble()).toFloat(), 0f, -1.5f + 0.3f * i), 2.5f + i))
+    }
+    // Place apple
+    apple = Apple(floatArrayOf(0f, 0f, -2.5f - 0.2f * planetCount))
+    // Reset arrows
+    arrows.clear()
+    gameState.arrowsLeft = 5
+    gameState.state = PuzzleState.PLAYING
+}
+
+private fun launchArrow(camera: Camera) {
+    if (gameState.state != PuzzleState.PLAYING || gameState.arrowsLeft <= 0) return
+    val pose = camera.pose
+    val dir = floatArrayOf(-pose.zAxis[0], -pose.zAxis[1], -pose.zAxis[2])
+    val pos = floatArrayOf(pose.translation[0], pose.translation[1], pose.translation[2])
+    val velocity = floatArrayOf(dir[0] * 2.5f, dir[1] * 2.5f, dir[2] * 2.5f) // fixed force for now
+    arrows.add(Arrow(pos.copyOf(), velocity, 1.0f))
+    gameState.arrowsLeft--
+}
+
+private fun updateGameLogic(dt: Float) {
+    if (gameState.state != PuzzleState.PLAYING) return
+    val applePos = apple?.position ?: return
+    for (arrow in arrows) {
+        if (!arrow.active) continue
+        // Apply gravity from planets
+        for (planet in planets) {
+            val dx = planet.position[0] - arrow.position[0]
+            val dy = planet.position[1] - arrow.position[1]
+            val dz = planet.position[2] - arrow.position[2]
+            val distSqr = dx*dx + dy*dy + dz*dz + 0.01f
+            val dist = Math.sqrt(distSqr.toDouble()).toFloat()
+            val force = gravityConstant * planet.mass * arrow.mass / distSqr
+            arrow.velocity[0] += force * dx / dist * dt
+            arrow.velocity[1] += force * dy / dist * dt
+            arrow.velocity[2] += force * dz / dist * dt
+        }
+        // Update position
+        arrow.position[0] += arrow.velocity[0] * dt
+        arrow.position[1] += arrow.velocity[1] * dt
+        arrow.position[2] += arrow.velocity[2] * dt
+        // Check collision with apple
+        val adx = arrow.position[0] - applePos[0]
+        val ady = arrow.position[1] - applePos[1]
+        val adz = arrow.position[2] - applePos[2]
+        if (adx*adx + ady*ady + adz*adz < (arrowRadius + appleRadius) * (arrowRadius + appleRadius)) {
+            gameState.state = PuzzleState.VICTORY
+            gameState.score += 100 * gameState.level
+            arrow.active = false
+        }
+        // TODO: collision with planet (optional)
+    }
+    // Check defeat
+    if (gameState.arrowsLeft == 0 && arrows.none { it.active }) {
+        gameState.state = PuzzleState.DEFEAT
+    }
+}
+
+private fun nextLevel() {
+    gameState.level++
+    resetLevel()
+}
+
+private fun restartGame() {
+    gameState = GameState()
+    resetLevel()
+}
+
 /** Renders the HelloAR application using our example Renderer. */
 class HelloArRenderer(val activity: HelloArActivity) :
   SampleRender.Renderer, DefaultLifecycleObserver {
@@ -244,6 +342,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
       Log.e(TAG, "Failed to read a required asset file", e)
       showError("Failed to read a required asset file: $e")
     }
+    resetLevel()
   }
 
   override fun onSurfaceChanged(render: SampleRender, width: Int, height: Int) {
@@ -253,7 +352,6 @@ class HelloArRenderer(val activity: HelloArActivity) :
 
   override fun onDrawFrame(render: SampleRender) {
     val session = session ?: return
-
     // Texture names should only be set once on a GL thread unless they change. This is done during
     // onDrawFrame rather than onSurfaceCreated since the session is not guaranteed to have been
     // initialized during the execution of onSurfaceCreated.
@@ -261,27 +359,14 @@ class HelloArRenderer(val activity: HelloArActivity) :
       session.setCameraTextureNames(intArrayOf(backgroundRenderer.cameraColorTexture.textureId))
       hasSetTextureNames = true
     }
-
     // -- Update per-frame state
-
-    // Notify ARCore session that the view size changed so that the perspective matrix and
-    // the video background can be properly adjusted.
     displayRotationHelper.updateSessionIfNeeded(session)
-
-    // Obtain the current frame from ARSession. When the configuration is set to
-    // UpdateMode.BLOCKING (it is by default), this will throttle the rendering to the
-    // camera framerate.
-    val frame =
-      try {
-        session.update()
-      } catch (e: CameraNotAvailableException) {
-        Log.e(TAG, "Camera not available during onDrawFrame", e)
-        showError("Camera not available. Try restarting the app.")
-        return
-      }
-
+    val frame = try { session.update() } catch (e: CameraNotAvailableException) {
+      Log.e(TAG, "Camera not available during onDrawFrame", e)
+      showError("Camera not available. Try restarting the app.")
+      return
+    }
     val camera = frame.camera
-
     // Update BackgroundRenderer state to match the depth settings.
     try {
       backgroundRenderer.setUseDepthVisualization(
@@ -294,9 +379,6 @@ class HelloArRenderer(val activity: HelloArActivity) :
       showError("Failed to read a required asset file: $e")
       return
     }
-
-    // BackgroundRenderer.updateDisplayGeometry must be called every frame to update the coordinates
-    // used to draw the background camera image.
     backgroundRenderer.updateDisplayGeometry(frame)
     val shouldGetDepthImage =
       activity.depthSettings.useDepthForOcclusion() ||
@@ -311,13 +393,12 @@ class HelloArRenderer(val activity: HelloArActivity) :
         // spam the logcat with this.
       }
     }
-
-    // Handle one tap per frame.
+    // --- GAME LOOP ---
+    updateGameLogic(1f / 60f) // Assume 60 FPS for now
+    // Handle one tap per frame (arrow launch)
     handleTap(frame, camera)
-
     // Keep the screen unlocked while tracking, but allow it to lock when tracking stops.
     trackingStateHelper.updateKeepScreenOnFlag(camera.trackingState)
-
     // Show a message based on whether tracking has failed, if planes are detected, and if the user
     // has placed any objects.
     val message: String? =
@@ -327,9 +408,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
           activity.getString(R.string.searching_planes)
         camera.trackingState == TrackingState.PAUSED ->
           TrackingStateHelper.getTrackingFailureReasonString(camera)
-        session.hasTrackingPlane() && wrappedAnchors.isEmpty() ->
-          activity.getString(R.string.waiting_taps)
-        session.hasTrackingPlane() && wrappedAnchors.isNotEmpty() -> null
+        session.hasTrackingPlane() -> null
         else -> activity.getString(R.string.searching_planes)
       }
     if (message == null) {
@@ -337,25 +416,15 @@ class HelloArRenderer(val activity: HelloArActivity) :
     } else {
       activity.view.snackbarHelper.showMessage(activity, message)
     }
-
     // -- Draw background
     if (frame.timestamp != 0L) {
-      // Suppress rendering if the camera did not produce the first frame yet. This is to avoid
-      // drawing possible leftover data from previous sessions if the texture is reused.
       backgroundRenderer.drawBackground(render)
     }
-
-    // If not tracking, don't draw 3D objects.
     if (camera.trackingState == TrackingState.PAUSED) {
       return
     }
-
     // -- Draw non-occluded virtual objects (planes, point cloud)
-
-    // Get projection matrix.
     camera.getProjectionMatrix(projectionMatrix, 0, Z_NEAR, Z_FAR)
-
-    // Get camera matrix and draw.
     camera.getViewMatrix(viewMatrix, 0)
     frame.acquirePointCloud().use { pointCloud ->
       if (pointCloud.timestamp > lastPointCloudTimestamp) {
@@ -366,49 +435,65 @@ class HelloArRenderer(val activity: HelloArActivity) :
       pointCloudShader.setMat4("u_ModelViewProjection", modelViewProjectionMatrix)
       render.draw(pointCloudMesh, pointCloudShader)
     }
-
-    // Visualize planes.
     planeRenderer.drawPlanes(
       render,
       session.getAllTrackables<Plane>(Plane::class.java),
       camera.displayOrientedPose,
       projectionMatrix
     )
-
     // -- Draw occluded virtual objects
-
-    // Update lighting parameters in the shader
     updateLightEstimation(frame.lightEstimate, viewMatrix)
-
-    // Visualize anchors created by touch.
     render.clear(virtualSceneFramebuffer, 0f, 0f, 0f, 0f)
-    for ((anchor, trackable) in
-      wrappedAnchors.filter { it.anchor.trackingState == TrackingState.TRACKING }) {
-      // Get the current pose of an Anchor in world space. The Anchor pose is updated
-      // during calls to session.update() as ARCore refines its estimate of the world.
-      anchor.pose.toMatrix(modelMatrix, 0)
-
-      // Calculate model/view/projection matrices
+    // Draw apple
+    apple?.let {
+      Matrix.setIdentityM(modelMatrix, 0)
+      modelMatrix[12] = it.position[0]
+      modelMatrix[13] = it.position[1]
+      modelMatrix[14] = it.position[2]
       Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0)
       Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
-
-      // Update shader properties and draw
       virtualObjectShader.setMat4("u_ModelView", modelViewMatrix)
       virtualObjectShader.setMat4("u_ModelViewProjection", modelViewProjectionMatrix)
-      val texture =
-        if ((trackable as? InstantPlacementPoint)?.trackingMethod ==
-            InstantPlacementPoint.TrackingMethod.SCREENSPACE_WITH_APPROXIMATE_DISTANCE
-        ) {
-          virtualObjectAlbedoInstantPlacementTexture
-        } else {
-          virtualObjectAlbedoTexture
-        }
-      virtualObjectShader.setTexture("u_AlbedoTexture", texture)
+      virtualObjectShader.setTexture("u_AlbedoTexture", virtualObjectAlbedoTexture)
       render.draw(virtualObjectMesh, virtualObjectShader, virtualSceneFramebuffer)
     }
-
+    // Draw arrows
+    for (arrow in arrows) {
+      if (!arrow.active) continue
+      Matrix.setIdentityM(modelMatrix, 0)
+      modelMatrix[12] = arrow.position[0]
+      modelMatrix[13] = arrow.position[1]
+      modelMatrix[14] = arrow.position[2]
+      Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0)
+      Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
+      virtualObjectShader.setMat4("u_ModelView", modelViewMatrix)
+      virtualObjectShader.setMat4("u_ModelViewProjection", modelViewProjectionMatrix)
+      virtualObjectShader.setTexture("u_AlbedoTexture", virtualObjectAlbedoTexture)
+      render.draw(virtualObjectMesh, virtualObjectShader, virtualSceneFramebuffer)
+    }
+    // Draw planets
+    for (planet in planets) {
+      Matrix.setIdentityM(modelMatrix, 0)
+      modelMatrix[12] = planet.position[0]
+      modelMatrix[13] = planet.position[1]
+      modelMatrix[14] = planet.position[2]
+      Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0)
+      Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
+      virtualObjectShader.setMat4("u_ModelView", modelViewMatrix)
+      virtualObjectShader.setMat4("u_ModelViewProjection", modelViewProjectionMatrix)
+      virtualObjectShader.setTexture("u_AlbedoTexture", virtualObjectAlbedoTexture)
+      render.draw(virtualObjectMesh, virtualObjectShader, virtualSceneFramebuffer)
+    }
     // Compose the virtual scene with the background.
     backgroundRenderer.drawVirtualScene(render, virtualSceneFramebuffer, Z_NEAR, Z_FAR)
+    // Show simple victory/defeat overlays (stub: log for now)
+    if (gameState.state == PuzzleState.VICTORY) {
+      Log.i(TAG, "Victory! Score: ${gameState.score}")
+      // nextLevel() // Uncomment to auto-advance
+    } else if (gameState.state == PuzzleState.DEFEAT) {
+      Log.i(TAG, "Defeat! Score: ${gameState.score}")
+      // restartGame() // Uncomment to auto-restart
+    }
   }
 
   /** Checks if we detected at least one plane. */
@@ -520,6 +605,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
       // depth-based occlusion. This dialog needs to be spawned on the UI thread.
       activity.runOnUiThread { activity.view.showOcclusionDialogIfNeeded() }
     }
+    launchArrow(camera)
   }
 
   private fun showError(errorMessage: String) =
