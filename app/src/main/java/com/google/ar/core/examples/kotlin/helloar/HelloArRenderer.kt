@@ -50,16 +50,34 @@ import java.io.IOException
 import java.nio.ByteBuffer
 
 // --- GAME STATE DATA CLASSES ---
-data class Planet(val position: FloatArray, val mass: Float)
+data class Planet(val position: FloatArray, val mass: Float, val textureIdx: Int)
 data class Arrow(var position: FloatArray, var velocity: FloatArray, val mass: Float, var active: Boolean = true)
 data class Apple(var position: FloatArray)
 enum class PuzzleState { PLAYING, VICTORY, DEFEAT }
 data class GameState(
     var level: Int = 1,
-    var arrowsLeft: Int = 5,
+    var arrowsLeft: Int = 999, //debug
     var score: Int = 0,
     var state: PuzzleState = PuzzleState.PLAYING
 )
+
+// --- MODEL AND TEXTURE FIELDS ---
+private lateinit var planetMesh: Mesh
+private lateinit var appleMesh: Mesh
+private lateinit var arrowMesh: Mesh
+private val planetTextures: MutableList<Texture> = mutableListOf()
+private lateinit var appleTexture: Texture
+private lateinit var arrowTexture: Texture
+private val planetTextureFiles = listOf(
+    "models/textures/planet_texture_1.jpg",
+    "models/textures/planet_texture_2.jpg"
+    // Add more as needed
+)
+private const val appleTextureFile = "models/textures/apple_texture.jpg"
+private const val arrowTextureFile = "models/textures/arrow_texture.jpg"
+private const val planetObjFile = "models/planet.obj"
+private const val appleObjFile = "models/apple.obj"
+private const val arrowObjFile = "models/arrow.obj"
 
 // --- GAME STATE FIELDS ---
 private var gameState = GameState()
@@ -79,13 +97,13 @@ private fun resetLevel() {
     for (i in 0 until planetCount) {
         val angle = (2 * Math.PI * i / planetCount).toFloat()
         val dist = 0.5f + 0.5f * i // spread out
-        planets.add(Planet(floatArrayOf(dist * Math.cos(angle.toDouble()).toFloat(), 0f, -1.5f + 0.3f * i), 2.5f + i))
+        planets.add(Planet(floatArrayOf(dist * Math.cos(angle.toDouble()).toFloat(), 0f, -1.5f + 0.3f * i), 2.5f + i, i % planetTextures.size))
     }
     // Place apple
     apple = Apple(floatArrayOf(0f, 0f, -2.5f - 0.2f * planetCount))
     // Reset arrows
     arrows.clear()
-    gameState.arrowsLeft = 5
+    gameState.arrowsLeft = 999 //debug
     gameState.state = PuzzleState.PLAYING
 }
 
@@ -242,6 +260,18 @@ class HelloArRenderer(val activity: HelloArActivity) :
   }
 
   override fun onSurfaceCreated(render: SampleRender) {
+    this.render = render
+    // Load meshes
+    planetMesh = Mesh.createFromAsset(render, planetObjFile)
+    appleMesh = Mesh.createFromAsset(render, appleObjFile)
+    arrowMesh = Mesh.createFromAsset(render, arrowObjFile)
+    // Load textures
+    planetTextures.clear()
+    for (file in planetTextureFiles) {
+        planetTextures.add(Texture.createFromAsset(render, file, Texture.WrapMode.REPEAT, Texture.ColorFormat.SRGB))
+    }
+    appleTexture = Texture.createFromAsset(render, appleTextureFile, Texture.WrapMode.REPEAT, Texture.ColorFormat.SRGB)
+    arrowTexture = Texture.createFromAsset(render, arrowTextureFile, Texture.WrapMode.REPEAT, Texture.ColorFormat.SRGB)
     // Prepare the rendering objects.
     // This involves reading shaders and 3D model files, so may throw an IOException.
     try {
@@ -454,8 +484,8 @@ class HelloArRenderer(val activity: HelloArActivity) :
       Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
       virtualObjectShader.setMat4("u_ModelView", modelViewMatrix)
       virtualObjectShader.setMat4("u_ModelViewProjection", modelViewProjectionMatrix)
-      virtualObjectShader.setTexture("u_AlbedoTexture", virtualObjectAlbedoTexture)
-      render.draw(virtualObjectMesh, virtualObjectShader, virtualSceneFramebuffer)
+      virtualObjectShader.setTexture("u_AlbedoTexture", appleTexture)
+      render.draw(appleMesh, virtualObjectShader, virtualSceneFramebuffer)
     }
     // Draw arrows
     for (arrow in arrows) {
@@ -468,8 +498,8 @@ class HelloArRenderer(val activity: HelloArActivity) :
       Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
       virtualObjectShader.setMat4("u_ModelView", modelViewMatrix)
       virtualObjectShader.setMat4("u_ModelViewProjection", modelViewProjectionMatrix)
-      virtualObjectShader.setTexture("u_AlbedoTexture", virtualObjectAlbedoTexture)
-      render.draw(virtualObjectMesh, virtualObjectShader, virtualSceneFramebuffer)
+      virtualObjectShader.setTexture("u_AlbedoTexture", arrowTexture)
+      render.draw(arrowMesh, virtualObjectShader, virtualSceneFramebuffer)
     }
     // Draw planets
     for (planet in planets) {
@@ -481,8 +511,8 @@ class HelloArRenderer(val activity: HelloArActivity) :
       Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
       virtualObjectShader.setMat4("u_ModelView", modelViewMatrix)
       virtualObjectShader.setMat4("u_ModelViewProjection", modelViewProjectionMatrix)
-      virtualObjectShader.setTexture("u_AlbedoTexture", virtualObjectAlbedoTexture)
-      render.draw(virtualObjectMesh, virtualObjectShader, virtualSceneFramebuffer)
+      virtualObjectShader.setTexture("u_AlbedoTexture", planetTextures[planet.textureIdx])
+      render.draw(planetMesh, virtualObjectShader, virtualSceneFramebuffer)
     }
     // Compose the virtual scene with the background.
     backgroundRenderer.drawVirtualScene(render, virtualSceneFramebuffer, Z_NEAR, Z_FAR)
