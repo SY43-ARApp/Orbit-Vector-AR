@@ -50,7 +50,7 @@ import java.io.IOException
 import java.nio.ByteBuffer
 
 // --- GAME STATE DATA CLASSES ---
-data class Planet(val position: FloatArray, val mass: Float, val textureIdx: Int)
+data class Planet(val position: FloatArray, val mass: Float, val textureIdx: Int, val scale: Float)
 data class Arrow(var position: FloatArray, var velocity: FloatArray, val mass: Float, var active: Boolean = true)
 data class Apple(var position: FloatArray)
 enum class PuzzleState { PLAYING, VICTORY, DEFEAT }
@@ -94,11 +94,16 @@ private fun resetLevel() {
     // Simple procedural placement
     planets.clear()
     val planetCount = gameState.level
+    val minScale = 0.5f
+    val maxScale = 1.5f
     for (i in 0 until planetCount) {
         val angle = (2 * Math.PI * i / planetCount).toFloat()
         val dist = 0.5f + 0.5f * i // spread out
-        planets.add(Planet(floatArrayOf(dist * Math.cos(angle.toDouble()).toFloat(), 0f, -1.5f + 0.3f * i), 2.5f + i, i % planetTextures.size))
+        val scale = (minScale + Math.random() * (maxScale - minScale)).toFloat()
+        val mass = 2.5f * scale // gravity proportional to size
+        planets.add(Planet(floatArrayOf(dist * Math.cos(angle.toDouble()).toFloat(), 0f, -1.5f + 0.3f * i), mass, i % planetTextures.size, scale))
     }
+    
     // Place apple
     apple = Apple(floatArrayOf(0f, 0f, -2.5f - 0.2f * planetCount))
     // Reset arrows
@@ -491,6 +496,26 @@ class HelloArRenderer(val activity: HelloArActivity) :
     for (arrow in arrows) {
       if (!arrow.active) continue
       Matrix.setIdentityM(modelMatrix, 0)
+      // Orient the arrow in the direction of velocity
+      val vx = arrow.velocity[0]
+      val vy = arrow.velocity[1]
+      val vz = arrow.velocity[2]
+      val norm = Math.sqrt((vx*vx + vy*vy + vz*vz).toDouble()).toFloat()
+      if (norm > 1e-4) {
+        // Forward vector (z axis) is (0, 0, -1) by default in OpenGL
+        // Compute rotation axis and angle to align -Z to velocity
+        val fx = vx / norm
+        val fy = vy / norm
+        val fz = vz / norm
+        val up = floatArrayOf(0f, 1f, 0f)
+        val dot = -fz // dot([-Z], velocity)
+        val axis = floatArrayOf(fy, -fx, 0f) // cross([-Z], velocity)
+        val angle = Math.acos(dot.toDouble()).toFloat()
+        if (angle > 1e-4 && (axis[0]*axis[0] + axis[1]*axis[1] + axis[2]*axis[2]) > 1e-4) {
+          Matrix.rotateM(modelMatrix, 0, Math.toDegrees(angle.toDouble()).toFloat(), axis[0], axis[1], axis[2])
+        }
+      }
+      // Translate
       modelMatrix[12] = arrow.position[0]
       modelMatrix[13] = arrow.position[1]
       modelMatrix[14] = arrow.position[2]
@@ -504,6 +529,9 @@ class HelloArRenderer(val activity: HelloArActivity) :
     // Draw planets
     for (planet in planets) {
       Matrix.setIdentityM(modelMatrix, 0)
+      // Apply scale
+      Matrix.scaleM(modelMatrix, 0, planet.scale, planet.scale, planet.scale)
+      // Translate
       modelMatrix[12] = planet.position[0]
       modelMatrix[13] = planet.position[1]
       modelMatrix[14] = planet.position[2]
