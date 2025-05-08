@@ -1,0 +1,28 @@
+@startuml
+left to right direction
+
+state "Title Screen" as TitleScreen
+state "Main Menu" as MainMenu
+state "Shop Menu" as ShopMenu
+state "Game Scene" as Game
+state "Login Menu" as Login
+' state "Victory Screen" as VictoryScreen
+' state "GameOver Screen" as GameOverScreen
+
+
+[*] --> TitleScreen
+TitleScreen --> Login : first login 
+Login --> MainMenu 
+TitleScreen --> MainMenu : user already logged
+MainMenu --> ShopMenu
+MainMenu --> [*]
+ShopMenu --> MainMenu
+MainMenu --> Game
+Game --> Game
+Game --> MainMenu
+
+' Game --> VictoryScreen
+' Game --> GameOverScreen
+' VictoryScreen --> MainMenu
+' GameOverScreen --> MainMenu
+@enduml
