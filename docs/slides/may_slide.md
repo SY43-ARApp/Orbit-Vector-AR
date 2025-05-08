@@ -39,17 +39,37 @@ revealOptions:
 
 /s
 
-# Database
-
-## Database Slide 1
+# Base de Données
 
 /v
 
-## Database Slide 2
+## Structure de la Base de Données
+
+### Table USER
+- **uuid** (Primary Key) : Identifiant unique de l'utilisateur
+- **name** : Nom de l'utilisateur
+- **bestscore** : Meilleur score de l'utilisateur
 
 /v
 
-## Database Slide 3
+### Table SCORE
+- **id** (Primary Key) : Identifiant unique du score
+- **uuid** (Foreign Key) : Référence vers l'utilisateur
+- **time** : Date et heure du score
+- **score** : Valeur du score
+
+/v
+
+## Relations
+- Un utilisateur peut avoir plusieurs scores (1:N)
+- Chaque score appartient à un seul utilisateur
+- La clé étrangère uuid dans SCORE référence la clé primaire de USER
+
+/v
+
+## MCD
+
+![MCD](MCD.png)
 
 /s
 
