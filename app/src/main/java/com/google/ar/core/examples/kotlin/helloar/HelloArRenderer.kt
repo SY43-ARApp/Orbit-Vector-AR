@@ -60,53 +60,42 @@ import kotlin.random.Random
 
 // --- CONSTANTS ---
 private const val INITIAL_ARROWS_PER_LEVEL = 10
-private const val MAX_PLANETS_CAP = 10 // Max planets overall
-private const val INITIAL_PLANET_COUNT = 1 // Planets on Level 1
-private const val LEVELS_PER_NEW_PLANET = 2 // Add a new planet every 2 levels
+private const val MAX_PLANETS_CAP = 10
+private const val INITIAL_PLANET_COUNT = 1
+private const val LEVELS_PER_NEW_PLANET = 2
 
 private const val LEVEL_ANCHOR_DISTANCE_FORWARD = 3.5f
 private const val LEVEL_ANCHOR_DISTANCE_UP = 0.0f
 
-// Cluster Generation Parameters (relative to level anchor)
 private const val CLUSTER_MAX_RADIUS_APPLE = 1.5f
 private const val CLUSTER_MAX_RADIUS_PLANETS = 2.0f
 private const val CLUSTER_MIN_DIST_PLANETS_FROM_ANCHOR = 0.5f
 private const val CLUSTER_VERTICAL_SPREAD_FACTOR = 0.2f
 
-// --- MODEL DEFAULT RADII ---
 private const val APPLE_MODEL_DEFAULT_RADIUS = 0.1f
 private const val PLANET_MODEL_DEFAULT_RADIUS = 0.1f
 private const val ARROW_MODEL_DEFAULT_RADIUS = 0.1f
+private const val TRAJECTORY_DOT_MODEL_DEFAULT_RADIUS = 0.05f
 
-// --- TARGET RENDERED/COLLISION RADII (in world meters) ---
 private const val APPLE_TARGET_RADIUS = 0.2f
 private const val PLANET_TARGET_RADIUS_MIN = 0.3f
 private const val PLANET_TARGET_RADIUS_MAX = 0.6f
 private const val ARROW_VISUAL_AND_COLLISION_RADIUS = 0.1f
+private const val TRAJECTORY_DOT_TARGET_RADIUS = 0.01f
 
-private const val PLANET_MASS_SCALE_FACTOR = 4000.0f
+private const val PLANET_MASS_SCALE_FACTOR = 4500.0f
+private const val ARROW_LAUNCH_SPEED = 7.0f
+private const val ARROW_MASS = 0.5f
 
 private const val MIN_TRACKING_FRAMES_FOR_ANCHOR_PLACEMENT = 60
 
+private const val TRAJECTORY_SIMULATION_STEPS = 70
+private const val TRAJECTORY_SIMULATION_TIMESTEP = 0.015f
+
 // --- GAME STATE DATA CLASSES ---
 data class Planet(val worldPosition: FloatArray, val mass: Float, val textureIdx: Int, val targetRadius: Float) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        other as Planet
-        if (!worldPosition.contentEquals(other.worldPosition)) return false
-        if (mass != other.mass) return false
-        if (textureIdx != other.textureIdx) return false
-        if (targetRadius != other.targetRadius) return false
-        return true
-    }
-    override fun hashCode(): Int {
-        var result = worldPosition.contentHashCode()
-        result = 31 * result + mass.hashCode()
-        result = 31 * result + textureIdx
-        result = 31 * result + targetRadius.hashCode()
-        return result
-    }
+    override fun equals(other: Any?): Boolean { if (this === other) return true; if (javaClass != other?.javaClass) return false; other as Planet; if (!worldPosition.contentEquals(other.worldPosition)) return false; if (mass != other.mass) return false; if (textureIdx != other.textureIdx) return false; if (targetRadius != other.targetRadius) return false; return true }
+    override fun hashCode(): Int { var result = worldPosition.contentHashCode(); result = 31 * result + mass.hashCode(); result = 31 * result + textureIdx; result = 31 * result + targetRadius.hashCode(); return result }
 }
 data class Arrow(var position: FloatArray, var velocity: FloatArray, val mass: Float, var active: Boolean = true) {
      override fun equals(other: Any?): Boolean { if (this === other) return true; if (javaClass != other?.javaClass) return false; other as Arrow; if (!position.contentEquals(other.position)) return false; return true } override fun hashCode(): Int { return position.contentHashCode() }
@@ -126,15 +115,22 @@ data class GameState(
 private lateinit var planetMesh: Mesh
 private lateinit var appleMesh: Mesh
 private lateinit var arrowMesh: Mesh
+private lateinit var trajectoryDotMesh: Mesh
 private val planetTextures: MutableList<Texture> = mutableListOf()
 private lateinit var appleTexture: Texture
 private lateinit var arrowTexture: Texture
+private lateinit var trajectoryDotTexture: Texture
+
 private val planetTextureFiles = listOf("models/textures/planet_texture_1.jpg", "models/textures/planet_texture_2.jpg")
 private const val appleTextureFile = "models/textures/apple_texture.jpg"
 private const val arrowTextureFile = "models/textures/arrow_texture.jpg"
+private const val trajectoryDotTextureFile = "models/textures/dot_texture.jpg"
+
 private const val planetObjFile = "models/planet.obj"
 private const val appleObjFile = "models/apple.obj"
 private const val arrowObjFile = "models/arrow.obj"
+private const val trajectoryDotObjFile = "models/trajectory_dot.obj"
+
 
 // --- GAME STATE FIELDS ---
 private var gameState = GameState()
@@ -143,7 +139,9 @@ private var planets: MutableList<Planet> = mutableListOf()
 private var arrows: MutableList<Arrow> = mutableListOf()
 private var apple: Apple? = null
 private var levelOriginAnchor: Anchor? = null
-private val gravityConstant = 0.05f // Tuned for new mass calculation (G in F = G*m1*m2/r^2)
+private val gravityConstant = 0.05f
+private val trajectoryPoints: MutableList<FloatArray> = mutableListOf()
+
 
 /** Renders the HelloAR application using our example Renderer. */
 class HelloArRenderer(val activity: HelloArActivity) :
@@ -212,25 +210,18 @@ class HelloArRenderer(val activity: HelloArActivity) :
         val anchorPose = anchor.pose
         val placedObjectPositionsAndRadii = mutableListOf<Pair<FloatArray, Float>>()
 
-        // Place Apple
         val appleRadius = APPLE_TARGET_RADIUS
         var applePlaced = false
         for (i in 0..100) {
             val r = Random.nextFloat() * CLUSTER_MAX_RADIUS_APPLE
             val theta = Random.nextFloat() * 2f * PI.toFloat() 
             val phi = Random.nextFloat() * PI.toFloat() * CLUSTER_VERTICAL_SPREAD_FACTOR - (PI.toFloat() * CLUSTER_VERTICAL_SPREAD_FACTOR / 2f)
-
-            val localX = r * cos(theta) * cos(phi)
-            val localY = r * sin(phi)
-            val localZ = r * sin(theta) * cos(phi)
+            val localX = r * cos(theta) * cos(phi); val localY = r * sin(phi); val localZ = r * sin(theta) * cos(phi)
             val localPos = floatArrayOf(localX, localY, localZ)
             val worldPos = anchorPose.transformPoint(localPos)
-
             apple = Apple(worldPos.copyOf(), appleRadius)
             placedObjectPositionsAndRadii.add(Pair(worldPos.copyOf(), appleRadius))
-            applePlaced = true
-            // Log.d(TAG, "Apple placed at local: [${localPos.joinToString()}], world: [${worldPos.joinToString()}]")
-            break
+            applePlaced = true; break
         }
         if (!applePlaced) {
             Log.w(TAG, "Failed to place apple, placing at anchor as fallback.")
@@ -239,7 +230,6 @@ class HelloArRenderer(val activity: HelloArActivity) :
             placedObjectPositionsAndRadii.add(Pair(worldPos.copyOf(), appleRadius))
         }
 
-        // Place Planets
         var planetsSuccessfullyPlaced = 0
         for (pIdx in 0 until numPlanetsToSpawn) {
             val planetRad = Random.nextFloat() * (PLANET_TARGET_RADIUS_MAX - PLANET_TARGET_RADIUS_MIN) + PLANET_TARGET_RADIUS_MIN
@@ -248,37 +238,25 @@ class HelloArRenderer(val activity: HelloArActivity) :
                 val r = CLUSTER_MIN_DIST_PLANETS_FROM_ANCHOR + Random.nextFloat() * (CLUSTER_MAX_RADIUS_PLANETS - CLUSTER_MIN_DIST_PLANETS_FROM_ANCHOR)
                 val theta = Random.nextFloat() * 2f * PI.toFloat()
                 val phi = Random.nextFloat() * PI.toFloat() * CLUSTER_VERTICAL_SPREAD_FACTOR - (PI.toFloat() * CLUSTER_VERTICAL_SPREAD_FACTOR / 2f)
-
-                val localX = r * cos(theta) * cos(phi)
-                val localY = r * sin(phi)
-                val localZ = r * sin(theta) * cos(phi)
+                val localX = r * cos(theta) * cos(phi); val localY = r * sin(phi); val localZ = r * sin(theta) * cos(phi)
                 val localPos = floatArrayOf(localX, localY, localZ)
                 val worldPos = anchorPose.transformPoint(localPos)
-
                 var tooCloseToOthers = false
                 for ((otherPos, otherRadius) in placedObjectPositionsAndRadii) {
                     val minDistSq = (planetRad + otherRadius + 0.2f).pow(2) 
-                    if (calculateDistanceSquared(worldPos, otherPos) < minDistSq) {
-                        tooCloseToOthers = true
-                        break
-                    }
+                    if (calculateDistanceSquared(worldPos, otherPos) < minDistSq) { tooCloseToOthers = true; break }
                 }
                 if (tooCloseToOthers) continue
-
-                val mass = PLANET_MASS_SCALE_FACTOR * planetRad.pow(2.0f) // Mass proportional to radius^2, scaled
+                val mass = PLANET_MASS_SCALE_FACTOR * planetRad.pow(2.0f)
                 val textureIdx = planetsSuccessfullyPlaced % kotlin.math.max(1, planetTextures.size)
                 planets.add(Planet(worldPos.copyOf(), mass, textureIdx, planetRad))
                 placedObjectPositionsAndRadii.add(Pair(worldPos.copyOf(), planetRad))
-                planetsSuccessfullyPlaced++
-                planetPlacedThisIter = true
-                // Log.d(TAG, "Planet $pIdx (mass: $mass) placed at world: [${worldPos.joinToString()}]")
-                break
+                planetsSuccessfullyPlaced++; planetPlacedThisIter = true; break
             }
             if (!planetPlacedThisIter) Log.w(TAG, "Failed to place planet ${pIdx + 1} after multiple attempts.")
         }
         Log.i(TAG, "Level generation complete. Apple ${if(applePlaced)"OK" else "FALLBACK"}. $planetsSuccessfullyPlaced/$numPlanetsToSpawn planets.")
     }
-
 
     private fun resetLevel(session: Session, camera: Camera?) {
         Log.i(TAG, "Resetting level ${gameState.level}")
@@ -287,19 +265,16 @@ class HelloArRenderer(val activity: HelloArActivity) :
                 if (anchor.trackingState == TrackingState.TRACKING) {
                     val additionalPlanets = if (gameState.level <= 1) 0 else (gameState.level - 1) / LEVELS_PER_NEW_PLANET
                     val numPlanets = kotlin.math.min(INITIAL_PLANET_COUNT + additionalPlanets, MAX_PLANETS_CAP)
-                    
                     generateLevelLayout(anchor, numPlanets)
                     gameState.arrowsLeft = INITIAL_ARROWS_PER_LEVEL + (gameState.level / 2) 
                     gameState.state = PuzzleState.PLAYING
                 } else {
-                    Log.w(TAG, "Level anchor not tracking. Waiting.")
-                    gameState.state = PuzzleState.WAITING_FOR_ANCHOR
+                    Log.w(TAG, "Level anchor not tracking. Waiting."); gameState.state = PuzzleState.WAITING_FOR_ANCHOR
                 }
             }
         } else {
-            Log.w(TAG, "Failed to create or confirm level anchor. Waiting for stable tracking.")
-            gameState.state = PuzzleState.WAITING_FOR_ANCHOR
-            planets.clear(); arrows.clear(); apple = null
+            Log.w(TAG, "Failed to create or confirm level anchor. Waiting for stable tracking."); gameState.state = PuzzleState.WAITING_FOR_ANCHOR
+            planets.clear(); arrows.clear(); apple = null; trajectoryPoints.clear()
         }
     }
 
@@ -309,11 +284,67 @@ class HelloArRenderer(val activity: HelloArActivity) :
         val startOff = 0.2f
         val forward = FloatArray(3).apply{ camPose.getTransformedAxis(2, -1f, this, 0) } 
         val pos = floatArrayOf(camPose.tx() + forward[0] * startOff, camPose.ty() + forward[1] * startOff, camPose.tz() + forward[2] * startOff)
-        val speed = 7.0f
-        val vel = floatArrayOf(forward[0] * speed, forward[1] * speed, forward[2] * speed)
-        arrows.add(Arrow(pos.copyOf(), vel, 0.5f)) // Arrow mass
+        val vel = floatArrayOf(forward[0] * ARROW_LAUNCH_SPEED, forward[1] * ARROW_LAUNCH_SPEED, forward[2] * ARROW_LAUNCH_SPEED)
+        arrows.add(Arrow(pos.copyOf(), vel, ARROW_MASS))
         gameState.arrowsLeft--
     }
+
+    private fun simulateArrowTrajectory(startCamera: Camera) {
+        trajectoryPoints.clear()
+        if (planets.isEmpty() && apple == null) return 
+
+        val camPose = startCamera.pose
+        val startOffset = 0.2f
+        val forward = FloatArray(3).apply { camPose.getTransformedAxis(2, -1f, this, 0) }
+
+        val currentPosition = floatArrayOf(
+            camPose.tx() + forward[0] * startOffset,
+            camPose.ty() + forward[1] * startOffset,
+            camPose.tz() + forward[2] * startOffset
+        )
+        val currentVelocity = floatArrayOf(
+            forward[0] * ARROW_LAUNCH_SPEED,
+            forward[1] * ARROW_LAUNCH_SPEED,
+            forward[2] * ARROW_LAUNCH_SPEED
+        )
+        val simulatedArrowMass = ARROW_MASS
+
+        for (step in 0 until TRAJECTORY_SIMULATION_STEPS) {
+            // Apply gravity from planets
+            planets.forEach { planet ->
+                val dx = planet.worldPosition[0] - currentPosition[0]
+                val dy = planet.worldPosition[1] - currentPosition[1]
+                val dz = planet.worldPosition[2] - currentPosition[2]
+                var distSq = dx * dx + dy * dy + dz * dz
+                if (distSq < (planet.targetRadius * 0.5f).pow(2)) {
+                    distSq = (planet.targetRadius * 0.5f).pow(2)
+                }
+                distSq += 0.01f 
+
+                val dist = sqrt(distSq)
+                val forceMagnitude = gravityConstant * planet.mass * simulatedArrowMass / distSq
+
+                currentVelocity[0] += forceMagnitude * dx / dist * TRAJECTORY_SIMULATION_TIMESTEP
+                currentVelocity[1] += forceMagnitude * dy / dist * TRAJECTORY_SIMULATION_TIMESTEP
+                currentVelocity[2] += forceMagnitude * dz / dist * TRAJECTORY_SIMULATION_TIMESTEP
+            }
+
+            // Update position
+            currentPosition[0] += currentVelocity[0] * TRAJECTORY_SIMULATION_TIMESTEP
+            currentPosition[1] += currentVelocity[1] * TRAJECTORY_SIMULATION_TIMESTEP
+            currentPosition[2] += currentVelocity[2] * TRAJECTORY_SIMULATION_TIMESTEP
+
+            trajectoryPoints.add(currentPosition.copyOf())
+
+            apple?.let { currentApple ->
+                 val collisionDistSq = (ARROW_VISUAL_AND_COLLISION_RADIUS + currentApple.targetRadius).pow(2)
+                 if (calculateDistanceSquared(currentPosition, currentApple.worldPosition) < collisionDistSq) {
+                     return // Stop simulation early
+                 }
+            }
+        }
+    }
+
 
     private fun updateGameLogic(dt: Float) {
         if (gameState.state != PuzzleState.PLAYING) return
@@ -321,50 +352,23 @@ class HelloArRenderer(val activity: HelloArActivity) :
 
         arrows.filter { it.active }.forEach { arrow ->
             planets.forEach { planet ->
-                val dx = planet.worldPosition[0] - arrow.position[0]
-                val dy = planet.worldPosition[1] - arrow.position[1]
-                val dz = planet.worldPosition[2] - arrow.position[2]
-                // Add planet's radius to distance calculation for surface gravity, or keep as center-to-center?
-                // For now, center-to-center, but add epsilon.
-                // If arrow is inside planet, dist can be very small.
-                // Add square of planet radius to distSq to somewhat simulate gravity from surface if close
-                // val effectiveDistSq = dx*dx + dy*dy + dz*dz + planet.targetRadius.pow(2) * 0.1f + 0.01f
+                val dx = planet.worldPosition[0] - arrow.position[0]; val dy = planet.worldPosition[1] - arrow.position[1]; val dz = planet.worldPosition[2] - arrow.position[2]
                 var distSq = dx*dx + dy*dy + dz*dz
-                if (distSq < (planet.targetRadius * 0.5f).pow(2)) { // If very close or inside, clamp distance to avoid extreme forces
-                    distSq = (planet.targetRadius * 0.5f).pow(2)
-                }
-                distSq += 0.01f // Epsilon
-
+                if (distSq < (planet.targetRadius * 0.5f).pow(2)) { distSq = (planet.targetRadius * 0.5f).pow(2) }
+                distSq += 0.01f 
                 val dist = sqrt(distSq)
                 val forceMagnitude = gravityConstant * planet.mass * arrow.mass / distSq
-                
-                arrow.velocity[0] += forceMagnitude * dx / dist * dt
-                arrow.velocity[1] += forceMagnitude * dy / dist * dt
-                arrow.velocity[2] += forceMagnitude * dz / dist * dt
+                arrow.velocity[0] += forceMagnitude * dx / dist * dt; arrow.velocity[1] += forceMagnitude * dy / dist * dt; arrow.velocity[2] += forceMagnitude * dz / dist * dt
             }
-            arrow.position[0] += arrow.velocity[0] * dt
-            arrow.position[1] += arrow.velocity[1] * dt
-            arrow.position[2] += arrow.velocity[2] * dt
-
+            arrow.position[0] += arrow.velocity[0] * dt; arrow.position[1] += arrow.velocity[1] * dt; arrow.position[2] += arrow.velocity[2] * dt
             val collisionDistanceSq = (ARROW_VISUAL_AND_COLLISION_RADIUS + currentApple.targetRadius).pow(2)
             if (calculateDistanceSquared(arrow.position, currentApple.worldPosition) < collisionDistanceSq) {
-                Log.i(TAG, "Apple hit!")
-                gameState.score += 100 * gameState.level
-                gameState.state = PuzzleState.VICTORY
-                arrow.active = false
-                return 
+                Log.i(TAG, "Apple hit!"); gameState.score += 100 * gameState.level; gameState.state = PuzzleState.VICTORY; arrow.active = false; return 
             }
-
-            levelOriginAnchor?.pose?.translation?.let { origin ->
-                 if (calculateDistanceSquared(arrow.position, origin) > 50f.pow(2)) {
-                     arrow.active = false
-                 }
-            }
+            levelOriginAnchor?.pose?.translation?.let { origin -> if (calculateDistanceSquared(arrow.position, origin) > 50f.pow(2)) { arrow.active = false } }
         }
-
         if (gameState.arrowsLeft == 0 && arrows.none { it.active } && gameState.state == PuzzleState.PLAYING) {
-            Log.i(TAG, "No arrows left and all shot arrows inactive. Defeat.")
-            gameState.state = PuzzleState.DEFEAT
+            Log.i(TAG, "No arrows left and all shot arrows inactive. Defeat."); gameState.state = PuzzleState.DEFEAT
         }
     }
 
@@ -374,60 +378,36 @@ class HelloArRenderer(val activity: HelloArActivity) :
             planetMesh = Mesh.createFromAsset(render, planetObjFile)
             appleMesh = Mesh.createFromAsset(render, appleObjFile)
             arrowMesh = Mesh.createFromAsset(render, arrowObjFile)
+            trajectoryDotMesh = Mesh.createFromAsset(render, trajectoryDotObjFile) // Load dot model
 
             planetTextures.clear()
-            planetTextureFiles.forEach {
-                planetTextures.add(Texture.createFromAsset(render, it, Texture.WrapMode.REPEAT, Texture.ColorFormat.SRGB))
-            }
+            planetTextureFiles.forEach { planetTextures.add(Texture.createFromAsset(render, it, Texture.WrapMode.REPEAT, Texture.ColorFormat.SRGB)) }
             if (planetTextures.isEmpty()) Log.e(TAG, "No planet textures loaded!")
             appleTexture = Texture.createFromAsset(render, appleTextureFile, Texture.WrapMode.REPEAT, Texture.ColorFormat.SRGB)
             arrowTexture = Texture.createFromAsset(render, arrowTextureFile, Texture.WrapMode.REPEAT, Texture.ColorFormat.SRGB)
+            trajectoryDotTexture = Texture.createFromAsset(render, trajectoryDotTextureFile, Texture.WrapMode.CLAMP_TO_EDGE, Texture.ColorFormat.SRGB) // Load dot texture
 
-            planeRenderer = PlaneRenderer(render)
-            backgroundRenderer = BackgroundRenderer(render)
-            virtualSceneFramebuffer = Framebuffer(render, 1, 1) 
-
+            planeRenderer = PlaneRenderer(render); backgroundRenderer = BackgroundRenderer(render); virtualSceneFramebuffer = Framebuffer(render, 1, 1) 
             cubemapFilter = SpecularCubemapFilter(render, CUBEMAP_RESOLUTION, CUBEMAP_NUMBER_OF_IMPORTANCE_SAMPLES)
             dfgTexture = Texture(render, Texture.Target.TEXTURE_2D, Texture.WrapMode.CLAMP_TO_EDGE, false)
-            val dfgRes = 64
-            val buffer = ByteBuffer.allocateDirect(dfgRes * dfgRes * 4).apply {
-                activity.assets.open("models/dfg.raw").use { it.read(array()) }
-            }
-            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, dfgTexture.textureId); GLError.maybeThrowGLException("","glBindTexture DFG")
-            GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_RG16F, dfgRes, dfgRes, 0, GLES30.GL_RG, GLES30.GL_HALF_FLOAT, buffer); GLError.maybeThrowGLException("","glTexImage2D DFG")
-
-            pointCloudShader = Shader.createFromAssets(render, "shaders/point_cloud.vert", "shaders/point_cloud.frag", null)
-                .setVec4("u_Color", floatArrayOf(0.12f, 0.74f, 0.82f, 1f))
-                .setFloat("u_PointSize", 5f)
-            pointCloudVertexBuffer = VertexBuffer(render, 4, null) 
-            pointCloudMesh = Mesh(render, Mesh.PrimitiveMode.POINTS, null, arrayOf(pointCloudVertexBuffer))
-
-            virtualObjectShader = Shader.createFromAssets(render, "shaders/environmental_hdr.vert", "shaders/environmental_hdr.frag",
-                mapOf("NUMBER_OF_MIPMAP_LEVELS" to cubemapFilter.numberOfMipmapLevels.toString()))
-                .setTexture("u_Cubemap", cubemapFilter.filteredCubemapTexture)
-                .setTexture("u_DfgTexture", dfgTexture)
-
+            val dfgRes = 64; val buffer = ByteBuffer.allocateDirect(dfgRes * dfgRes * 4).apply { activity.assets.open("models/dfg.raw").use { it.read(array()) } }
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, dfgTexture.textureId); GLError.maybeThrowGLException("","")
+            GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_RG16F, dfgRes, dfgRes, 0, GLES30.GL_RG, GLES30.GL_HALF_FLOAT, buffer); GLError.maybeThrowGLException("","")
+            pointCloudShader = Shader.createFromAssets(render, "shaders/point_cloud.vert", "shaders/point_cloud.frag", null).setVec4("u_Color", floatArrayOf(0.12f,0.74f,0.82f,1f)).setFloat("u_PointSize", 5f)
+            pointCloudVertexBuffer = VertexBuffer(render, 4, null); pointCloudMesh = Mesh(render, Mesh.PrimitiveMode.POINTS, null, arrayOf(pointCloudVertexBuffer))
+            virtualObjectShader = Shader.createFromAssets(render, "shaders/environmental_hdr.vert", "shaders/environmental_hdr.frag", mapOf("NUMBER_OF_MIPMAP_LEVELS" to cubemapFilter.numberOfMipmapLevels.toString()))
+                .setTexture("u_Cubemap", cubemapFilter.filteredCubemapTexture).setTexture("u_DfgTexture", dfgTexture)
             gameState = GameState() 
-
-        } catch (e: Exception) { 
-            Log.e(TAG, "Error during onSurfaceCreated", e)
-            showError("Initialization Error: ${e.message}")
-        }
+        } catch (e: Exception) { Log.e(TAG, "Error during onSurfaceCreated", e); showError("Initialization Error: ${e.message}") }
     }
 
     override fun onResume(owner: LifecycleOwner) { displayRotationHelper.onResume(); hasSetTextureNames = false }
     override fun onPause(owner: LifecycleOwner) { displayRotationHelper.onPause() }
-    override fun onSurfaceChanged(render: SampleRender, width: Int, height: Int) {
-        displayRotationHelper.onSurfaceChanged(width, height)
-        virtualSceneFramebuffer.resize(width, height)
-    }
+    override fun onSurfaceChanged(render: SampleRender, width: Int, height: Int) { displayRotationHelper.onSurfaceChanged(width, height); virtualSceneFramebuffer.resize(width, height) }
 
     override fun onDrawFrame(render: SampleRender) {
         val localSession = session ?: return
-        if (!hasSetTextureNames) {
-            localSession.setCameraTextureNames(intArrayOf(backgroundRenderer.cameraColorTexture.textureId))
-            hasSetTextureNames = true
-        }
+        if (!hasSetTextureNames) { localSession.setCameraTextureNames(intArrayOf(backgroundRenderer.cameraColorTexture.textureId)); hasSetTextureNames = true }
         displayRotationHelper.updateSessionIfNeeded(localSession)
         val frame = try { localSession.update() } catch (e: CameraNotAvailableException) { Log.e(TAG, "Camera not available", e); showError("Camera error."); return }
         val camera = frame.camera
@@ -436,16 +416,18 @@ class HelloArRenderer(val activity: HelloArActivity) :
             if (framesSinceTrackingStable < MIN_TRACKING_FRAMES_FOR_ANCHOR_PLACEMENT + 10) framesSinceTrackingStable++
         } else {
             framesSinceTrackingStable = 0
-            if (gameState.state == PuzzleState.PLAYING) { 
-                Log.w(TAG, "Tracking lost during play. Switching to WAITING_FOR_ANCHOR.")
-                gameState.state = PuzzleState.WAITING_FOR_ANCHOR
-            }
+            if (gameState.state == PuzzleState.PLAYING) { Log.w(TAG, "Tracking lost during play."); gameState.state = PuzzleState.WAITING_FOR_ANCHOR }
         }
         
         if (gameState.state == PuzzleState.WAITING_FOR_ANCHOR) {
-            if (attemptCreateLevelAnchor(localSession, camera)) {
-                resetLevel(localSession, camera) 
-            }
+            if (attemptCreateLevelAnchor(localSession, camera)) { resetLevel(localSession, camera) }
+        }
+
+        // Simulate trajectory if playing
+        if (gameState.state == PuzzleState.PLAYING) {
+            simulateArrowTrajectory(camera)
+        } else {
+            trajectoryPoints.clear() 
         }
 
         val userWantsOcclusion = activity.depthSettings.useDepthForOcclusion()
@@ -453,17 +435,12 @@ class HelloArRenderer(val activity: HelloArActivity) :
             backgroundRenderer.setUseDepthVisualization(render, activity.depthSettings.depthColorVisualizationEnabled())
             backgroundRenderer.setUseOcclusion(render, userWantsOcclusion)
         } catch (e: IOException) { Log.e(TAG, "Depth settings asset error", e); return }
-
         backgroundRenderer.updateDisplayGeometry(frame)
         if (camera.trackingState == TrackingState.TRACKING && userWantsOcclusion) { 
-            try {
-                frame.acquireDepthImage16Bits().use { depthImage -> backgroundRenderer.updateCameraDepthTexture(depthImage) }
-            } catch (e: NotYetAvailableException) { /* Common */ }
+            try { frame.acquireDepthImage16Bits().use { depthImage -> backgroundRenderer.updateCameraDepthTexture(depthImage) } } catch (e: NotYetAvailableException) { /* Common */ }
         }
 
-        if (gameState.state == PuzzleState.PLAYING) {
-            updateGameLogic(1f / 60f) 
-        }
+        if (gameState.state == PuzzleState.PLAYING) { updateGameLogic(1f / 60f) }
         handleTap(frame, camera)
 
         trackingStateHelper.updateKeepScreenOnFlag(camera.trackingState)
@@ -475,33 +452,37 @@ class HelloArRenderer(val activity: HelloArActivity) :
             gameState.state == PuzzleState.DEFEAT -> "Game Over. Tap to retry."
             else -> null
         }
-        if (snackbarMessage != null) activity.view.snackbarHelper.showMessage(activity, snackbarMessage)
-        else activity.view.snackbarHelper.hide(activity)
+        if (snackbarMessage != null) activity.view.snackbarHelper.showMessage(activity, snackbarMessage) else activity.view.snackbarHelper.hide(activity)
 
         if (frame.timestamp != 0L) backgroundRenderer.drawBackground(render)
         if (camera.trackingState == TrackingState.PAUSED && gameState.state != PuzzleState.WAITING_FOR_ANCHOR) return
 
-        camera.getProjectionMatrix(projectionMatrix, 0, Z_NEAR, Z_FAR)
-        camera.getViewMatrix(viewMatrix, 0)
-
-        frame.acquirePointCloud().use { pointCloud ->
-            if (pointCloud.timestamp > lastPointCloudTimestamp) {
-                pointCloudVertexBuffer.set(pointCloud.points)
-                lastPointCloudTimestamp = pointCloud.timestamp
-            }
+        camera.getProjectionMatrix(projectionMatrix, 0, Z_NEAR, Z_FAR); camera.getViewMatrix(viewMatrix, 0)
+        frame.acquirePointCloud().use { pc -> if (pc.timestamp > lastPointCloudTimestamp) { pointCloudVertexBuffer.set(pc.points); lastPointCloudTimestamp = pc.timestamp }
             Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, viewMatrix, 0)
-            pointCloudShader.setMat4("u_ModelViewProjection", modelViewProjectionMatrix)
-            render.draw(pointCloudMesh, pointCloudShader)
+            pointCloudShader.setMat4("u_ModelViewProjection", modelViewProjectionMatrix); render.draw(pointCloudMesh, pointCloudShader)
         }
-
         planeRenderer.drawPlanes(render, localSession.getAllTrackables(Plane::class.java), camera.displayOrientedPose, projectionMatrix)
         updateLightEstimation(frame.lightEstimate, viewMatrix)
         
         render.clear(virtualSceneFramebuffer, 0f, 0f, 0f, 0f)
+        GLES30.glDisable(GLES30.GL_DEPTH_TEST); GLES30.glDepthMask(false); GLES30.glDisable(GLES30.GL_BLEND)    
 
-        GLES30.glDisable(GLES30.GL_DEPTH_TEST) 
-        GLES30.glDepthMask(false)            
-        GLES30.glDisable(GLES30.GL_BLEND)    
+        // Draw Trajectory Points
+        if (gameState.state == PuzzleState.PLAYING && trajectoryPoints.isNotEmpty()) {
+            val dotScaleFactor = TRAJECTORY_DOT_TARGET_RADIUS / TRAJECTORY_DOT_MODEL_DEFAULT_RADIUS
+            trajectoryPoints.forEach { point ->
+                Matrix.setIdentityM(modelMatrix, 0)
+                Matrix.translateM(modelMatrix, 0, point[0], point[1], point[2])
+                Matrix.scaleM(modelMatrix, 0, dotScaleFactor, dotScaleFactor, dotScaleFactor) 
+                Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0)
+                Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
+                virtualObjectShader.setMat4("u_ModelView", modelViewMatrix)
+                                   .setMat4("u_ModelViewProjection", modelViewProjectionMatrix)
+                                   .setTexture("u_AlbedoTexture", trajectoryDotTexture)
+                render.draw(trajectoryDotMesh, virtualObjectShader, virtualSceneFramebuffer)
+            }
+        }
 
         apple?.let { currentApple ->
             Matrix.setIdentityM(modelMatrix, 0)
@@ -515,7 +496,6 @@ class HelloArRenderer(val activity: HelloArActivity) :
                                .setTexture("u_AlbedoTexture", appleTexture)
             render.draw(appleMesh, virtualObjectShader, virtualSceneFramebuffer)
         }
-
         val arrowScaleFactor = ARROW_VISUAL_AND_COLLISION_RADIUS / ARROW_MODEL_DEFAULT_RADIUS
         arrows.filter { it.active }.forEach { currentArrow ->
             Matrix.setIdentityM(modelMatrix, 0)
@@ -528,9 +508,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
                                .setTexture("u_AlbedoTexture", arrowTexture)
             render.draw(arrowMesh, virtualObjectShader, virtualSceneFramebuffer)
         }
-
-        if (planetTextures.isNotEmpty()) { 
-            planets.forEach { currentPlanet ->
+        if (planetTextures.isNotEmpty()) { planets.forEach { currentPlanet ->
                 Matrix.setIdentityM(modelMatrix, 0)
                 Matrix.translateM(modelMatrix, 0, currentPlanet.worldPosition[0], currentPlanet.worldPosition[1], currentPlanet.worldPosition[2])
                 val planetScaleFactor = currentPlanet.targetRadius / PLANET_MODEL_DEFAULT_RADIUS
@@ -541,79 +519,38 @@ class HelloArRenderer(val activity: HelloArActivity) :
                                    .setMat4("u_ModelViewProjection", modelViewProjectionMatrix)
                                    .setTexture("u_AlbedoTexture", planetTextures[currentPlanet.textureIdx % planetTextures.size])
                 render.draw(planetMesh, virtualObjectShader, virtualSceneFramebuffer)
-            }
-        }
+        } }
         
-        GLES30.glEnable(GLES30.GL_BLEND)      
-        GLES30.glDepthMask(true)
-        GLES30.glEnable(GLES30.GL_DEPTH_TEST)
-
+        GLES30.glEnable(GLES30.GL_BLEND); GLES30.glDepthMask(true); GLES30.glEnable(GLES30.GL_DEPTH_TEST)
         var occlusionWasForcedOffForGameScene = false
-        if (userWantsOcclusion) {
-            backgroundRenderer.setUseOcclusion(render, false) 
-            occlusionWasForcedOffForGameScene = true
-        }
+        if (userWantsOcclusion) { backgroundRenderer.setUseOcclusion(render, false); occlusionWasForcedOffForGameScene = true }
         backgroundRenderer.drawVirtualScene(render, virtualSceneFramebuffer, Z_NEAR, Z_FAR)
-
-        if (occlusionWasForcedOffForGameScene) { // Only restore if we changed it
-            backgroundRenderer.setUseOcclusion(render, true)
-        }
+        if (occlusionWasForcedOffForGameScene) { backgroundRenderer.setUseOcclusion(render, true) }
     
-        if (gameState.state == PuzzleState.VICTORY) {
-            Log.i(TAG, "Victory Lvl ${gameState.level}! Score: ${gameState.score}")
-            gameState.level++
-            resetLevel(localSession, camera) 
-        } else if (gameState.state == PuzzleState.DEFEAT) {
-            Log.i(TAG, "Defeat Lvl ${gameState.level}. Score: ${gameState.score}")
-        }
+        if (gameState.state == PuzzleState.VICTORY) { Log.i(TAG, "Victory Lvl ${gameState.level}!"); gameState.level++; resetLevel(localSession, camera) } 
+        else if (gameState.state == PuzzleState.DEFEAT) { Log.i(TAG, "Defeat Lvl ${gameState.level}.") }
     }
 
-    private fun updateLightEstimation(lightEstimate: LightEstimate, viewMatrixParam: FloatArray) {
-        if (lightEstimate.state != LightEstimate.State.VALID) {
-            virtualObjectShader.setBool("u_LightEstimateIsValid", false)
-            return
-        }
-        virtualObjectShader.setBool("u_LightEstimateIsValid", true)
-        Matrix.invertM(viewInverseMatrix, 0, viewMatrixParam, 0)
+    private fun updateLightEstimation(lightEstimate: LightEstimate, viewMatrixParam: FloatArray) { /* ... same as before ... */ 
+        if (lightEstimate.state != LightEstimate.State.VALID) { virtualObjectShader.setBool("u_LightEstimateIsValid", false); return }
+        virtualObjectShader.setBool("u_LightEstimateIsValid", true); Matrix.invertM(viewInverseMatrix, 0, viewMatrixParam, 0)
         virtualObjectShader.setMat4("u_ViewInverse", viewInverseMatrix)
-
-        worldLightDirection[0] = lightEstimate.environmentalHdrMainLightDirection[0]
-        worldLightDirection[1] = lightEstimate.environmentalHdrMainLightDirection[1]
-        worldLightDirection[2] = lightEstimate.environmentalHdrMainLightDirection[2]
-        worldLightDirection[3] = 0.0f
-        Matrix.multiplyMV(viewLightDirection, 0, viewMatrixParam, 0, worldLightDirection, 0)
-        virtualObjectShader.setVec4("u_ViewLightDirection", viewLightDirection)
+        worldLightDirection[0] = lightEstimate.environmentalHdrMainLightDirection[0]; worldLightDirection[1] = lightEstimate.environmentalHdrMainLightDirection[1]; worldLightDirection[2] = lightEstimate.environmentalHdrMainLightDirection[2]; worldLightDirection[3] = 0.0f
+        Matrix.multiplyMV(viewLightDirection, 0, viewMatrixParam, 0, worldLightDirection, 0); virtualObjectShader.setVec4("u_ViewLightDirection", viewLightDirection)
         virtualObjectShader.setVec3("u_LightIntensity", lightEstimate.environmentalHdrMainLightIntensity)
-
         val harmonics = lightEstimate.environmentalHdrAmbientSphericalHarmonics
         for (i in sphericalHarmonicsCoefficients.indices) {
-             if (harmonics != null && i < harmonics.size) {
-                sphericalHarmonicsCoefficients[i] = harmonics[i] * sphericalHarmonicFactors[i / 3]
-            } else {
-                sphericalHarmonicsCoefficients[i] = 0f 
-            }
+             if (harmonics != null && i < harmonics.size) sphericalHarmonicsCoefficients[i] = harmonics[i] * sphericalHarmonicFactors[i / 3] else sphericalHarmonicsCoefficients[i] = 0f 
         }
         virtualObjectShader.setVec3Array("u_SphericalHarmonicsCoefficients", sphericalHarmonicsCoefficients)
     }
-
     private fun handleTap(frame: Frame, camera: Camera) {
         if (camera.trackingState != TrackingState.TRACKING) return
-
         activity.view.tapHelper.poll()?.let { _ ->
-            if (gameState.state == PuzzleState.PLAYING) {
-                launchArrow(camera)
-            } else if (gameState.state == PuzzleState.DEFEAT) {
-                Log.i(TAG, "Tap detected in DEFEAT state. Resetting game.")
-                gameState.level = 1 
-                gameState.score = 0
-                resetLevel(session!!, camera) 
-            } else if (gameState.state == PuzzleState.WAITING_FOR_ANCHOR) {
-                 Log.d(TAG, "Tap while waiting for anchor. Attempting anchor placement.")
-                 if (attemptCreateLevelAnchor(session!!, camera)) {
-                    resetLevel(session!!, camera)
-                 } else {
-                    activity.view.snackbarHelper.showMessage(activity, "Still trying to find a stable place...")
-                 }
+            if (gameState.state == PuzzleState.PLAYING) launchArrow(camera)
+            else if (gameState.state == PuzzleState.DEFEAT) { Log.i(TAG, "Tap in DEFEAT state."); gameState.level = 1; gameState.score = 0; resetLevel(session!!, camera) } 
+            else if (gameState.state == PuzzleState.WAITING_FOR_ANCHOR) { Log.d(TAG, "Tap while waiting for anchor.")
+                 if (attemptCreateLevelAnchor(session!!, camera)) resetLevel(session!!, camera) else activity.view.snackbarHelper.showMessage(activity, "Still trying...")
             }
         }
     }
