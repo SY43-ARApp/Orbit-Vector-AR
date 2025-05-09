@@ -56,6 +56,7 @@ import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
+import android.widget.TextView
 
 // --- CONSTANTS ---
 private const val INITIAL_ARROWS_PER_LEVEL = 10
@@ -155,6 +156,13 @@ class HelloArRenderer(val activity: HelloArActivity) :
     private val sphericalHarmonicFactors = floatArrayOf(0.282095f, -0.325735f, 0.325735f, -0.325735f, 0.273137f, -0.273137f, 0.078848f, -0.273137f, 0.136569f)
     private const val Z_NEAR = 0.1f; private const val Z_FAR = 100f
     const val CUBEMAP_RESOLUTION = 16; const val CUBEMAP_NUMBER_OF_IMPORTANCE_SAMPLES = 32
+  }
+
+  private val levelTextView: TextView by lazy {
+      activity.findViewById<TextView>(activity.resources.getIdentifier("level_text", "id", activity.packageName))
+  }
+  private val arrowsLeftTextView: TextView by lazy {
+      activity.findViewById<TextView>(activity.resources.getIdentifier("arrows_left_text", "id", activity.packageName))
   }
 
   lateinit var render: SampleRender
@@ -512,6 +520,13 @@ class HelloArRenderer(val activity: HelloArActivity) :
         if (occlusionWasForcedOffForGameScene) { backgroundRenderer.setUseOcclusion(render, true) }
         if (gameState.state == PuzzleState.VICTORY) { Log.i(TAG, "Victory Lvl ${gameState.level}!"); gameState.level++; resetLevel(localSession, camera) } 
         else if (gameState.state == PuzzleState.DEFEAT) { Log.i(TAG, "Defeat Lvl ${gameState.level}.") }
+
+        levelTextView.post {
+            levelTextView.text = "Level ${gameState.level}"
+        }
+        arrowsLeftTextView.post {
+            arrowsLeftTextView.text = gameState.arrowsLeft.toString()
+        }
     }
 
     private fun updateLightEstimation(lightEstimate: LightEstimate, viewMatrixParam: FloatArray) {
