@@ -52,6 +52,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.sin
@@ -123,7 +124,7 @@ private lateinit var trajectoryDotTexture: Texture
 
 private val planetTextureFiles = listOf("models/textures/planet_texture_1.jpg", "models/textures/planet_texture_2.jpg")
 private const val appleTextureFile = "models/textures/apple_texture.jpg"
-private const val arrowTextureFile = "models/textures/arrow_texture.jpg"
+private const val arrowTextureFile = "models/textures/arrow_texture.png"
 private const val trajectoryDotTextureFile = "models/textures/dot_texture.jpg"
 
 private const val planetObjFile = "models/planet.obj"
@@ -141,6 +142,8 @@ private var apple: Apple? = null
 private var levelOriginAnchor: Anchor? = null
 private val gravityConstant = 0.05f
 private val trajectoryPoints: MutableList<FloatArray> = mutableListOf()
+
+private val worldUpVector = floatArrayOf(0f, 1f, 0f)
 
 
 /** Renders the HelloAR application using our example Renderer. */
@@ -170,6 +173,11 @@ class HelloArRenderer(val activity: HelloArActivity) :
   val sphericalHarmonicsCoefficients = FloatArray(9 * 3); val viewInverseMatrix = FloatArray(16)
   val worldLightDirection = floatArrayOf(0.0f, 0.0f, 0.0f, 0.0f); val viewLightDirection = FloatArray(4)
 
+  // arrow rotation matices
+  private val rotationMatrix = FloatArray(16)
+  private val tempMatrix = FloatArray(16)
+
+
   val session get() = activity.arCoreSessionHelper.session
   val displayRotationHelper = DisplayRotationHelper(activity)
   val trackingStateHelper = TrackingStateHelper(activity)
@@ -178,7 +186,43 @@ class HelloArRenderer(val activity: HelloArActivity) :
         val dx = pos1[0] - pos2[0]; val dy = pos1[1] - pos2[1]; val dz = pos1[2] - pos2[2]
         return dx * dx + dy * dy + dz * dz
     }
-    
+
+    private fun rotationMatrixFromTo(from: FloatArray, to: FloatArray, outMatrix: FloatArray) {
+        // axis and angle
+        val cross = floatArrayOf(
+            from[1]*to[2] - from[2]*to[1],
+            from[2]*to[0] - from[0]*to[2],
+            from[0]*to[1] - from[1]*to[0]
+        )
+        val dot = from[0]*to[0] + from[1]*to[1] + from[2]*to[2]
+        val normCross = sqrt(cross[0]*cross[0] + cross[1]*cross[1] + cross[2]*cross[2])
+
+        if (normCross < 1e-6 && dot > 0.9999f) {    //same vector
+            Matrix.setIdentityM(outMatrix, 0)
+            return
+        }
+        if (normCross < 1e-6 && dot < -0.9999f) {   //opposite vector
+            val axis = if (abs(from[0]) < 0.1f) floatArrayOf(1f,0f,0f) else floatArrayOf(0f,1f,0f)
+            val ortho = floatArrayOf(
+                from[1]*axis[2] - from[2]*axis[1],
+                from[2]*axis[0] - from[0]*axis[2],
+                from[0]*axis[1] - from[1]*axis[0]
+            )
+            val n = sqrt(ortho[0]*ortho[0] + ortho[1]*ortho[1] + ortho[2]*ortho[2])
+            if (n > 1e-6) {
+                ortho[0] /= n; ortho[1] /= n; ortho[2] /= n
+                Matrix.setRotateM(outMatrix, 0, 180f, ortho[0], ortho[1], ortho[2])
+            } else {
+                Matrix.setIdentityM(outMatrix, 0)
+            }
+            return
+        }
+        // axis angle to quaternion
+        val axis = floatArrayOf(cross[0]/normCross, cross[1]/normCross, cross[2]/normCross)
+        val angle = Math.acos(dot.coerceIn(-1f,1f).toDouble()).toFloat() * (180f/PI.toFloat())
+        Matrix.setRotateM(outMatrix, 0, angle, axis[0], axis[1], axis[2])
+    }
+
     private fun attemptCreateLevelAnchor(session: Session, camera: Camera): Boolean {
         if (levelOriginAnchor != null && levelOriginAnchor!!.trackingState == TrackingState.TRACKING) {
             return true
@@ -310,46 +354,24 @@ class HelloArRenderer(val activity: HelloArActivity) :
         val simulatedArrowMass = ARROW_MASS
 
         for (step in 0 until TRAJECTORY_SIMULATION_STEPS) {
-            // Apply gravity from planets
             planets.forEach { planet ->
-                val dx = planet.worldPosition[0] - currentPosition[0]
-                val dy = planet.worldPosition[1] - currentPosition[1]
-                val dz = planet.worldPosition[2] - currentPosition[2]
+                val dx = planet.worldPosition[0] - currentPosition[0]; val dy = planet.worldPosition[1] - currentPosition[1]; val dz = planet.worldPosition[2] - currentPosition[2]
                 var distSq = dx * dx + dy * dy + dz * dz
-                if (distSq < (planet.targetRadius * 0.5f).pow(2)) {
-                    distSq = (planet.targetRadius * 0.5f).pow(2)
-                }
+                if (distSq < (planet.targetRadius * 0.5f).pow(2)) { distSq = (planet.targetRadius * 0.5f).pow(2) }
                 distSq += 0.01f 
-
                 val dist = sqrt(distSq)
                 val forceMagnitude = gravityConstant * planet.mass * simulatedArrowMass / distSq
-
-                currentVelocity[0] += forceMagnitude * dx / dist * TRAJECTORY_SIMULATION_TIMESTEP
-                currentVelocity[1] += forceMagnitude * dy / dist * TRAJECTORY_SIMULATION_TIMESTEP
-                currentVelocity[2] += forceMagnitude * dz / dist * TRAJECTORY_SIMULATION_TIMESTEP
+                currentVelocity[0] += forceMagnitude * dx / dist * TRAJECTORY_SIMULATION_TIMESTEP; currentVelocity[1] += forceMagnitude * dy / dist * TRAJECTORY_SIMULATION_TIMESTEP; currentVelocity[2] += forceMagnitude * dz / dist * TRAJECTORY_SIMULATION_TIMESTEP
             }
-
-            // Update position
-            currentPosition[0] += currentVelocity[0] * TRAJECTORY_SIMULATION_TIMESTEP
-            currentPosition[1] += currentVelocity[1] * TRAJECTORY_SIMULATION_TIMESTEP
-            currentPosition[2] += currentVelocity[2] * TRAJECTORY_SIMULATION_TIMESTEP
-
+            currentPosition[0] += currentVelocity[0] * TRAJECTORY_SIMULATION_TIMESTEP; currentPosition[1] += currentVelocity[1] * TRAJECTORY_SIMULATION_TIMESTEP; currentPosition[2] += currentVelocity[2] * TRAJECTORY_SIMULATION_TIMESTEP
             trajectoryPoints.add(currentPosition.copyOf())
-
-            apple?.let { currentApple ->
-                 val collisionDistSq = (ARROW_VISUAL_AND_COLLISION_RADIUS + currentApple.targetRadius).pow(2)
-                 if (calculateDistanceSquared(currentPosition, currentApple.worldPosition) < collisionDistSq) {
-                     return // Stop simulation early
-                 }
-            }
+            apple?.let { currentApple -> val collisionDistSq = (ARROW_VISUAL_AND_COLLISION_RADIUS + currentApple.targetRadius).pow(2); if (calculateDistanceSquared(currentPosition, currentApple.worldPosition) < collisionDistSq) { return } }
         }
     }
-
 
     private fun updateGameLogic(dt: Float) {
         if (gameState.state != PuzzleState.PLAYING) return
         val currentApple = apple ?: return
-
         arrows.filter { it.active }.forEach { arrow ->
             planets.forEach { planet ->
                 val dx = planet.worldPosition[0] - arrow.position[0]; val dy = planet.worldPosition[1] - arrow.position[1]; val dz = planet.worldPosition[2] - arrow.position[2]
@@ -375,28 +397,17 @@ class HelloArRenderer(val activity: HelloArActivity) :
     override fun onSurfaceCreated(render: SampleRender) {
         this.render = render
         try {
-            planetMesh = Mesh.createFromAsset(render, planetObjFile)
-            appleMesh = Mesh.createFromAsset(render, appleObjFile)
-            arrowMesh = Mesh.createFromAsset(render, arrowObjFile)
-            trajectoryDotMesh = Mesh.createFromAsset(render, trajectoryDotObjFile) // Load dot model
-
-            planetTextures.clear()
-            planetTextureFiles.forEach { planetTextures.add(Texture.createFromAsset(render, it, Texture.WrapMode.REPEAT, Texture.ColorFormat.SRGB)) }
+            planetMesh = Mesh.createFromAsset(render, planetObjFile); appleMesh = Mesh.createFromAsset(render, appleObjFile); arrowMesh = Mesh.createFromAsset(render, arrowObjFile); trajectoryDotMesh = Mesh.createFromAsset(render, trajectoryDotObjFile)
+            planetTextures.clear(); planetTextureFiles.forEach { planetTextures.add(Texture.createFromAsset(render, it, Texture.WrapMode.REPEAT, Texture.ColorFormat.SRGB)) }
             if (planetTextures.isEmpty()) Log.e(TAG, "No planet textures loaded!")
-            appleTexture = Texture.createFromAsset(render, appleTextureFile, Texture.WrapMode.REPEAT, Texture.ColorFormat.SRGB)
-            arrowTexture = Texture.createFromAsset(render, arrowTextureFile, Texture.WrapMode.REPEAT, Texture.ColorFormat.SRGB)
-            trajectoryDotTexture = Texture.createFromAsset(render, trajectoryDotTextureFile, Texture.WrapMode.CLAMP_TO_EDGE, Texture.ColorFormat.SRGB) // Load dot texture
-
+            appleTexture = Texture.createFromAsset(render, appleTextureFile, Texture.WrapMode.REPEAT, Texture.ColorFormat.SRGB); arrowTexture = Texture.createFromAsset(render, arrowTextureFile, Texture.WrapMode.REPEAT, Texture.ColorFormat.SRGB); trajectoryDotTexture = Texture.createFromAsset(render, trajectoryDotTextureFile, Texture.WrapMode.CLAMP_TO_EDGE, Texture.ColorFormat.SRGB)
             planeRenderer = PlaneRenderer(render); backgroundRenderer = BackgroundRenderer(render); virtualSceneFramebuffer = Framebuffer(render, 1, 1) 
-            cubemapFilter = SpecularCubemapFilter(render, CUBEMAP_RESOLUTION, CUBEMAP_NUMBER_OF_IMPORTANCE_SAMPLES)
-            dfgTexture = Texture(render, Texture.Target.TEXTURE_2D, Texture.WrapMode.CLAMP_TO_EDGE, false)
+            cubemapFilter = SpecularCubemapFilter(render, CUBEMAP_RESOLUTION, CUBEMAP_NUMBER_OF_IMPORTANCE_SAMPLES); dfgTexture = Texture(render, Texture.Target.TEXTURE_2D, Texture.WrapMode.CLAMP_TO_EDGE, false)
             val dfgRes = 64; val buffer = ByteBuffer.allocateDirect(dfgRes * dfgRes * 4).apply { activity.assets.open("models/dfg.raw").use { it.read(array()) } }
-            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, dfgTexture.textureId); GLError.maybeThrowGLException("","")
-            GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_RG16F, dfgRes, dfgRes, 0, GLES30.GL_RG, GLES30.GL_HALF_FLOAT, buffer); GLError.maybeThrowGLException("","")
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, dfgTexture.textureId); GLError.maybeThrowGLException("",""); GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_RG16F, dfgRes, dfgRes, 0, GLES30.GL_RG, GLES30.GL_HALF_FLOAT, buffer); GLError.maybeThrowGLException("","")
             pointCloudShader = Shader.createFromAssets(render, "shaders/point_cloud.vert", "shaders/point_cloud.frag", null).setVec4("u_Color", floatArrayOf(0.12f,0.74f,0.82f,1f)).setFloat("u_PointSize", 5f)
             pointCloudVertexBuffer = VertexBuffer(render, 4, null); pointCloudMesh = Mesh(render, Mesh.PrimitiveMode.POINTS, null, arrayOf(pointCloudVertexBuffer))
-            virtualObjectShader = Shader.createFromAssets(render, "shaders/environmental_hdr.vert", "shaders/environmental_hdr.frag", mapOf("NUMBER_OF_MIPMAP_LEVELS" to cubemapFilter.numberOfMipmapLevels.toString()))
-                .setTexture("u_Cubemap", cubemapFilter.filteredCubemapTexture).setTexture("u_DfgTexture", dfgTexture)
+            virtualObjectShader = Shader.createFromAssets(render, "shaders/environmental_hdr.vert", "shaders/environmental_hdr.frag", mapOf("NUMBER_OF_MIPMAP_LEVELS" to cubemapFilter.numberOfMipmapLevels.toString())).setTexture("u_Cubemap", cubemapFilter.filteredCubemapTexture).setTexture("u_DfgTexture", dfgTexture)
             gameState = GameState() 
         } catch (e: Exception) { Log.e(TAG, "Error during onSurfaceCreated", e); showError("Initialization Error: ${e.message}") }
     }
@@ -412,37 +423,18 @@ class HelloArRenderer(val activity: HelloArActivity) :
         val frame = try { localSession.update() } catch (e: CameraNotAvailableException) { Log.e(TAG, "Camera not available", e); showError("Camera error."); return }
         val camera = frame.camera
 
-        if (camera.trackingState == TrackingState.TRACKING) {
-            if (framesSinceTrackingStable < MIN_TRACKING_FRAMES_FOR_ANCHOR_PLACEMENT + 10) framesSinceTrackingStable++
-        } else {
-            framesSinceTrackingStable = 0
-            if (gameState.state == PuzzleState.PLAYING) { Log.w(TAG, "Tracking lost during play."); gameState.state = PuzzleState.WAITING_FOR_ANCHOR }
-        }
-        
-        if (gameState.state == PuzzleState.WAITING_FOR_ANCHOR) {
-            if (attemptCreateLevelAnchor(localSession, camera)) { resetLevel(localSession, camera) }
-        }
-
-        // Simulate trajectory if playing
-        if (gameState.state == PuzzleState.PLAYING) {
-            simulateArrowTrajectory(camera)
-        } else {
-            trajectoryPoints.clear() 
-        }
+        if (camera.trackingState == TrackingState.TRACKING) { if (framesSinceTrackingStable < MIN_TRACKING_FRAMES_FOR_ANCHOR_PLACEMENT + 10) framesSinceTrackingStable++ } 
+        else { framesSinceTrackingStable = 0; if (gameState.state == PuzzleState.PLAYING) { Log.w(TAG, "Tracking lost during play."); gameState.state = PuzzleState.WAITING_FOR_ANCHOR } }
+        if (gameState.state == PuzzleState.WAITING_FOR_ANCHOR) { if (attemptCreateLevelAnchor(localSession, camera)) { resetLevel(localSession, camera) } }
+        if (gameState.state == PuzzleState.PLAYING) simulateArrowTrajectory(camera) else trajectoryPoints.clear() 
 
         val userWantsOcclusion = activity.depthSettings.useDepthForOcclusion()
-        try {
-            backgroundRenderer.setUseDepthVisualization(render, activity.depthSettings.depthColorVisualizationEnabled())
-            backgroundRenderer.setUseOcclusion(render, userWantsOcclusion)
-        } catch (e: IOException) { Log.e(TAG, "Depth settings asset error", e); return }
+        try { backgroundRenderer.setUseDepthVisualization(render, activity.depthSettings.depthColorVisualizationEnabled()); backgroundRenderer.setUseOcclusion(render, userWantsOcclusion) } 
+        catch (e: IOException) { Log.e(TAG, "Depth settings asset error", e); return }
         backgroundRenderer.updateDisplayGeometry(frame)
-        if (camera.trackingState == TrackingState.TRACKING && userWantsOcclusion) { 
-            try { frame.acquireDepthImage16Bits().use { depthImage -> backgroundRenderer.updateCameraDepthTexture(depthImage) } } catch (e: NotYetAvailableException) { /* Common */ }
-        }
-
-        if (gameState.state == PuzzleState.PLAYING) { updateGameLogic(1f / 60f) }
+        if (camera.trackingState == TrackingState.TRACKING && userWantsOcclusion) { try { frame.acquireDepthImage16Bits().use { backgroundRenderer.updateCameraDepthTexture(it) } } catch (e: NotYetAvailableException) { /* Common */ } }
+        if (gameState.state == PuzzleState.PLAYING) updateGameLogic(1f / 60f)
         handleTap(frame, camera)
-
         trackingStateHelper.updateKeepScreenOnFlag(camera.trackingState)
         val snackbarMessage = when {
             gameState.state == PuzzleState.WAITING_FOR_ANCHOR -> activity.getString(R.string.waiting_for_anchor)
@@ -453,85 +445,74 @@ class HelloArRenderer(val activity: HelloArActivity) :
             else -> null
         }
         if (snackbarMessage != null) activity.view.snackbarHelper.showMessage(activity, snackbarMessage) else activity.view.snackbarHelper.hide(activity)
-
         if (frame.timestamp != 0L) backgroundRenderer.drawBackground(render)
         if (camera.trackingState == TrackingState.PAUSED && gameState.state != PuzzleState.WAITING_FOR_ANCHOR) return
-
         camera.getProjectionMatrix(projectionMatrix, 0, Z_NEAR, Z_FAR); camera.getViewMatrix(viewMatrix, 0)
         frame.acquirePointCloud().use { pc -> if (pc.timestamp > lastPointCloudTimestamp) { pointCloudVertexBuffer.set(pc.points); lastPointCloudTimestamp = pc.timestamp }
             Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, viewMatrix, 0)
             pointCloudShader.setMat4("u_ModelViewProjection", modelViewProjectionMatrix); render.draw(pointCloudMesh, pointCloudShader)
         }
-        planeRenderer.drawPlanes(render, localSession.getAllTrackables(Plane::class.java), camera.displayOrientedPose, projectionMatrix)
-        updateLightEstimation(frame.lightEstimate, viewMatrix)
-        
+        planeRenderer.drawPlanes(render, localSession.getAllTrackables(Plane::class.java), camera.displayOrientedPose, projectionMatrix); updateLightEstimation(frame.lightEstimate, viewMatrix)
         render.clear(virtualSceneFramebuffer, 0f, 0f, 0f, 0f)
         GLES30.glDisable(GLES30.GL_DEPTH_TEST); GLES30.glDepthMask(false); GLES30.glDisable(GLES30.GL_BLEND)    
 
-        // Draw Trajectory Points
         if (gameState.state == PuzzleState.PLAYING && trajectoryPoints.isNotEmpty()) {
             val dotScaleFactor = TRAJECTORY_DOT_TARGET_RADIUS / TRAJECTORY_DOT_MODEL_DEFAULT_RADIUS
             trajectoryPoints.forEach { point ->
-                Matrix.setIdentityM(modelMatrix, 0)
-                Matrix.translateM(modelMatrix, 0, point[0], point[1], point[2])
+                Matrix.setIdentityM(modelMatrix, 0); Matrix.translateM(modelMatrix, 0, point[0], point[1], point[2])
                 Matrix.scaleM(modelMatrix, 0, dotScaleFactor, dotScaleFactor, dotScaleFactor) 
-                Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0)
-                Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
-                virtualObjectShader.setMat4("u_ModelView", modelViewMatrix)
-                                   .setMat4("u_ModelViewProjection", modelViewProjectionMatrix)
-                                   .setTexture("u_AlbedoTexture", trajectoryDotTexture)
+                Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0); Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
+                virtualObjectShader.setMat4("u_ModelView", modelViewMatrix).setMat4("u_ModelViewProjection", modelViewProjectionMatrix).setTexture("u_AlbedoTexture", trajectoryDotTexture)
                 render.draw(trajectoryDotMesh, virtualObjectShader, virtualSceneFramebuffer)
             }
         }
-
         apple?.let { currentApple ->
-            Matrix.setIdentityM(modelMatrix, 0)
-            Matrix.translateM(modelMatrix, 0, currentApple.worldPosition[0], currentApple.worldPosition[1], currentApple.worldPosition[2])
-            val appleScaleFactor = currentApple.targetRadius / APPLE_MODEL_DEFAULT_RADIUS
-            Matrix.scaleM(modelMatrix, 0, appleScaleFactor, appleScaleFactor, appleScaleFactor)
-            Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0)
-            Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
-            virtualObjectShader.setMat4("u_ModelView", modelViewMatrix)
-                               .setMat4("u_ModelViewProjection", modelViewProjectionMatrix)
-                               .setTexture("u_AlbedoTexture", appleTexture)
+            Matrix.setIdentityM(modelMatrix, 0); Matrix.translateM(modelMatrix, 0, currentApple.worldPosition[0], currentApple.worldPosition[1], currentApple.worldPosition[2])
+            val appleScaleFactor = currentApple.targetRadius / APPLE_MODEL_DEFAULT_RADIUS; Matrix.scaleM(modelMatrix, 0, appleScaleFactor, appleScaleFactor, appleScaleFactor)
+            Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0); Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
+            virtualObjectShader.setMat4("u_ModelView", modelViewMatrix).setMat4("u_ModelViewProjection", modelViewProjectionMatrix).setTexture("u_AlbedoTexture", appleTexture)
             render.draw(appleMesh, virtualObjectShader, virtualSceneFramebuffer)
         }
         val arrowScaleFactor = ARROW_VISUAL_AND_COLLISION_RADIUS / ARROW_MODEL_DEFAULT_RADIUS
         arrows.filter { it.active }.forEach { currentArrow ->
             Matrix.setIdentityM(modelMatrix, 0)
             Matrix.translateM(modelMatrix, 0, currentArrow.position[0], currentArrow.position[1], currentArrow.position[2])
+
+            // arrow rotation to match the velocity
+            val direction = currentArrow.velocity.clone()
+            val length = Matrix.length(direction[0], direction[1], direction[2])
+            if (length > 0.001f) {
+                direction[0] /= length; direction[1] /= length; direction[2] /= length
+                // forward is +Z
+                val defaultForward = floatArrayOf(0f, 0f, 1f)
+                rotationMatrixFromTo(defaultForward, direction, rotationMatrix)
+                // M = T * R * S
+                Matrix.multiplyMM(tempMatrix, 0, modelMatrix, 0, rotationMatrix, 0)
+                for (i in tempMatrix.indices) modelMatrix[i] = tempMatrix[i]
+            }
             Matrix.scaleM(modelMatrix, 0, arrowScaleFactor, arrowScaleFactor, arrowScaleFactor)
             Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0)
             Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
-            virtualObjectShader.setMat4("u_ModelView", modelViewMatrix)
-                               .setMat4("u_ModelViewProjection", modelViewProjectionMatrix)
-                               .setTexture("u_AlbedoTexture", arrowTexture)
+            virtualObjectShader.setMat4("u_ModelView", modelViewMatrix).setMat4("u_ModelViewProjection", modelViewProjectionMatrix).setTexture("u_AlbedoTexture", arrowTexture)
             render.draw(arrowMesh, virtualObjectShader, virtualSceneFramebuffer)
         }
         if (planetTextures.isNotEmpty()) { planets.forEach { currentPlanet ->
-                Matrix.setIdentityM(modelMatrix, 0)
-                Matrix.translateM(modelMatrix, 0, currentPlanet.worldPosition[0], currentPlanet.worldPosition[1], currentPlanet.worldPosition[2])
-                val planetScaleFactor = currentPlanet.targetRadius / PLANET_MODEL_DEFAULT_RADIUS
-                Matrix.scaleM(modelMatrix, 0, planetScaleFactor, planetScaleFactor, planetScaleFactor)
-                Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0)
-                Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
-                virtualObjectShader.setMat4("u_ModelView", modelViewMatrix)
-                                   .setMat4("u_ModelViewProjection", modelViewProjectionMatrix)
-                                   .setTexture("u_AlbedoTexture", planetTextures[currentPlanet.textureIdx % planetTextures.size])
+                Matrix.setIdentityM(modelMatrix, 0); Matrix.translateM(modelMatrix, 0, currentPlanet.worldPosition[0], currentPlanet.worldPosition[1], currentPlanet.worldPosition[2])
+                val planetScaleFactor = currentPlanet.targetRadius / PLANET_MODEL_DEFAULT_RADIUS; Matrix.scaleM(modelMatrix, 0, planetScaleFactor, planetScaleFactor, planetScaleFactor)
+                Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0); Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
+                virtualObjectShader.setMat4("u_ModelView", modelViewMatrix).setMat4("u_ModelViewProjection", modelViewProjectionMatrix).setTexture("u_AlbedoTexture", planetTextures[currentPlanet.textureIdx % planetTextures.size])
                 render.draw(planetMesh, virtualObjectShader, virtualSceneFramebuffer)
         } }
-        
         GLES30.glEnable(GLES30.GL_BLEND); GLES30.glDepthMask(true); GLES30.glEnable(GLES30.GL_DEPTH_TEST)
         var occlusionWasForcedOffForGameScene = false
         if (userWantsOcclusion) { backgroundRenderer.setUseOcclusion(render, false); occlusionWasForcedOffForGameScene = true }
         backgroundRenderer.drawVirtualScene(render, virtualSceneFramebuffer, Z_NEAR, Z_FAR)
         if (occlusionWasForcedOffForGameScene) { backgroundRenderer.setUseOcclusion(render, true) }
-    
         if (gameState.state == PuzzleState.VICTORY) { Log.i(TAG, "Victory Lvl ${gameState.level}!"); gameState.level++; resetLevel(localSession, camera) } 
         else if (gameState.state == PuzzleState.DEFEAT) { Log.i(TAG, "Defeat Lvl ${gameState.level}.") }
     }
 
-    private fun updateLightEstimation(lightEstimate: LightEstimate, viewMatrixParam: FloatArray) { /* ... same as before ... */ 
+    private fun updateLightEstimation(lightEstimate: LightEstimate, viewMatrixParam: FloatArray) { 
         if (lightEstimate.state != LightEstimate.State.VALID) { virtualObjectShader.setBool("u_LightEstimateIsValid", false); return }
         virtualObjectShader.setBool("u_LightEstimateIsValid", true); Matrix.invertM(viewInverseMatrix, 0, viewMatrixParam, 0)
         virtualObjectShader.setMat4("u_ViewInverse", viewInverseMatrix)
@@ -539,9 +520,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
         Matrix.multiplyMV(viewLightDirection, 0, viewMatrixParam, 0, worldLightDirection, 0); virtualObjectShader.setVec4("u_ViewLightDirection", viewLightDirection)
         virtualObjectShader.setVec3("u_LightIntensity", lightEstimate.environmentalHdrMainLightIntensity)
         val harmonics = lightEstimate.environmentalHdrAmbientSphericalHarmonics
-        for (i in sphericalHarmonicsCoefficients.indices) {
-             if (harmonics != null && i < harmonics.size) sphericalHarmonicsCoefficients[i] = harmonics[i] * sphericalHarmonicFactors[i / 3] else sphericalHarmonicsCoefficients[i] = 0f 
-        }
+        for (i in sphericalHarmonicsCoefficients.indices) { if (harmonics != null && i < harmonics.size) sphericalHarmonicsCoefficients[i] = harmonics[i] * sphericalHarmonicFactors[i / 3] else sphericalHarmonicsCoefficients[i] = 0f }
         virtualObjectShader.setVec3Array("u_SphericalHarmonicsCoefficients", sphericalHarmonicsCoefficients)
     }
     private fun handleTap(frame: Frame, camera: Camera) {
