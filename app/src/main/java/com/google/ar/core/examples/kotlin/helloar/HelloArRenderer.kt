@@ -23,11 +23,9 @@ import androidx.lifecycle.LifecycleOwner
 import com.google.ar.core.Anchor
 import com.google.ar.core.Camera
 import com.google.ar.core.Frame
-import android.media.Image // Correct import
-// import com.google.ar.core.InstantPlacementPoint // Not strictly needed for this revised approach
+import android.media.Image
 import com.google.ar.core.LightEstimate
 import com.google.ar.core.Plane
-// import com.google.ar.core.Point // Not strictly needed
 import com.google.ar.core.Pose
 import com.google.ar.core.Session
 import com.google.ar.core.Trackable
@@ -61,17 +59,17 @@ import kotlin.random.Random
 
 // --- CONSTANTS ---
 private const val INITIAL_ARROWS_PER_LEVEL = 10
-private const val MAX_PLANETS_CAP = 10
-private const val INITIAL_PLANET_COUNT = 1
+private const val MAX_PLANETS_CAP = 50
+private const val INITIAL_PLANET_COUNT = 10
 private const val LEVELS_PER_NEW_PLANET = 2
 
-private const val LEVEL_ANCHOR_DISTANCE_FORWARD = 3.5f
-private const val LEVEL_ANCHOR_DISTANCE_UP = 0.0f
+private const val LEVEL_ANCHOR_DISTANCE_FORWARD = 5.5f
+private const val LEVEL_ANCHOR_DISTANCE_UP = 0.7f
 
 private const val CLUSTER_MAX_RADIUS_APPLE = 1.5f
 private const val CLUSTER_MAX_RADIUS_PLANETS = 2.0f
 private const val CLUSTER_MIN_DIST_PLANETS_FROM_ANCHOR = 0.5f
-private const val CLUSTER_VERTICAL_SPREAD_FACTOR = 0.2f
+private const val CLUSTER_VERTICAL_SPREAD_FACTOR = 0.8f
 
 private const val APPLE_MODEL_DEFAULT_RADIUS = 0.1f
 private const val PLANET_MODEL_DEFAULT_RADIUS = 0.1f
@@ -79,8 +77,8 @@ private const val ARROW_MODEL_DEFAULT_RADIUS = 0.1f
 private const val TRAJECTORY_DOT_MODEL_DEFAULT_RADIUS = 0.05f
 
 private const val APPLE_TARGET_RADIUS = 0.2f
-private const val PLANET_TARGET_RADIUS_MIN = 0.3f
-private const val PLANET_TARGET_RADIUS_MAX = 0.6f
+private const val PLANET_TARGET_RADIUS_MIN = 0.15f
+private const val PLANET_TARGET_RADIUS_MAX = 0.55f
 private const val ARROW_VISUAL_AND_COLLISION_RADIUS = 0.1f
 private const val TRAJECTORY_DOT_TARGET_RADIUS = 0.01f
 
@@ -122,7 +120,8 @@ private lateinit var appleTexture: Texture
 private lateinit var arrowTexture: Texture
 private lateinit var trajectoryDotTexture: Texture
 
-private val planetTextureFiles = listOf("models/textures/planet_texture_1.jpg", "models/textures/planet_texture_2.jpg")
+private val planetTextureFiles = listOf("models/textures/planet_texture_1.jpg", "models/textures/planet_texture_2a.jpg", "models/textures/planet_texture_2b.jpg", "models/textures/planet_texture_3a.jpg", "models/textures/planet_texture_3b.jpg")
+
 private const val appleTextureFile = "models/textures/apple_texture.jpg"
 private const val arrowTextureFile = "models/textures/arrow_texture.png"
 private const val trajectoryDotTextureFile = "models/textures/dot_texture.jpg"
@@ -512,17 +511,20 @@ class HelloArRenderer(val activity: HelloArActivity) :
         else if (gameState.state == PuzzleState.DEFEAT) { Log.i(TAG, "Defeat Lvl ${gameState.level}.") }
     }
 
-    private fun updateLightEstimation(lightEstimate: LightEstimate, viewMatrixParam: FloatArray) { 
-        if (lightEstimate.state != LightEstimate.State.VALID) { virtualObjectShader.setBool("u_LightEstimateIsValid", false); return }
-        virtualObjectShader.setBool("u_LightEstimateIsValid", true); Matrix.invertM(viewInverseMatrix, 0, viewMatrixParam, 0)
+    private fun updateLightEstimation(lightEstimate: LightEstimate, viewMatrixParam: FloatArray) {
+        // default light bc otherwhise weird albedo 
+        virtualObjectShader.setBool("u_LightEstimateIsValid", false)
+        val defaultLightDirection = floatArrayOf(0.0f, -1.0f, 0.0f, 0.0f)
+        val defaultLightIntensity = floatArrayOf(1.0f, 1.0f, 1.0f)
+        Matrix.invertM(viewInverseMatrix, 0, viewMatrixParam, 0)
         virtualObjectShader.setMat4("u_ViewInverse", viewInverseMatrix)
-        worldLightDirection[0] = lightEstimate.environmentalHdrMainLightDirection[0]; worldLightDirection[1] = lightEstimate.environmentalHdrMainLightDirection[1]; worldLightDirection[2] = lightEstimate.environmentalHdrMainLightDirection[2]; worldLightDirection[3] = 0.0f
-        Matrix.multiplyMV(viewLightDirection, 0, viewMatrixParam, 0, worldLightDirection, 0); virtualObjectShader.setVec4("u_ViewLightDirection", viewLightDirection)
-        virtualObjectShader.setVec3("u_LightIntensity", lightEstimate.environmentalHdrMainLightIntensity)
-        val harmonics = lightEstimate.environmentalHdrAmbientSphericalHarmonics
-        for (i in sphericalHarmonicsCoefficients.indices) { if (harmonics != null && i < harmonics.size) sphericalHarmonicsCoefficients[i] = harmonics[i] * sphericalHarmonicFactors[i / 3] else sphericalHarmonicsCoefficients[i] = 0f }
+        Matrix.multiplyMV(viewLightDirection, 0, viewMatrixParam, 0, defaultLightDirection, 0)
+        virtualObjectShader.setVec4("u_ViewLightDirection", viewLightDirection)
+        virtualObjectShader.setVec3("u_LightIntensity", defaultLightIntensity)
+        for (i in sphericalHarmonicsCoefficients.indices) sphericalHarmonicsCoefficients[i] = 0.2f
         virtualObjectShader.setVec3Array("u_SphericalHarmonicsCoefficients", sphericalHarmonicsCoefficients)
     }
+
     private fun handleTap(frame: Frame, camera: Camera) {
         if (camera.trackingState != TrackingState.TRACKING) return
         activity.view.tapHelper.poll()?.let { _ ->
