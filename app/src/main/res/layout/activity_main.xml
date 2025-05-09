@@ -48,7 +48,8 @@
         android:shadowColor="#CC000000"
         android:shadowDx="2"
         android:shadowDy="2"
-        android:shadowRadius="4" />
+        android:shadowRadius="4"
+        android:fontFamily="@font/quicksand" />
 
     <LinearLayout
         android:id="@+id/arrows_left_container"
@@ -70,7 +71,8 @@
             android:shadowColor="#CC000000"
             android:shadowDx="2"
             android:shadowDy="2"
-            android:shadowRadius="4" />
+            android:shadowRadius="4"
+            android:fontFamily="@font/quicksand" />
 
         <ImageView
             android:id="@+id/arrows_left_icon"
