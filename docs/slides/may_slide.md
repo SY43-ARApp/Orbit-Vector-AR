@@ -7,23 +7,49 @@ revealOptions:
   transition: 'fade'
 ---
 
-<!-- .slide: data-background="./img/background.png" -->
+<!-- TODO : REPLACE picsum -->
 
-# Orbit Vector AE
+<!-- .slide: data-background="./img/background.png" style="color:white-->
+
+<img src="img/gametitle.png" style="width: 30%; height: auto;" />
 
 ---
 
-### Perrin Antoine, Beaujard Traïan, Martin, Alex
-#### SY43 - P25
+<h3 style="color:white">
+Perrin Antoine, Beaujard Traïan, Martin, Alex  
+</h3>
+
+<h4 style="color:white">
+SY43 - P25
+</h4>
 
 /s
 
-## Introduction
+## Contextualisation du projet
 
-- Why this subject ?
+### Jeu casual Puzzle en AR : Orbit Vector AR
+
+<div style="display: flex; justify-content: center; align-items: flex-start; gap: 2vw;">
+  <div style=" line-height: 1.2;">
+    <ul>
+      <li>Atteindre la cible (pomme) avec une flèche</li>
+      <li>Utiliser la gravité des planètes pour dévier la flèche</li>
+      <li>Partie finie quand plus de flèches</li>
+      <li>Score sauvegardé en ligne sur BDD</li>
+      <li>Classement en ligne</li>
+    </ul>
+  </div>
+
+  <img src="https://picsum.photos/800/1200" alt="demo jeu gif" style="width: 30%; height: auto;" />
+</div>
+
+/v
+
+### Avancée globale
+
+<img src="https://picsum.photos/1400/600" alt="screen github project" style="width: 90%; height: auto;" />
 
 /s
-
 # UI
 
 ## UI Slide 1
@@ -39,7 +65,6 @@ revealOptions:
 /s
 
 # Base de Données
-
 /v
 
 ## Structure de la Base de Données
@@ -200,7 +225,7 @@ else if (_uiState.value.isLoggedIn) {
 /s
 
 # Gameplay AR
-
+<br>
 <img src="https://picsum.photos/800/1400" alt="previewGameplay" style="width: 20%; height: auto; display: block; margin: 0 auto;" />
 
 /v
