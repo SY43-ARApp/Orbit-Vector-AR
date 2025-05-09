@@ -88,8 +88,10 @@ private const val ARROW_MASS = 0.5f
 
 private const val MIN_TRACKING_FRAMES_FOR_ANCHOR_PLACEMENT = 60
 
+private const val TRAJECTORY_SIMULATION_START_AT_STEP = 15
 private const val TRAJECTORY_SIMULATION_STEPS = 70
 private const val TRAJECTORY_SIMULATION_TIMESTEP = 0.015f
+
 
 // --- GAME STATE DATA CLASSES ---
 data class Planet(val worldPosition: FloatArray, val mass: Float, val textureIdx: Int, val targetRadius: Float) {
@@ -457,7 +459,8 @@ class HelloArRenderer(val activity: HelloArActivity) :
 
         if (gameState.state == PuzzleState.PLAYING && trajectoryPoints.isNotEmpty()) {
             val dotScaleFactor = TRAJECTORY_DOT_TARGET_RADIUS / TRAJECTORY_DOT_MODEL_DEFAULT_RADIUS
-            trajectoryPoints.forEach { point ->
+            trajectoryPoints.forEachIndexed { idx, point ->
+                if (idx < TRAJECTORY_SIMULATION_START_AT_STEP) return@forEachIndexed
                 Matrix.setIdentityM(modelMatrix, 0); Matrix.translateM(modelMatrix, 0, point[0], point[1], point[2])
                 Matrix.scaleM(modelMatrix, 0, dotScaleFactor, dotScaleFactor, dotScaleFactor) 
                 Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0); Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
