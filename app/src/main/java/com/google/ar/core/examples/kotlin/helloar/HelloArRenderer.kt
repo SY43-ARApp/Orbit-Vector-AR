@@ -122,7 +122,7 @@ private lateinit var trajectoryDotTexture: Texture
 
 private val planetTextureFiles = listOf("models/textures/planet_texture_1.jpg", "models/textures/planet_texture_2a.jpg", "models/textures/planet_texture_2b.jpg", "models/textures/planet_texture_3a.jpg", "models/textures/planet_texture_3b.jpg")
 
-private const val appleTextureFile = "models/textures/apple_texture.jpg"
+private const val appleTextureFile = "models/textures/Apple_BaseColor.jpg"
 private const val arrowTextureFile = "models/textures/arrow_texture.png"
 private const val trajectoryDotTextureFile = "models/textures/dot_texture.jpg"
 
