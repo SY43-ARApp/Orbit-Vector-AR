@@ -457,11 +457,11 @@ class HelloArRenderer(val activity: HelloArActivity) :
         if (frame.timestamp != 0L) backgroundRenderer.drawBackground(render)
         if (camera.trackingState == TrackingState.PAUSED && gameState.state != PuzzleState.WAITING_FOR_ANCHOR) return
         camera.getProjectionMatrix(projectionMatrix, 0, Z_NEAR, Z_FAR); camera.getViewMatrix(viewMatrix, 0)
-        frame.acquirePointCloud().use { pc -> if (pc.timestamp > lastPointCloudTimestamp) { pointCloudVertexBuffer.set(pc.points); lastPointCloudTimestamp = pc.timestamp }
-            Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, viewMatrix, 0)
-            pointCloudShader.setMat4("u_ModelViewProjection", modelViewProjectionMatrix); render.draw(pointCloudMesh, pointCloudShader)
-        }
-        planeRenderer.drawPlanes(render, localSession.getAllTrackables(Plane::class.java), camera.displayOrientedPose, projectionMatrix); updateLightEstimation(frame.lightEstimate, viewMatrix)
+        // frame.acquirePointCloud().use { pc -> if (pc.timestamp > lastPointCloudTimestamp) { pointCloudVertexBuffer.set(pc.points); lastPointCloudTimestamp = pc.timestamp }
+        //     Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, viewMatrix, 0)
+        //     pointCloudShader.setMat4("u_ModelViewProjection", modelViewProjectionMatrix); render.draw(pointCloudMesh, pointCloudShader)
+        // }
+        updateLightEstimation(frame.lightEstimate, viewMatrix)
         render.clear(virtualSceneFramebuffer, 0f, 0f, 0f, 0f)
         GLES30.glDisable(GLES30.GL_DEPTH_TEST); GLES30.glDepthMask(false); GLES30.glDisable(GLES30.GL_BLEND)    
 
