@@ -52,6 +52,11 @@ SY43 - P25
 
 /vs
 
+## UI navigation UML
+<img src="img/ui_navigation_uml.png" alt="schema de navigation UML" style="width: 90%; height: auto;" />
+
+/vs
+
 ## Les visuels à atteindres 
 <div style="display: flex; justify-content: center; align-items: flex-start; gap: 2vw; flex-wrap: wrap;">
   <img src="img/main_title_screen.png" alt="Main title" style="width: 25%; height: auto;" />
@@ -93,6 +98,7 @@ SY43 - P25
 
 -  Relier l'UI avec la base de donnée
 -  Faire correspondre les visuels attendu avec l'UI existante
+-  Bonus : Rajouter des animations de boutons et des transition d'écran
 
 /s
 
