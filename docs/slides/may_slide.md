@@ -13,9 +13,9 @@ revealOptions:
 
 ---
 
-<h3 style="color:white">
-Perrin Antoine, Beaujard Traïan, Martin, Alex  
-</h3>
+<h4 style="color:white">
+Perrin Antoine - Beaujard Traïan - Kubisiak Martin - Ramallo Alex
+</h4>
 
 <h4 style="color:white">
 SY43 - P25
@@ -32,8 +32,8 @@ SY43 - P25
     <ul>
       <li>Atteindre la cible (pomme) avec une flèche</li>
       <li>Utiliser la gravité des planètes pour dévier la flèche</li>
-      <li>Partie finie quand plus de flèches</li>
-      <li>Score sauvegardé en ligne sur BDD</li>
+      <li>Partie finie quand les flèches sont épuisées</li>
+      <li>Score sauvegardé en ligne dans une BDD</li>
       <li>Classement en ligne</li>
     </ul>
   </div>
@@ -96,9 +96,10 @@ SY43 - P25
 
 ## Ce qu'il nous reste à faire 
 
--  Relier l'UI avec la base de donnée
--  Faire correspondre les visuels attendu avec l'UI existante
--  Bonus : Rajouter des animations de boutons et des transition d'écran
+-  Faire correspondre les visuels attendus avec l'UI existante
+-  Relier l'UI avec la base de données
+-  Rajouter des animations de boutons et des transition d'écran
+
 
 /s
 
@@ -133,7 +134,16 @@ SY43 - P25
 
 ![MCD](img/MCD.png)
 
-/s
+/vs
+
+## Optimisation de la BDD
+
+- Lors d'un envoie de score, on vérifie si le nouveau score est meilleur que le meilleur score enregistré de la table USER
+- Si oui, on met à jour le meilleur score de l'utilisateur dans la table USER
+- On insère le nouveau score dans la table SCORE
+- Optimisation réalisées : Pas de requête supplémentaire coûteuse pour obtenir le meilleur score d'un utilisateur
+
+/vs
 
 ### Connection entre Kotlin et Base de Données
 
@@ -151,7 +161,7 @@ SY43 - P25
 - Les réponses sont traitées en JSON
 - Les données sont envoyées sous forme de paramètres d'URL (GET pour des requêtes simples)
 - Les réponses sont transformées en objets Kotlin facilement manipulables
-- Exemple de requête : `http://chaelpixserver.ddns.net/apis/ovar/register.php?uuid=1234&username=JohnDoe
+- Exemple de requête : http://chaelpixserver.ddns.net/apis/ovar/register.php?uuid=1234&username=JohnDoe
 
 /vs
 
@@ -223,7 +233,7 @@ SY43 - P25
 
 ### Utilisation de l'API dans le code Kotlin
 `MainViewModel.kt`
-```kotlin [191:]
+```kotlin [191:, 1-13 | 1 | 2 | 5-10]
 else if (_uiState.value.isLoggedIn) {
     val response = api.getUserScores(_uiState.value.uuid)
     Log.d(TAG, "User scores response: ${response.body()}")
@@ -243,7 +253,7 @@ else if (_uiState.value.isLoggedIn) {
 
 ### Résultat JSON
 
-```json
+```json[| 1, 14 | 2-5 | 6-9 | 10-13 |3, 7, 11 | 4, 8, 12 |]
 [
   {
     "score": 1000,
@@ -596,7 +606,7 @@ val appleClusterRadius = CLUSTER_MAX_RADIUS_APPLE + (level * 0.03f).coerceAtMost
 
 /vs
 
-## Ce qui reste à faire 
+## Ce qu'il reste à faire 
 
 <div style="font-size: 2vw; line-height: 1.2;">
 <ul>
@@ -610,4 +620,16 @@ val appleClusterRadius = CLUSTER_MAX_RADIUS_APPLE + (level * 0.03f).coerceAtMost
 
 /s
 
-## FIN
+<!-- .slide: data-background="./img/background.png" style="color:white-->
+
+<img src="img/gametitle.png" style="width: 30%; height: auto;" />
+
+---
+
+<h4 style="color:white">
+Perrin Antoine - Beaujard Traïan - Kubisiak Martin - Ramallo Alex
+</h4>
+
+<h4 style="color:white">
+SY43 - P25
+</h4>
