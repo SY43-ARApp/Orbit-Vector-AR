@@ -236,10 +236,15 @@ else if (_uiState.value.isLoggedIn) {
 
 ## AR Core
 
+<div style="font-size: 1.5vw; line-height: 1.5;">
+
 -  [AR Core](https://developers.google.com/ar) est un SDK offrant des fonctionnalités de réalité augmentée pour Android utilisable par APIs Kotlin.
   
+<br> 
+<br> 
+
 ### Fonctionnalités utiles d'AR Core
-<div style="font-size: 2vw; line-height: 1.2;">
+<div style="font-size: 1.8vw; line-height: 1.2;">
 <ul>
   <li>Caméra</li>
   <li>Suivi de mouvement (position et orientation)</li>
@@ -249,6 +254,7 @@ else if (_uiState.value.isLoggedIn) {
   <li>Depth Map</li>
   <li>Ancrage d'objets virtuels dans le monde réel</li>
 </ul>
+</div>
 </div>
 
 /vs
@@ -377,13 +383,11 @@ $ \phi $ est l'angle aléatoire autour de l'ancre (vertical) <br>
 
 /vs
 
-<video controls width="250">
-    <source src="img/ar_screens/arrow1.webm" type="video/webm">
-    <source src="img/ar_screens/arrow1.webm" type="video/webm">
-</video>
+<div style="display: flex; justify-content: center; align-items: flex-start; gap: 2vw;">
+  <img src="img/ar_screens/place_proto_1.jpg" alt="screen repo template" style="width: 30%; height: auto;" />
+  <img src="img/ar_screens/place_proto_2.jpg" alt="screen repo template" style="width: 30%; height: auto;" />
+</div>
  
-  
-
 /vs
 
 #### Ajout des modèles et textures
@@ -403,6 +407,13 @@ $ \phi $ est l'angle aléatoire autour de l'ancre (vertical) <br>
 val planetMesh = Mesh.createFromAsset(render, "models/apple.obj")
 val planetTexture = Texture.createFromAsset(render, "models/textures/apple_texture.jpg")
 ```
+</div>
+
+/vs
+
+<div style="display: flex; justify-content: center; align-items: flex-start; gap: 2vw;">
+  <img src="img/ar_screens/place_textures_1.jpg" alt="screen repo template" style="width: 30%; height: auto;" />
+  <img src="img/ar_screens/place_textures_2.jpg" alt="screen repo template" style="width: 30%; height: auto;" />
 </div>
 
 /vs
@@ -504,6 +515,44 @@ if (calculateDistanceSquared(arrow.position, currentApple.worldPosition) < colli
 
 #### Prévisualisation trajectoire de la flèche
 
+
+<div style="font-size: 1.5vw; line-height: 1.5;">
+<ul>
+  <li>Toutes les 0.05s, le jeu simule le lancement d'une flèche, récupère les points à intervalles réguliers, et instancie des sphères le long de la courbe.</li>
+</ul>
+</div>
+
+<video controls width="250">
+    <source src="img/ar_screens/trajectory.mp4" type="video/mp4">
+    Sorry, your browser doesn't support embedded videos.
+</video>
+
+/vs
+
+### Générateur de niveaux procéduraux
+
+<div style="font-size: 1.5vw; line-height: 1.5;">
+<ul>
+  <li>Un générateur procédural adapte à chaque niveau le nombre, la taille et la masse des planètes pour augmenter la difficulté.</li>
+</ul>
+</div>
+
+<br>
+
+<div style="font-size: 1.5vw; line-height: 1.5;">
+
+**Exemples**
+```kotlin
+val clusterMaxRadiusPlanets = CLUSTER_MAX_RADIUS_PLANETS + (level * 0.12f).coerceAtMost(3.0f) 
+val planetTargetRadiusMin = PLANET_TARGET_RADIUS_MIN + (level * 0.01f).coerceAtMost(0.25f)
+val planetTargetRadiusMax = PLANET_TARGET_RADIUS_MAX + (level * 0.03f).coerceAtMost(1.2f)
+val planetMassScale = PLANET_MASS_SCALE_FACTOR + (level * 400f)
+val appleClusterRadius = CLUSTER_MAX_RADIUS_APPLE + (level * 0.03f).coerceAtMost(2.0f)
+```
+</div>
+
+/vs
+
 ## Ce qui reste à faire 
 
 <div style="font-size: 2vw; line-height: 1.2;">
@@ -513,4 +562,9 @@ if (calculateDistanceSquared(arrow.position, currentApple.worldPosition) < colli
   <li>Améliorations et équilibrages</li>
   <li>Publication sur Playstore</li>
 </ul>
+
 </div>
+
+/s
+
+## FIN
