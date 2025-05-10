@@ -93,7 +93,6 @@ SY43 - P25
 
 -  Faire correspondre les visuels attendus avec l'UI existante
 -  Relier l'UI avec la base de données
--  Relier l'UI avec le gameplay
 
 /s
 
@@ -600,7 +599,7 @@ val appleClusterRadius = CLUSTER_MAX_RADIUS_APPLE + (level * 0.03f).coerceAtMost
 
 /vs
 
-## Ce qui reste à faire 
+## Ce qu'il reste à faire 
 
 <div style="font-size: 2vw; line-height: 1.2;">
 <ul>
