@@ -52,15 +52,19 @@ SY43 - P25
 /s
 # UI
 
-## UI Slide 1
+## Les visuels à atteindres
+
 
 /v
 
-## UI Slide 2
+## Ce que nous avons 
 
 /v
 
-## UI Slide 3
+## Ce qu'il nous reste à faire 
+
+-Relier l'UI avec la base de donnée
+-Faire correspondre les visuels attendu avec l'UI existante
 
 /s
 
