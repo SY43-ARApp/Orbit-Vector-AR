@@ -7,8 +7,6 @@ revealOptions:
   transition: 'fade'
 ---
 
-<!-- TODO : REPLACE picsum -->
-
 <!-- .slide: data-background="./img/background.png" style="color:white-->
 
 <img src="img/gametitle.png" style="width: 30%; height: auto;" />
@@ -40,14 +38,14 @@ SY43 - P25
     </ul>
   </div>
 
-  <img src="https://picsum.photos/800/1200" alt="demo jeu gif" style="width: 30%; height: auto;" />
+  <img src="img/ar_screens/place_textures_2.jpg" alt="demo jeu gif" style="width: 30%; height: auto;" />
 </div>
 
 /vs
 
 ### Avancée globale
 
-<img src="https://picsum.photos/1400/600" alt="screen github project" style="width: 90%; height: auto;" />
+<img src="img/githubprojects.png" alt="screen github project" style="width: 90%; height: auto;" />
 
 /s
 # UI
@@ -230,7 +228,7 @@ else if (_uiState.value.isLoggedIn) {
 
 # Gameplay AR
 <br>
-<img src="https://picsum.photos/800/1400" alt="previewGameplay" style="width: 20%; height: auto; display: block; margin: 0 auto;" />
+<img src="img/ar_screens/place_textures_2.jpg" alt="previewGameplay" style="width: 20%; height: auto; display: block; margin: 0 auto;" />
 
 /vs
 
@@ -261,7 +259,7 @@ else if (_uiState.value.isLoggedIn) {
 ---
 Mis en place l'exemple d'AR Core, testé les apis. Puis crée un repo template github pour notre projet;
 
-<img src="https://picsum.photos/1000/800" alt="screen repo template" style="width: 50%; height: auto; display: block; margin: 0 auto;" />
+<img src="img/githubtemplate.png" alt="screen repo template" style="width: 50%; height: auto; display: block; margin: 0 auto;" />
 
 /vs
 
