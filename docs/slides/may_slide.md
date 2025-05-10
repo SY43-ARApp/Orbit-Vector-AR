@@ -51,20 +51,44 @@ SY43 - P25
 
 /s
 # UI
+/v
+## Les visuels à atteindres 
+<div style="display: flex; justify-content: center; align-items: flex-start; gap: 2vw; flex-wrap: wrap;">
+  <img src="img/main_title_screen.png" alt="Main title" style="width: 15%; height: auto;" />
+  <img src="img/main_menu_screen.png" alt="Main menu" style="width: 15%; height: auto;" />
+  <img src="img/leaderboard_screen.png" alt="leaderboard" style="width: 15%; height: auto;" />
+</div>
+/v
+<div style="display: flex; justify-content: center; align-items: flex-start; gap: 2vw; flex-wrap: wrap;">
 
-## Les visuels à atteindres
-
+  <img src="img/profile_screen.png" alt="Profile" style="width: 15%; height: auto;" />
+  <img src="img/Shop_screen.png" alt="Shop" style="width: 15%; height: auto;" />
+  <img src="img/Settings_screen.png" alt="Settings" style="width: 15%; height: auto;" />
+</div>
 
 /v
 
 ## Ce que nous avons 
 
+<div style="display: flex; justify-content: center; align-items: flex-start; gap: 2vw; flex-wrap: wrap;">
+  <img src="img/app_title_screen.jpg" alt="Main title in app" style="width: 15%; height: auto;" />
+  <img src="img/app_home_screen.jpg" alt="Main menu in app" style="width: 15%; height: auto;" />
+  <img src="img/app_leaderboard_screen.jpg" alt="leaderboard in app" style="width: 15%; height: auto;" />
+</div>
+/v
+<div style="display: flex; justify-content: center; align-items: flex-start; gap: 2vw; flex-wrap: wrap;">
+
+  <img src="img/app_profile_screen.jpg" alt="Profile in app" style="width: 15%; height: auto;" />
+  <img src="img/app_game_history_screen.jpg" alt="Game history in app" style="width: 15%; height: auto;" />
+  <img src="img/app_setting_screen.jpg" alt="Settings in app" style="width: 15%; height: auto;" />
+</div>
+
 /v
 
 ## Ce qu'il nous reste à faire 
 
--Relier l'UI avec la base de donnée
--Faire correspondre les visuels attendu avec l'UI existante
+-  Relier l'UI avec la base de donnée
+-  Faire correspondre les visuels attendu avec l'UI existante
 
 /s
 
