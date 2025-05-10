@@ -281,10 +281,19 @@ else if (_uiState.value.isLoggedIn) {
 
 /vs
 ---
+
 Mis en place l'exemple d'AR Core, testé les apis. Puis crée un repo template github pour notre projet;
 
 <img src="img/githubtemplate.png" alt="screen repo template" style="width: 50%; height: auto; display: block; margin: 0 auto;" />
 
+/vs
+
+<div style="display: flex; justify-content: center; align-items: flex-start; gap: 2vw;">
+  <img src="img/ar_screens/template_1.jpg" alt="screen repo template" style="width: 30%; height: auto;" />
+  <img src="img/ar_screens/template_2.jpg" alt="screen repo template" style="width: 30%; height: auto;" />  
+  <img src="img/ar_screens/template_3.jpg" alt="screen repo template" style="width: 30%; height: auto;" />
+</div>
+ 
 /vs
 
 ## Ce qui a été fait
