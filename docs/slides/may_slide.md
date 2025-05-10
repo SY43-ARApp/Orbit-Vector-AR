@@ -32,8 +32,8 @@ SY43 - P25
     <ul>
       <li>Atteindre la cible (pomme) avec une flèche</li>
       <li>Utiliser la gravité des planètes pour dévier la flèche</li>
-      <li>Partie finie quand plus de flèches</li>
-      <li>Score sauvegardé en ligne sur BDD</li>
+      <li>Partie finie quand les flèches sont épuisées</li>
+      <li>Score sauvegardé en ligne dans une BDD</li>
       <li>Classement en ligne</li>
     </ul>
   </div>
@@ -91,8 +91,9 @@ SY43 - P25
 
 ## Ce qu'il nous reste à faire 
 
--  Relier l'UI avec la base de donnée
--  Faire correspondre les visuels attendu avec l'UI existante
+-  Faire correspondre les visuels attendus avec l'UI existante
+-  Relier l'UI avec la base de données
+-  Relier l'UI avec le gameplay
 
 /s
 
@@ -127,7 +128,16 @@ SY43 - P25
 
 ![MCD](img/MCD.png)
 
-/s
+/vs
+
+## Optimisation de la BDD
+
+- Lors d'un envoie de score, on vérifie si le nouveau score est meilleur que le meilleur score enregistré de la table USER
+- Si oui, on met à jour le meilleur score de l'utilisateur dans la table USER
+- On insère le nouveau score dans la table SCORE
+- Optimisation réalisées : Pas de requête supplémentaire coûteuse pour obtenir le meilleur score d'un utilisateur
+
+/vs
 
 ### Connection entre Kotlin et Base de Données
 
