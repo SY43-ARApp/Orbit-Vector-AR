@@ -83,7 +83,7 @@ SY43 - P25
 <div style="display: flex; justify-content: center; align-items: flex-start; gap: 2vw; flex-wrap: wrap;">
 
   <img src="img/app_profile_screen.jpg" alt="Profile in app" style="width: 25%; height: auto;" />
-  <img src="img/app_game_history_screen.jpg" alt="Game history in app" style="width: 25%; height: auto;" />
+  <img src="img/app_shop_screen.jpg" alt="Game history in app" style="width: 25%; height: auto;" />
   <img src="img/app_setting_screen.jpg" alt="Settings in app" style="width: 25%; height: auto;" />
 </div>
 
