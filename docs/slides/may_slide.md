@@ -272,6 +272,27 @@ else if (_uiState.value.isLoggedIn) {
 
 /s
 
+# RGPD
+---
+### Fonctionnement actuel de l'application
+  - L'application collecte des données personnelles (UUID, nom d'utilisateur) pour les stocker dans une base de données.
+  - Ces données sont envoyées via des requêtes HTTP GET à un serveur PHP.
+
+/vs
+
+## Problème
+- Le RGPD (Règlement Général sur la Protection des Données) est une réglementation de l'UE qui protège les données personnelles des utilisateurs.
+- Il impose des obligations concernant la collecte, le stockage et le traitement des données personnelles.
+
+/vs
+
+## Solution proposée
+- Avoir une autre méthode de stockage des données, notamment avec une adresse email.
+- Créer réellement un compte utilisateur avec un mot de passe.
+   - Changement en BDD, nom d'utilisateur unique
+
+/s
+
 # Gameplay AR
 <br>
 <img src="img/ar_screens/place_textures_2.jpg" alt="previewGameplay" style="width: 20%; height: auto; display: block; margin: 0 auto;" />
