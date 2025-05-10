@@ -155,7 +155,7 @@ SY43 - P25
 - Les réponses sont traitées en JSON
 - Les données sont envoyées sous forme de paramètres d'URL (GET pour des requêtes simples)
 - Les réponses sont transformées en objets Kotlin facilement manipulables
-- Exemple de requête : `http://chaelpixserver.ddns.net/apis/ovar/register.php?uuid=1234&username=JohnDoe
+- Exemple de requête : http://chaelpixserver.ddns.net/apis/ovar/register.php?uuid=1234&username=JohnDoe
 
 /vs
 
@@ -227,7 +227,7 @@ SY43 - P25
 
 ### Utilisation de l'API dans le code Kotlin
 `MainViewModel.kt`
-```kotlin [191:]
+```kotlin [191:, 1-13 | 1 | 2 | 5-10]
 else if (_uiState.value.isLoggedIn) {
     val response = api.getUserScores(_uiState.value.uuid)
     Log.d(TAG, "User scores response: ${response.body()}")
@@ -247,7 +247,7 @@ else if (_uiState.value.isLoggedIn) {
 
 ### Résultat JSON
 
-```json
+```json[| 1, 14 | 2-5 | 6-9 | 10-13 |3, 7, 11 | 4, 8, 12 |]
 [
   {
     "score": 1000,
