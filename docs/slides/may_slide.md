@@ -13,9 +13,9 @@ revealOptions:
 
 ---
 
-<h3 style="color:white">
-Perrin Antoine, Beaujard Traïan, Martin, Alex  
-</h3>
+<h4 style="color:white">
+Perrin Antoine - Beaujard Traïan - Kubisiak Martin - Ramallo Alex
+</h4>
 
 <h4 style="color:white">
 SY43 - P25
@@ -613,4 +613,16 @@ val appleClusterRadius = CLUSTER_MAX_RADIUS_APPLE + (level * 0.03f).coerceAtMost
 
 /s
 
-## FIN
+<!-- .slide: data-background="./img/background.png" style="color:white-->
+
+<img src="img/gametitle.png" style="width: 30%; height: auto;" />
+
+---
+
+<h4 style="color:white">
+Perrin Antoine - Beaujard Traïan - Kubisiak Martin - Ramallo Alex
+</h4>
+
+<h4 style="color:white">
+SY43 - P25
+</h4>
