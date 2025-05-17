@@ -37,6 +37,8 @@ class MenuScreenActivity : ComponentActivity() {
             OrbitVectorARTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     MenuScreen(onPlay = {
+                        AudioManager.stopBackground()
+                        AudioManager.playSfx("titletap")
                         startActivity(Intent(this, HelloArActivity::class.java))
                         finish()
                     })
@@ -48,9 +50,9 @@ class MenuScreenActivity : ComponentActivity() {
 
 @Composable
 fun MenuScreen(
-    onPlay: () -> Unit = {},
-    onLeaderboard: () -> Unit = {},
-    onBattlePass: () -> Unit = {}
+    onPlay: () -> Unit = { },
+    onLeaderboard: () -> Unit = { AudioManager.playSfx("tap") },
+    onBattlePass: () -> Unit = { AudioManager.playSfx("tap") }
 ) {
     // --- font
     val font = DisketFont
@@ -61,6 +63,7 @@ fun MenuScreen(
     ) {
         // --- parallax
         ParallaxBackground()
+        AudioManager.playBackground(R.raw.menubgmusic)
 
         // --- gamertag area
         Row(

@@ -11,18 +11,21 @@ object AudioManager {
     private var soundPool: SoundPool? = null
     private val soundMap = mutableMapOf<String, Int>()
     private var prefs: SharedPreferences? = null
+    private var appContext: Context? = null
 
     private const val PREFS_NAME = "audio_prefs"
     private const val KEY_MUSIC_ENABLED = "music_enabled"
     private const val KEY_SFX_ENABLED = "sfx_enabled"
 
     private val sfxResources = mapOf(
-        "titletap" to R.raw.titletap
+        "titletap" to R.raw.titletap,
+        "tap" to R.raw.tap
     )
 
     fun init(context: Context) {
         if (soundPool != null) return
-        prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        appContext = context.applicationContext
+        prefs = appContext!!.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         soundPool = SoundPool.Builder()
             .setMaxStreams(4)
             .setAudioAttributes(
@@ -33,7 +36,7 @@ object AudioManager {
             )
             .build()
         sfxResources.forEach { (key, resId) ->
-            val soundId = soundPool!!.load(context, resId, 1)
+            val soundId = soundPool!!.load(appContext, resId, 1)
             soundMap[key] = soundId
         }
     }
@@ -64,9 +67,10 @@ object AudioManager {
         soundPool?.play(id, volume, volume, 1, 0, 1f)
     }
 
-    fun playBackground(context: Context, resId: Int, looping: Boolean = true) {
+    fun playBackground(resId: Int, looping: Boolean = true) {
         if (!isMusicEnabled()) return
         stopBackground()
+        val context = appContext ?: return
         bgPlayer = MediaPlayer.create(context, resId).apply {
             isLooping = looping
             start()
