@@ -31,3 +31,10 @@ google-services.json
 
 # Android Profiling
 *.hprof
+node_modules/
+package-lock.json
+package.json
+.gitignore
+
+# Static Site folder
+_site
