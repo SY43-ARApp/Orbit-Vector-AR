@@ -40,6 +40,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.ar.core.examples.kotlin.helloar.R
+import com.google.ar.core.examples.kotlin.helloar.ParallaxBackground
 import com.google.ar.core.examples.kotlin.helloar.ui.theme.DisketFont
 import com.google.ar.core.examples.kotlin.helloar.ui.theme.OrbitVectorARTheme
 
@@ -77,84 +78,20 @@ fun TitleScreen(onTap: () -> Unit) {
         ), label = "alphaAnim"
     )
 
-    // -------- parallax
-    val context = LocalContext.current
-    val sensorManager = remember { context.getSystemService(Context.SENSOR_SERVICE) as SensorManager }
-    val rotationSensor = remember(sensorManager) {
-        sensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR)
-            ?: sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
-    }
-
-    var parallaxOffsetX by remember { mutableStateOf(0f) }
-    var parallaxOffsetY by remember { mutableStateOf(0f) }
-
-    val maxParallaxOffsetDp = 24.dp
-    val maxParallaxOffsetPx = with(LocalDensity.current) { maxParallaxOffsetDp.toPx() }
-
-    DisposableEffect(sensorManager, rotationSensor) {
-        val sensorEventListener = object : SensorEventListener {
-            private val rotationMatrix = FloatArray(9)
-            private val orientationAngles = FloatArray(3)
-
-            override fun onSensorChanged(event: SensorEvent?) {
-                val sensorType = rotationSensor?.type
-                if (event != null && sensorType != null && event.sensor.type == sensorType) {
-                    SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
-                    SensorManager.getOrientation(rotationMatrix, orientationAngles)
-
-                    val pitch = orientationAngles[1] 
-                    val roll = orientationAngles[2]
-
-                    val maxTiltAngleRad = Math.toRadians(25.0).toFloat()
-
-                    val normalizedPitch = (pitch / maxTiltAngleRad).coerceIn(-1f, 1f)
-                    val normalizedRoll = (roll / maxTiltAngleRad).coerceIn(-1f, 1f)
-
-                    parallaxOffsetY = -normalizedPitch * maxParallaxOffsetPx
-                    parallaxOffsetX = -normalizedRoll * maxParallaxOffsetPx
-                }
-            }
-
-            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) { }
-        }
-
-        if (rotationSensor != null) {
-            sensorManager.registerListener(sensorEventListener, rotationSensor, SensorManager.SENSOR_DELAY_GAME)
-        }
-
-        onDispose {
-            if (rotationSensor != null) { 
-                sensorManager.unregisterListener(sensorEventListener)
-            }
-        }
-    }
-
-    val font = DisketFont 
-
+    val font = DisketFont
+    val currentContext = LocalContext.current
     // -------- screen layout
     Box(
         modifier = Modifier
             .fillMaxSize()
             .clickable { onTap() }
     ) {
-        // --- bg img
-        Image(
-            painter = painterResource(id = R.drawable.ui_menu_bg),
-            contentDescription = "Background Image",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxSize()
-                .align(Alignment.Center)
-                .scale(1.15f)
-                .graphicsLayer {
-                    translationX = parallaxOffsetX
-                    translationY = parallaxOffsetY
-                }
-        )
+        // --- parallax
+        ParallaxBackground()
 
         // --- app version (from build.gradle)
         val versionName = try {
-            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            val packageInfo = currentContext.packageManager.getPackageInfo(currentContext.packageName, 0)
             packageInfo.versionName ?: ""
         } catch (e: Exception) { "" }
         if (versionName.isNotEmpty()) {
