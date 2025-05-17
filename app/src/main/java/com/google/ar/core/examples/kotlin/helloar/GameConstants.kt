@@ -9,7 +9,7 @@ object GameConstants {
 
     // --- LEVEL GENERATION ---
     const val MAX_PLANETS_CAP = 50
-    const val INITIAL_PLANET_COUNT = 5
+    const val INITIAL_PLANET_COUNT = 2
     const val LEVELS_PER_NEW_PLANET = 1
 
     // --- CLUSTER GENERATION ---
@@ -36,7 +36,8 @@ object GameConstants {
     const val ARROW_LAUNCH_SPEED = 10.0f
     const val ARROW_MASS = 0.5f
     var GRAVITY_CONSTANT = 0.05f
-    const val INITIAL_ARROWS_PER_LEVEL = 10
+    const val INITIAL_ARROWS_PER_LEVEL = 1
+    const val ARROW_LIFETIME_SECONDS = 3f
 
     // --- TRAJECTORY SIMULATION ---
     const val TRAJECTORY_SIMULATION_START_AT_STEP = 2

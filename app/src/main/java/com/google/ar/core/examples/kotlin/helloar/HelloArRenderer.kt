@@ -287,6 +287,12 @@ class HelloArRenderer(val activity: HelloArActivity) :
         if (gameState.state == PuzzleState.PLAYING && gameState.arrowsLeft == 0 && !physicsSimulator.hasActiveArrows()) {
             Log.i(TAG, "No arrows left and all shot arrows inactive. Defeat.")
             gameState.state = PuzzleState.DEFEAT
+            val intent = android.content.Intent(activity, EndScreenActivity::class.java)
+            intent.putExtra("score", gameState.level)
+            intent.putExtra("points", gameState.points)
+            activity.startActivity(intent)
+            activity.finish()
+            return
         }
 
         // Handle user taps
