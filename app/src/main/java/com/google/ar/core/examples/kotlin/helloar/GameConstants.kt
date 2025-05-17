@@ -49,8 +49,7 @@ object GameConstants {
         "models/textures/planet_texture_1.jpg",
         "models/textures/Tropical.png",
         "models/textures/Terrestrial1.png",
-        "models/textures/Tropical2.jpg",
-        "models/textures/Icy.png"
+        "models/textures/Tropical2.jpg"
     )
     const val APPLE_TEXTURE_FILE = "models/textures/Apple_BaseColor.jpg"
     const val ARROW_TEXTURE_FILE = "models/textures/arrow_texture.png"
@@ -67,8 +66,8 @@ object GameConstants {
     const val MAX_X_OFFSET = 0.2f
 
     // --- MOON SYSTEM ---
-    const val MOON_START_LEVEL = 1
-    const val LEVELS_PER_NEW_MOON = 3
+    const val MOON_START_LEVEL = 2
+    const val LEVELS_PER_NEW_MOON = 2
     const val MAX_MOONS_CAP = 8
     val MOON_TEXTURE_FILES = listOf(
         "models/textures/Icy.png",
