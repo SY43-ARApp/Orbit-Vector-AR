@@ -91,16 +91,16 @@
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"
         android:layout_marginBottom="18dp"
+        android:background="@drawable/slider"
         android:backgroundTint="#FFF9EE"
         android:contentDescription="Adjust arrow launch X position"
         android:elevation="8dp"
         android:max="200"
         android:progress="100"
-
-        android:progressTint="#00161616"
-        android:scaleY="1.2"
+        android:progressDrawable="@drawable/empty"
+        android:scaleY="1.0"
         android:splitTrack="false"
-        android:thumb="@android:drawable/btn_default"
-        android:thumbTint="#FFFFFF" />
+        android:thumb="@drawable/slider_carret"
+        android:thumbTint="@null" />
 
 </RelativeLayout>
