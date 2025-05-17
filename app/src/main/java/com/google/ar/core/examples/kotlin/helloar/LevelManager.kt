@@ -9,8 +9,14 @@ import com.google.ar.core.examples.kotlin.helloar.GameConstants.CLUSTER_MAX_RADI
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.CLUSTER_MIN_DIST_PLANETS_FROM_ANCHOR
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.CLUSTER_VERTICAL_SPREAD_FACTOR
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.INITIAL_PLANET_COUNT
+import com.google.ar.core.examples.kotlin.helloar.GameConstants.LEVELS_PER_NEW_MOON
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.LEVELS_PER_NEW_PLANET
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.MAX_PLANETS_CAP
+import com.google.ar.core.examples.kotlin.helloar.GameConstants.MOON_ORBIT_RADIUS_MAX
+import com.google.ar.core.examples.kotlin.helloar.GameConstants.MOON_ORBIT_RADIUS_MIN
+import com.google.ar.core.examples.kotlin.helloar.GameConstants.MOON_ORBIT_SPEED_MAX
+import com.google.ar.core.examples.kotlin.helloar.GameConstants.MOON_ORBIT_SPEED_MIN
+import com.google.ar.core.examples.kotlin.helloar.GameConstants.MOON_START_LEVEL
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.PLANET_MASS_SCALE_FACTOR
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.PLANET_TARGET_RADIUS_MAX
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.PLANET_TARGET_RADIUS_MIN
@@ -165,12 +171,48 @@ class LevelGenerator(private val assetLoader: AssetLoader) {
             }
         }
 
+        // --- Place moons (moving planets) ---
+        val moons = mutableListOf<Moon>()
+        if (level >= GameConstants.MOON_START_LEVEL) {
+            val moonShouldSpawn = (level - GameConstants.MOON_START_LEVEL) % GameConstants.LEVELS_PER_NEW_MOON == 0
+            val moonCount = kotlin.math.min(
+                ((level - GameConstants.MOON_START_LEVEL) / GameConstants.LEVELS_PER_NEW_MOON + 1),
+                GameConstants.MAX_MOONS_CAP
+            )
+            if (moonShouldSpawn) {
+                // add a moon, skip adding a planet for this level
+                if (planetLocals.isNotEmpty()) {
+                    planetLocals.removeAt(planetLocals.lastIndex)
+                    planetRadiiList.removeAt(planetRadiiList.lastIndex)
+                }
+                for (mIdx in 0 until moonCount) {
+                    // random point around anchor, not too close to apple
+                    val orbitRadius = Random.nextFloat() * (MOON_ORBIT_RADIUS_MAX - MOON_ORBIT_RADIUS_MIN) + MOON_ORBIT_RADIUS_MIN
+                    val orbitSpeed = Random.nextFloat() * (MOON_ORBIT_SPEED_MAX - MOON_ORBIT_SPEED_MIN) + MOON_ORBIT_SPEED_MIN
+                    val orbitPhase = Random.nextFloat() * 2f * PI.toFloat()
+                    val moonRad = Random.nextFloat() * (GameConstants.MOON_TARGET_RADIUS_MAX - GameConstants.MOON_TARGET_RADIUS_MIN) + GameConstants.MOON_TARGET_RADIUS_MIN
+                    val moonMass = GameConstants.MOON_MASS_SCALE_FACTOR * moonRad.pow(2.0f)
+                    val theta = Random.nextFloat() * 2f * PI.toFloat()
+                    val phi = Random.nextFloat() * PI.toFloat() * 0.5f - (PI.toFloat() * 0.25f)
+                    val centerLocal = floatArrayOf(
+                        (orbitRadius + 0.5f) * cos(theta) * cos(phi),
+                        (orbitRadius + 0.5f) * sin(phi),
+                        (orbitRadius + 0.5f) * sin(theta) * cos(phi)
+                    )
+                    val centerWorld = anchorPose.transformPoint(centerLocal)
+                    val textureIdx = mIdx % kotlin.math.max(1, assetLoader.moonTextures.size)
+                    moons.add(Moon(centerWorld, orbitRadius, orbitSpeed, orbitPhase, moonMass, textureIdx, moonRad))
+                }
+            }
+        }
+
         Log.i(TAG, "Level generation complete. Apple OK. $planetsSuccessfullyPlaced/$numPlanetsToSpawn planets placed.")
         currentLevelCluster = LevelCluster(
             planetLocals = planetLocals,
             planetRadii = planetRadiiList,
             appleLocal = appleLocalPos,
-            appleRadius = appleRadius
+            appleRadius = appleRadius,
+            moons = moons
         )
     }
 
@@ -194,6 +236,13 @@ class LevelGenerator(private val assetLoader: AssetLoader) {
         val pose = anchorPose ?: return null
         val worldPos = pose.transformPoint(cluster.appleLocal)
         return Apple(worldPos, cluster.appleRadius)
+    }
+
+    fun getCurrentMoonsWorld(timeSeconds: Float): List<Moon> {
+        val cluster = currentLevelCluster ?: return emptyList()
+        return cluster.moons.map { moon ->
+            moon.copy(currentAngle = (moon.currentAngle + moon.orbitSpeed * timeSeconds) % (2 * Math.PI).toFloat())
+        }
     }
 
     fun clearLevelLayout() {
