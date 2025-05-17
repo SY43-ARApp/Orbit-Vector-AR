@@ -35,6 +35,7 @@ SY43 - P25
       <li>Partie finie quand les flèches sont épuisées</li>
       <li>Score sauvegardé en ligne dans une BDD</li>
       <li>Classement en ligne</li>
+      <li>Publication sur Playstore</li>
     </ul>
   </div>
 
@@ -464,34 +465,6 @@ $ \phi $ est l'angle aléatoire autour de l'ancre (vertical) <br>
  
 /vs
 
-#### Ajout des modèles et textures
-
-<div style="font-size: 1.5vw; line-height: 1.5;">
-<ul>
-  <li>Les modèles 3D (.obj) et textures sont importés et gérés dans le code pour chaque objet.</li>
-</ul>
-</div>
-
-<br>
-<div style="font-size: 1.5vw; margin-left: 2vw;">
-
-**Exemple**
-
-```kotlin
-val planetMesh = Mesh.createFromAsset(render, "models/apple.obj")
-val planetTexture = Texture.createFromAsset(render, "models/textures/apple_texture.jpg")
-```
-</div>
-
-/vs
-
-<div style="display: flex; justify-content: center; align-items: flex-start; gap: 2vw;">
-  <img src="img/ar_screens/place_textures_1.jpg" alt="screen repo template" style="width: 30%; height: auto;" />
-  <img src="img/ar_screens/place_textures_2.jpg" alt="screen repo template" style="width: 30%; height: auto;" />
-</div>
-
-/vs
-
 ### Physiques - Gravité et Attraction
 
 <div style="font-size: 1.5vw; line-height: 1.5;">
@@ -587,6 +560,34 @@ if (calculateDistanceSquared(arrow.position, currentApple.worldPosition) < colli
 </video>
 /vs
 
+#### Ajout des modèles et textures
+
+<div style="font-size: 1.5vw; line-height: 1.5;">
+<ul>
+  <li>Les modèles 3D (.obj) et textures sont importés et gérés dans le code pour chaque objet.</li>
+</ul>
+</div>
+
+<br>
+<div style="font-size: 1.5vw; margin-left: 2vw;">
+
+**Exemple**
+
+```kotlin
+val planetMesh = Mesh.createFromAsset(render, "models/apple.obj")
+val planetTexture = Texture.createFromAsset(render, "models/textures/apple_texture.jpg")
+```
+</div>
+
+/vs
+
+<div style="display: flex; justify-content: center; align-items: flex-start; gap: 2vw;">
+  <img src="img/ar_screens/place_textures_1.jpg" alt="screen repo template" style="width: 30%; height: auto;" />
+  <img src="img/ar_screens/place_textures_2.jpg" alt="screen repo template" style="width: 30%; height: auto;" />
+</div>
+
+/vs
+
 #### Prévisualisation trajectoire de la flèche
 
 
@@ -634,7 +635,6 @@ val appleClusterRadius = CLUSTER_MAX_RADIUS_APPLE + (level * 0.03f).coerceAtMost
   <li>Envoyer les scores à la BDD</li>
   <li>Intégrer changement de menu JetpackCompose -> Scene AR</li>
   <li>Améliorations et équilibrages</li>
-  <li>Publication sur Playstore</li>
 </ul>
 
 </div>
