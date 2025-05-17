@@ -171,4 +171,28 @@ class GameObjectRenderer(private val assetLoader: AssetLoader) {
         shader.setTexture("u_AlbedoTexture", assetLoader.arrowTexture)
         render.draw(assetLoader.arrowMesh, shader, framebuffer)
     }
+
+    fun drawMoons(
+        render: SampleRender,
+        moons: List<Moon>,
+        shader: Shader,
+        viewMatrix: FloatArray,
+        projectionMatrix: FloatArray,
+        framebuffer: Framebuffer
+    ) {
+        if (assetLoader.moonTextures.isEmpty()) return
+        moons.forEach { moon ->
+            val pos = moon.getWorldPosition()
+            Matrix.setIdentityM(modelMatrix, 0)
+            Matrix.translateM(modelMatrix, 0, pos[0], pos[1], pos[2])
+            val scaleFactor = moon.targetRadius / PLANET_MODEL_DEFAULT_RADIUS
+            Matrix.scaleM(modelMatrix, 0, scaleFactor, scaleFactor, scaleFactor)
+            Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0)
+            Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
+            shader.setMat4("u_ModelView", modelViewMatrix)
+            shader.setMat4("u_ModelViewProjection", modelViewProjectionMatrix)
+            shader.setTexture("u_AlbedoTexture", assetLoader.moonTextures[moon.textureIdx % assetLoader.moonTextures.size])
+            render.draw(assetLoader.planetMesh, shader, framebuffer)
+        }
+    }
 }

@@ -65,6 +65,24 @@ data class Apple(
     }
 }
 
+data class Moon(
+    var orbitCenter: FloatArray, 
+    var orbitRadius: Float, 
+    var orbitSpeed: Float, // radians/sec
+    var orbitPhase: Float, // Initial phase offset (radians)
+    var mass: Float,
+    var textureIdx: Int,
+    var targetRadius: Float,
+    var currentAngle: Float = 0f
+) {
+    fun getWorldPosition(): FloatArray {
+        val x = orbitCenter[0] + orbitRadius * kotlin.math.cos(currentAngle + orbitPhase)
+        val y = orbitCenter[1]
+        val z = orbitCenter[2] + orbitRadius * kotlin.math.sin(currentAngle + orbitPhase)
+        return floatArrayOf(x, y, z)
+    }
+}
+
 enum class PuzzleState {
     WAITING_FOR_ANCHOR,
     PLAYING,
@@ -83,5 +101,6 @@ data class LevelCluster(
     val planetLocals: List<Triple<FloatArray, Float, Int>>, // localPos, mass, textureIdx
     val planetRadii: List<Float>,
     val appleLocal: FloatArray,
-    val appleRadius: Float
+    val appleRadius: Float,
+    val moons: List<Moon> = emptyList() // Add moons to the cluster
 )

@@ -67,6 +67,7 @@ class PhysicsSimulator {
     fun simulateArrowTrajectory(
         startCamera: Camera,
         currentPlanets: List<Planet>,
+        currentMoons: List<Moon>,
         currentApple: Apple?,
         xOffset: Float = 0f
     ) {
@@ -105,6 +106,23 @@ class PhysicsSimulator {
                 val dist = sqrt(distSq)
                 if (dist > 0.0001f) {
                     val forceMagnitude = GRAVITY_CONSTANT * planet.mass * simulatedArrowMass / distSq
+                    simVelocity[0] += (forceMagnitude * dx / dist) * TRAJECTORY_SIMULATION_TIMESTEP
+                    simVelocity[1] += (forceMagnitude * dy / dist) * TRAJECTORY_SIMULATION_TIMESTEP
+                    simVelocity[2] += (forceMagnitude * dz / dist) * TRAJECTORY_SIMULATION_TIMESTEP
+                }
+            }
+            currentMoons.forEach { moon ->
+                val moonPos = moon.getWorldPosition()
+                val dx = moonPos[0] - simPosition[0]
+                val dy = moonPos[1] - simPosition[1]
+                val dz = moonPos[2] - simPosition[2]
+                var distSq = dx * dx + dy * dy + dz * dz
+                val minCollisionDistSq = (moon.targetRadius * 0.5f).pow(2)
+                if (distSq < minCollisionDistSq) distSq = minCollisionDistSq
+                distSq += 0.01f
+                val dist = sqrt(distSq)
+                if (dist > 0.0001f) {
+                    val forceMagnitude = GRAVITY_CONSTANT * moon.mass * simulatedArrowMass / distSq
                     simVelocity[0] += (forceMagnitude * dx / dist) * TRAJECTORY_SIMULATION_TIMESTEP
                     simVelocity[1] += (forceMagnitude * dy / dist) * TRAJECTORY_SIMULATION_TIMESTEP
                     simVelocity[2] += (forceMagnitude * dz / dist) * TRAJECTORY_SIMULATION_TIMESTEP
@@ -153,6 +171,7 @@ class PhysicsSimulator {
     fun updateGamePhysics(
         dt: Float,
         currentPlanets: List<Planet>,
+        currentMoons: List<Moon>,
         currentApple: Apple?,
         levelOriginAnchorPose: Pose?,
         gameState: GameState // To modify state on hit
@@ -175,6 +194,23 @@ class PhysicsSimulator {
                 val dist = sqrt(distSq)
                 if (dist > 0.0001f) {
                     val forceMagnitude = GRAVITY_CONSTANT * planet.mass * arrow.mass / distSq
+                    arrow.velocity[0] += (forceMagnitude * dx / dist) * dt
+                    arrow.velocity[1] += (forceMagnitude * dy / dist) * dt
+                    arrow.velocity[2] += (forceMagnitude * dz / dist) * dt
+                }
+            }
+            currentMoons.forEach { moon ->
+                val moonPos = moon.getWorldPosition()
+                val dx = moonPos[0] - arrow.position[0]
+                val dy = moonPos[1] - arrow.position[1]
+                val dz = moonPos[2] - arrow.position[2]
+                var distSq = dx * dx + dy * dy + dz * dz
+                val minCollisionDistSq = (moon.targetRadius * 0.5f).pow(2)
+                if (distSq < minCollisionDistSq) distSq = minCollisionDistSq
+                distSq += 0.01f
+                val dist = sqrt(distSq)
+                if (dist > 0.0001f) {
+                    val forceMagnitude = GRAVITY_CONSTANT * moon.mass * arrow.mass / distSq
                     arrow.velocity[0] += (forceMagnitude * dx / dist) * dt
                     arrow.velocity[1] += (forceMagnitude * dy / dist) * dt
                     arrow.velocity[2] += (forceMagnitude * dz / dist) * dt

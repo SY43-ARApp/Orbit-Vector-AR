@@ -237,10 +237,12 @@ class HelloArRenderer(val activity: HelloArActivity) :
         // Get current game elements based on anchor pose
         val currentPlanets = levelGenerator.getCurrentPlanetsWorld(anchorPose)
         val currentApple = levelGenerator.getCurrentAppleWorld(anchorPose)
+        val timeSeconds = (System.currentTimeMillis() % 1000000L) / 1000f
+        val currentMoons = levelGenerator.getCurrentMoonsWorld(timeSeconds)
 
         // Simulate trajectory only when playing
         if (gameState.state == PuzzleState.PLAYING && anchorIsTracking) {
-            physicsSimulator.simulateArrowTrajectory(camera, currentPlanets, currentApple, arrowYOffset)
+            physicsSimulator.simulateArrowTrajectory(camera, currentPlanets, currentMoons, currentApple, arrowYOffset)
         } else {
             physicsSimulator.clearTrajectory()
         }
@@ -275,7 +277,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
         // ----------------- Game logic
         var appleHit = false
         if (gameState.state == PuzzleState.PLAYING && anchorIsTracking) {
-            appleHit = physicsSimulator.updateGamePhysics(1f / 60f, currentPlanets, currentApple, anchorPose, gameState)
+            appleHit = physicsSimulator.updateGamePhysics(1f / 60f, currentPlanets, currentMoons, currentApple, anchorPose, gameState)
             if (appleHit) {
                 gameState.state = PuzzleState.VICTORY
             }
@@ -335,20 +337,19 @@ class HelloArRenderer(val activity: HelloArActivity) :
 
 
         if (anchorIsTracking && assetLoader.assetsLoaded) { 
-            if (gameState.state == PuzzleState.PLAYING && gameState.arrowsLeft > 0) {
-                val (readyPos, readyDir) = physicsSimulator.getReadyArrowPose(camera, arrowYOffset)
-                gameObjectRenderer.drawReadyArrow(render, readyPos, readyDir, virtualObjectShader, viewMatrix, projectionMatrix, virtualSceneFramebuffer)
-            }
-            // Draw Trajectory
-            if (gameState.state == PuzzleState.PLAYING) {
-                gameObjectRenderer.drawTrajectory(render, physicsSimulator.trajectoryPoints, virtualObjectShader, viewMatrix, projectionMatrix, virtualSceneFramebuffer)
-            }
+            // Draw Planets
+            gameObjectRenderer.drawPlanets(render, currentPlanets, virtualObjectShader, viewMatrix, projectionMatrix, virtualSceneFramebuffer)
+            // Draw Moons
+            gameObjectRenderer.drawMoons(render, currentMoons, virtualObjectShader, viewMatrix, projectionMatrix, virtualSceneFramebuffer)
             // Draw Apple
             gameObjectRenderer.drawApple(render, currentApple, virtualObjectShader, viewMatrix, projectionMatrix, virtualSceneFramebuffer)
             // Draw Arrows
             gameObjectRenderer.drawArrows(render, physicsSimulator.arrows, virtualObjectShader, viewMatrix, projectionMatrix, virtualSceneFramebuffer)
-            // Draw Planets
-            gameObjectRenderer.drawPlanets(render, currentPlanets, virtualObjectShader, viewMatrix, projectionMatrix, virtualSceneFramebuffer)
+            // Draw Trajectory
+            gameObjectRenderer.drawTrajectory(render, physicsSimulator.trajectoryPoints, virtualObjectShader, viewMatrix, projectionMatrix, virtualSceneFramebuffer)
+            // Draw Ready arrow
+            val (readyArrowPos, readyArrowDir) = physicsSimulator.getReadyArrowPose(camera, arrowYOffset)
+            gameObjectRenderer.drawReadyArrow(render, readyArrowPos, readyArrowDir, virtualObjectShader, viewMatrix, projectionMatrix, virtualSceneFramebuffer)
         }
 
         // --- Composite virtual scene with camera feed ---

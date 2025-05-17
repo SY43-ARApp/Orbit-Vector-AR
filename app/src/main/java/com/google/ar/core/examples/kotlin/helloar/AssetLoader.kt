@@ -17,6 +17,7 @@ class AssetLoader {
     lateinit var trajectoryDotMesh: Mesh
 
     val planetTextures: MutableList<Texture> = mutableListOf()
+    val moonTextures: MutableList<Texture> = mutableListOf()
     lateinit var appleTexture: Texture
     lateinit var arrowTexture: Texture
     lateinit var trajectoryDotTexture: Texture
@@ -45,8 +46,23 @@ class AssetLoader {
                 )
             )
         }
+        // load moon textures
+        moonTextures.clear()
+        GameConstants.MOON_TEXTURE_FILES.forEach {
+            moonTextures.add(
+                Texture.createFromAsset(
+                    render,
+                    it,
+                    Texture.WrapMode.REPEAT,
+                    Texture.ColorFormat.SRGB
+                )
+            )
+        }
         if (planetTextures.isEmpty()) {
             Log.e(TAG, "No planet textures loaded! Will crash bc nobody added fallback lol.")
+        }
+        if (moonTextures.isEmpty()) {
+            Log.e(TAG, "No moon textures loaded! Will crash if moons are used.")
         }
 
         // load apple texture
