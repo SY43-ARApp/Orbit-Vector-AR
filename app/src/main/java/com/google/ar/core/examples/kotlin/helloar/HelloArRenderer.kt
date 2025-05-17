@@ -261,6 +261,36 @@ class HelloArRenderer(val activity: HelloArActivity) :
         return false
     }
 
+    private var anchorWasLostFrames = 0
+    private val ANCHOR_LOST_RESET_THRESHOLD = 120 // 2 seconds at 60fps
+
+    private fun attemptCreateLevelAnchorOnce(session: Session, camera: Camera): Boolean {
+        if (levelOriginAnchor != null && levelOriginAnchor!!.trackingState == TrackingState.TRACKING) {
+            return true
+        }
+        // recreate anchor if lsot
+        if (levelOriginAnchor == null || anchorWasLostFrames > ANCHOR_LOST_RESET_THRESHOLD) {
+            levelOriginAnchor?.detach()
+            levelOriginAnchor = null
+
+            if (camera.trackingState == TrackingState.TRACKING && framesSinceTrackingStable >= MIN_TRACKING_FRAMES_FOR_ANCHOR_PLACEMENT) {
+                val cameraPose = camera.pose
+                val translationInCameraFrame = floatArrayOf(0f, LEVEL_ANCHOR_DISTANCE_UP, -LEVEL_ANCHOR_DISTANCE_FORWARD)
+                val anchorPoseInWorld = cameraPose.compose(Pose.makeTranslation(translationInCameraFrame))
+                try {
+                    levelOriginAnchor = session.createAnchor(anchorPoseInWorld)
+                    Log.i(TAG, "Level anchor created at ${anchorPoseInWorld.translation.joinToString()}")
+                    anchorWasLostFrames = 0
+                    return true
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to create level anchor", e)
+                    return false
+                }
+            }
+        }
+        return false
+    }
+
     private fun generateLevelLayout(anchor: Anchor, numPlanetsToSpawn: Int) {
         Log.i(TAG, "Generating level layout for $numPlanetsToSpawn planets around anchor for level ${gameState.level}")
         arrows.clear()
@@ -405,7 +435,8 @@ class HelloArRenderer(val activity: HelloArActivity) :
 
     private fun resetLevel(session: Session, camera: Camera?) {
         Log.i(TAG, "Resetting level ${gameState.level}")
-        if (camera != null && attemptCreateLevelAnchor(session, camera)) {
+        // Only create anchor if needed
+        if (camera != null && attemptCreateLevelAnchorOnce(session, camera)) {
             levelOriginAnchor?.let { anchor ->
                 if (anchor.trackingState == TrackingState.TRACKING) {
                     val additionalPlanets = if (gameState.level <= 1) 0 else (gameState.level - 1) / LEVELS_PER_NEW_PLANET
@@ -531,9 +562,28 @@ class HelloArRenderer(val activity: HelloArActivity) :
         val frame = try { localSession.update() } catch (e: CameraNotAvailableException) { Log.e(TAG, "Camera not available", e); showError("Camera error."); return }
         val camera = frame.camera
 
-        if (camera.trackingState == TrackingState.TRACKING) { if (framesSinceTrackingStable < MIN_TRACKING_FRAMES_FOR_ANCHOR_PLACEMENT + 10) framesSinceTrackingStable++ } 
-        else { framesSinceTrackingStable = 0; if (gameState.state == PuzzleState.PLAYING) { Log.w(TAG, "Tracking lost during play."); gameState.state = PuzzleState.WAITING_FOR_ANCHOR } }
-        if (gameState.state == PuzzleState.WAITING_FOR_ANCHOR) { if (attemptCreateLevelAnchor(localSession, camera)) { resetLevel(localSession, camera) } }
+        // --- Anchor tracking logic ---
+        if (levelOriginAnchor != null && levelOriginAnchor!!.trackingState != TrackingState.TRACKING) {
+            anchorWasLostFrames++
+        } else {
+            anchorWasLostFrames = 0
+        }
+
+        if (camera.trackingState == TrackingState.TRACKING) { 
+            if (framesSinceTrackingStable < MIN_TRACKING_FRAMES_FOR_ANCHOR_PLACEMENT + 10) framesSinceTrackingStable++ 
+        } else { 
+            framesSinceTrackingStable = 0
+            if (gameState.state == PuzzleState.PLAYING) { 
+                Log.w(TAG, "Tracking lost during play."); gameState.state = PuzzleState.WAITING_FOR_ANCHOR 
+            }
+        }
+
+        // Only create anchor if none exists or lost for a while
+        if (gameState.state == PuzzleState.WAITING_FOR_ANCHOR) { 
+            if (attemptCreateLevelAnchorOnce(localSession, camera)) { 
+                resetLevel(localSession, camera) 
+            } 
+        }
 
         val anchorTracked = levelOriginAnchor != null && levelOriginAnchor!!.trackingState == TrackingState.TRACKING
 
@@ -654,9 +704,19 @@ class HelloArRenderer(val activity: HelloArActivity) :
         if (camera.trackingState != TrackingState.TRACKING) return
         activity.view.tapHelper.poll()?.let { _ ->
             if (gameState.state == PuzzleState.PLAYING) launchArrow(camera)
-            else if (gameState.state == PuzzleState.DEFEAT) { Log.i(TAG, "Tap in DEFEAT state."); gameState.level = 1; gameState.score = 0; resetLevel(session!!, camera) } 
-            else if (gameState.state == PuzzleState.WAITING_FOR_ANCHOR) { Log.d(TAG, "Tap while waiting for anchor.")
-                 if (attemptCreateLevelAnchor(session!!, camera)) resetLevel(session!!, camera) else activity.view.snackbarHelper.showMessage(activity, "Still trying...")
+            else if (gameState.state == PuzzleState.DEFEAT) { 
+                Log.i(TAG, "Tap in DEFEAT state."); 
+                gameState.level = 1; 
+                gameState.score = 0; 
+                levelOriginAnchor?.detach()
+                levelOriginAnchor = null
+                anchorWasLostFrames = 0
+                resetLevel(session!!, camera) 
+            } 
+            else if (gameState.state == PuzzleState.WAITING_FOR_ANCHOR) { 
+                Log.d(TAG, "Tap while waiting for anchor.")
+                if (attemptCreateLevelAnchorOnce(session!!, camera)) resetLevel(session!!, camera) 
+                else activity.view.snackbarHelper.showMessage(activity, "Still trying...")
             }
         }
     }
