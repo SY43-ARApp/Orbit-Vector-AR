@@ -29,11 +29,13 @@ class EndScreenActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val score = intent.getIntExtra("score", 0)
         val points = intent.getIntExtra("points", 0)
+        AudioManager.playSfx("gameover")
         setContent {
             OrbitVectorARTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     EndScreen(score = score, points = points, onHome = {
                         startActivity(Intent(this, MenuScreenActivity::class.java))
+                        AudioManager.playSfx("tap")
                         finish()
                     })
                 }

@@ -118,6 +118,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
             // Initialize managers
             levelGenerator = LevelGenerator(assetLoader)
             gameObjectRenderer = GameObjectRenderer(assetLoader)
+            AudioManager.playBackground(R.raw.gamebgmusic)
             Log.i(TAG, "Dependent managers initialized.")
 
             // ARCore rendering setup
@@ -280,6 +281,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
             appleHit = physicsSimulator.updateGamePhysics(1f / 60f, currentPlanets, currentMoons, currentApple, anchorPose, gameState)
             if (appleHit) {
                 gameState.state = PuzzleState.VICTORY
+                AudioManager.playSfx("victory")
             }
         }
 
@@ -290,6 +292,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
             val intent = android.content.Intent(activity, EndScreenActivity::class.java)
             intent.putExtra("score", gameState.level)
             intent.putExtra("points", gameState.points)
+            AudioManager.stopBackground()
             activity.startActivity(intent)
             activity.finish()
             return
@@ -384,7 +387,6 @@ class HelloArRenderer(val activity: HelloArActivity) :
             resetLevel(localSession, camera)
         } else if (gameState.state == PuzzleState.DEFEAT) {
             Log.i(TAG, "Defeat on Level ${gameState.level}.")
-            //TODO: HANDLE END GAME
         }
 
         // -- UI
@@ -426,6 +428,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
                     if (anchorManager.isAnchorTracking() && gameState.arrowsLeft > 0) {
                         physicsSimulator.launchArrow(camera, gameState, arrowYawOffset)
                         updateUIText()
+                        AudioManager.playSfx("arrow")
                     } else if (!anchorManager.isAnchorTracking()){
                          activity.view.snackbarHelper.showMessage(activity, "Wait for stable tracking to shoot.")
                     } else {
@@ -434,7 +437,6 @@ class HelloArRenderer(val activity: HelloArActivity) :
                 }
                 PuzzleState.DEFEAT -> {
                     Log.i(TAG, "Tap in DEFEAT state. Resetting game.")
-                    //TODO HANDLE END GAME
                 }
                 PuzzleState.WAITING_FOR_ANCHOR -> {
                     Log.d(TAG, "Tap while WAITING_FOR_ANCHOR.")

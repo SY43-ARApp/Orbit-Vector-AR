@@ -270,6 +270,7 @@ class PhysicsSimulator {
             // Stop arrow if it collides with any object
             if (checkCollision(arrow.position, currentPlanets, currentMoons, currentApple)) {
                 arrow.active = false
+                AudioManager.playSfx("arrowhit")
                 if (currentApple != null && MathUtils.calculateDistanceSquared(arrow.position, currentApple.worldPosition) < (ARROW_VISUAL_AND_COLLISION_RADIUS + currentApple.targetRadius).pow(2)) {
                     appleHitThisFrame = true
                 }
