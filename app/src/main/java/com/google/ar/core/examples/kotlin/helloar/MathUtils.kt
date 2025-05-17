@@ -73,4 +73,15 @@ object MathUtils {
         val angleDeg = (angleRad * 180.0 / PI).toFloat()
         Matrix.setRotateM(outMatrix, 0, angleDeg, axis[0], axis[1], axis[2])
     }
+
+    fun rotateVectorYaw(vec: FloatArray, yawRad: Float): FloatArray {
+        // rotates a 3D vector around the Y axis by yawRad radians
+        val cos = kotlin.math.cos(yawRad)
+        val sin = kotlin.math.sin(yawRad)
+        return floatArrayOf(
+            vec[0] * cos - vec[2] * sin,
+            vec[1],
+            vec[0] * sin + vec[2] * cos
+        )
+    }
 }

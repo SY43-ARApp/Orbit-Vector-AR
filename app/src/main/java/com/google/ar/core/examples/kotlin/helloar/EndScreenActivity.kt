@@ -29,6 +29,7 @@ class EndScreenActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val score = intent.getIntExtra("score", 0)
         val points = intent.getIntExtra("points", 0)
+        AudioManager.playSfx("gameover")
         setContent {
             OrbitVectorARTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -90,8 +91,11 @@ fun EndScreen(score: Int, points: Int, onHome: () -> Unit) {
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 80.dp)
-                .size(120.dp)
-                .clickable { onHome() }
+                .size(120.dp)  
+                .clickable {  
+                    AudioManager.playSfx("tap")
+                    onHome() 
+                }
         )
     }
 }

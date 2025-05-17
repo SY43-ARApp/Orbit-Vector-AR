@@ -46,10 +46,24 @@ import com.google.ar.core.examples.kotlin.helloar.ui.theme.OrbitVectorARTheme
 class TitleScreenActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        AudioManager.init(this)
+
+        // first time user
+        val prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val isFirstTime = prefs.getBoolean("first_time", true)
+        if (false) { // debug skip
+            prefs.edit().putBoolean("first_time", false).apply()
+            startActivity(Intent(this, HelloArActivity::class.java))
+            finish()
+            return
+        }
+
         setContent {
             OrbitVectorARTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     TitleScreen(onTap = {
+                        AudioManager.playSfx("titletap")
                         startActivity(Intent(this, MenuScreenActivity::class.java))
                         finish()
                     })

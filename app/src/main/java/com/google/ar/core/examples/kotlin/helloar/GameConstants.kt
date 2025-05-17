@@ -8,8 +8,8 @@ object GameConstants {
     const val ANCHOR_LOST_RESET_THRESHOLD = 120
 
     // --- LEVEL GENERATION ---
-    const val MAX_PLANETS_CAP = 50
-    const val INITIAL_PLANET_COUNT = 2
+    const val MAX_PLANETS_CAP = 25
+    const val INITIAL_PLANET_COUNT = 3
     const val LEVELS_PER_NEW_PLANET = 1
 
     // --- CLUSTER GENERATION ---
@@ -63,7 +63,7 @@ object GameConstants {
 
     // --- Arrow spawn/visual constants ---
     const val SPAWN_OFFSET_FORWARD = 0.6f
-    const val SPAWN_OFFSET_DOWN = 0.4f
+    const val SPAWN_OFFSET_DOWN = 0.35f
     const val MAX_X_OFFSET = 0.2f
 
     // --- MOON SYSTEM ---
