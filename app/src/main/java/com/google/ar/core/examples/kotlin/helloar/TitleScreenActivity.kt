@@ -181,7 +181,7 @@ fun TitleScreen(onTap: () -> Unit) {
             Image(
                 painter = painterResource(id = R.drawable.app_title),
                 contentDescription = "Title Logo",
-                modifier = Modifier.size(240.dp)
+                modifier = Modifier.size(350.dp)
             )
 
             Spacer(modifier = Modifier.weight(1f))
