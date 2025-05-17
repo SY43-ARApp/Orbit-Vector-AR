@@ -140,4 +140,35 @@ class GameObjectRenderer(private val assetLoader: AssetLoader) {
             render.draw(assetLoader.trajectoryDotMesh, shader, framebuffer)
         }
     }
+
+    fun drawReadyArrow(
+        render: SampleRender,
+        position: FloatArray,
+        direction: FloatArray,
+        shader: Shader,
+        viewMatrix: FloatArray,
+        projectionMatrix: FloatArray,
+        framebuffer: Framebuffer
+    ) {
+        val scaleFactor = ARROW_VISUAL_AND_COLLISION_RADIUS / ARROW_MODEL_DEFAULT_RADIUS
+        Matrix.setIdentityM(modelMatrix, 0)
+        Matrix.translateM(modelMatrix, 0, position[0], position[1], position[2])
+        // rotate arrow to match direction
+        val dir = direction.clone()
+        val length = Matrix.length(dir[0], dir[1], dir[2])
+        if (length > 0.001f) {
+            dir[0] /= length; dir[1] /= length; dir[2] /= length
+            val defaultForward = floatArrayOf(0f, 0f, 1f) // arrow model points +Z
+            MathUtils.rotationMatrixFromTo(defaultForward, dir, rotationMatrix)
+            Matrix.multiplyMM(tempMatrix, 0, modelMatrix, 0, rotationMatrix, 0)
+            System.arraycopy(tempMatrix, 0, modelMatrix, 0, 16)
+        }
+        Matrix.scaleM(modelMatrix, 0, scaleFactor, scaleFactor, scaleFactor)
+        Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0)
+        Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
+        shader.setMat4("u_ModelView", modelViewMatrix)
+        shader.setMat4("u_ModelViewProjection", modelViewProjectionMatrix)
+        shader.setTexture("u_AlbedoTexture", assetLoader.arrowTexture)
+        render.draw(assetLoader.arrowMesh, shader, framebuffer)
+    }
 }

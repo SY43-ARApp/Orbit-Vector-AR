@@ -33,15 +33,16 @@ object GameConstants {
 
     // --- PHYSICS AND GAMEPLAY ---
     const val PLANET_MASS_SCALE_FACTOR = 4500.0f
-    const val ARROW_LAUNCH_SPEED = 7.0f
+    const val ARROW_LAUNCH_SPEED = 10.0f
     const val ARROW_MASS = 0.5f
-    const val GRAVITY_CONSTANT = 0.05f
+    var GRAVITY_CONSTANT = 0.05f
     const val INITIAL_ARROWS_PER_LEVEL = 10
 
     // --- TRAJECTORY SIMULATION ---
-    const val TRAJECTORY_SIMULATION_START_AT_STEP = 8
-    const val TRAJECTORY_SIMULATION_STEPS = 70
-    const val TRAJECTORY_SIMULATION_TIMESTEP = 0.015f
+    const val TRAJECTORY_SIMULATION_START_AT_STEP = 2
+    var TRAJECTORY_SIMULATION_STEPS = 70 
+    var TRAJECTORY_SIMULATION_TIMESTEP = 0.10f
+    const val MAX_TRAJECTORY_DISTANCE = 15.0f
 
     // --- ASSET PATHS ---
     val PLANET_TEXTURE_FILES = listOf(
@@ -59,4 +60,9 @@ object GameConstants {
     const val APPLE_OBJ_FILE = "models/apple.obj"
     const val ARROW_OBJ_FILE = "models/arrow.obj"
     const val TRAJECTORY_DOT_OBJ_FILE = "models/trajectory_dot.obj"
+
+    // --- Arrow spawn/visual constants ---
+    const val SPAWN_OFFSET_FORWARD = 0.6f
+    const val SPAWN_OFFSET_DOWN = 0.4f
+    const val MAX_X_OFFSET = 0.2f
 }

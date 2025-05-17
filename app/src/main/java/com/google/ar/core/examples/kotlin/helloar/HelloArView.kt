@@ -54,6 +54,24 @@ class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
   val snackbarHelper = SnackbarHelper()
   val tapHelper = TapHelper(activity).also { surfaceView.setOnTouchListener(it) }
 
+  val arrowXSlider = root.findViewById<android.widget.SeekBar>(R.id.arrow_x_slider)
+  var arrowYOffset: Float = 0f
+  init {
+    arrowXSlider?.let { slider ->
+      slider.max = (GameConstants.MAX_X_OFFSET * 200).toInt() 
+      slider.progress = slider.max / 2
+      slider.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+        override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
+          // Map progress 0..max to -MAX_X_OFFSET..+MAX_X_OFFSET
+          val maxOffset = GameConstants.MAX_X_OFFSET
+          arrowYOffset = (progress - slider.max / 2) * (2 * maxOffset) / slider.max
+        }
+        override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
+        override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
+      })
+    }
+  }
+
   override fun onResume(owner: LifecycleOwner) {
     surfaceView.onResume()
   }

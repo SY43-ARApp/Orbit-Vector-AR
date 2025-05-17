@@ -240,7 +240,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
 
         // Simulate trajectory only when playing
         if (gameState.state == PuzzleState.PLAYING && anchorIsTracking) {
-            physicsSimulator.simulateArrowTrajectory(camera, currentPlanets, currentApple)
+            physicsSimulator.simulateArrowTrajectory(camera, currentPlanets, currentApple, arrowYOffset)
         } else {
             physicsSimulator.clearTrajectory()
         }
@@ -335,6 +335,10 @@ class HelloArRenderer(val activity: HelloArActivity) :
 
 
         if (anchorIsTracking && assetLoader.assetsLoaded) { 
+            if (gameState.state == PuzzleState.PLAYING && gameState.arrowsLeft > 0) {
+                val (readyPos, readyDir) = physicsSimulator.getReadyArrowPose(camera, arrowYOffset)
+                gameObjectRenderer.drawReadyArrow(render, readyPos, readyDir, virtualObjectShader, viewMatrix, projectionMatrix, virtualSceneFramebuffer)
+            }
             // Draw Trajectory
             if (gameState.state == PuzzleState.PLAYING) {
                 gameObjectRenderer.drawTrajectory(render, physicsSimulator.trajectoryPoints, virtualObjectShader, viewMatrix, projectionMatrix, virtualSceneFramebuffer)
@@ -403,19 +407,21 @@ class HelloArRenderer(val activity: HelloArActivity) :
         updateUIText()
     }
 
+    // Helper to get the current vertical offset from the view's slider
+    private val arrowYOffset: Float
+        get() = activity.view.arrowYOffset
+
     private fun handleTap(frame: Frame, camera: Camera, session: Session) {
         if (camera.trackingState != TrackingState.TRACKING) return
-
         activity.view.tapHelper.poll()?.let { tap ->
             when (gameState.state) {
                 PuzzleState.PLAYING -> {
                     if (anchorManager.isAnchorTracking() && gameState.arrowsLeft > 0) {
-                        physicsSimulator.launchArrow(camera, gameState)
+                        physicsSimulator.launchArrow(camera, gameState, arrowYOffset)
                         updateUIText()
                     } else if (!anchorManager.isAnchorTracking()){
                          activity.view.snackbarHelper.showMessage(activity, "Wait for stable tracking to shoot.")
-                    } else
-                    {
+                    } else {
 
                     }
                 }

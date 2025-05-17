@@ -18,61 +18,62 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:scaleY="1"
     tools:context="com.google.ar.core.examples.java.helloar.HelloArActivity">
 
-  <android.opengl.GLSurfaceView
-      android:id="@+id/surfaceview"
-      android:layout_width="fill_parent"
-      android:layout_height="fill_parent"
-      android:layout_gravity="top" />
+    <android.opengl.GLSurfaceView
+        android:id="@+id/surfaceview"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_gravity="top" />
 
-  <ImageButton
-      android:id="@+id/settings_button"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_alignParentTop="true"
-      android:layout_alignParentEnd="true"
-      android:layout_margin="25dp"
-      android:background="@android:color/transparent"
-      android:src="@drawable/ic_settings" />
+    <ImageButton
+        android:id="@+id/settings_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="25dp"
+        android:background="@android:color/transparent"
+        android:src="@drawable/ic_settings" />
 
     <TextView
         android:id="@+id/level_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:text="Level X"
+        android:fontFamily="@font/quicksand"
         android:gravity="center"
-        android:textColor="#FFF1F1"
-        android:textSize="34sp"
         android:shadowColor="#CC000000"
         android:shadowDx="2"
         android:shadowDy="2"
         android:shadowRadius="4"
-        android:fontFamily="@font/quicksand" />
+        android:text="Level X"
+        android:textColor="#FFF1F1"
+        android:textSize="34sp" />
 
     <LinearLayout
         android:id="@+id/arrows_left_container"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_below="@id/level_text"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
 
         <TextView
             android:id="@+id/arrows_left_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="10"
-            android:textColor="#FFF1F1"
-            android:textSize="28sp"
+            android:fontFamily="@font/quicksand"
             android:gravity="center"
             android:shadowColor="#CC000000"
             android:shadowDx="2"
             android:shadowDy="2"
             android:shadowRadius="4"
-            android:fontFamily="@font/quicksand" />
+            android:text="10"
+            android:textColor="#FFF1F1"
+            android:textSize="28sp" />
 
         <ImageView
             android:id="@+id/arrows_left_icon"
@@ -81,5 +82,25 @@
             android:layout_marginStart="8dp"
             android:src="@drawable/arrow_icon" />
     </LinearLayout>
+
+    <SeekBar
+        android:id="@+id/arrow_x_slider"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="18dp"
+        android:background="@drawable/slider"
+        android:backgroundTint="#FFF9EE"
+        android:contentDescription="Adjust arrow launch X position"
+        android:elevation="8dp"
+        android:max="200"
+        android:progress="100"
+        android:progressDrawable="@drawable/empty"
+        android:scaleY="1.0"
+        android:splitTrack="false"
+        android:thumb="@drawable/slider_carret"
+        android:thumbTint="@null" />
 
 </RelativeLayout>
