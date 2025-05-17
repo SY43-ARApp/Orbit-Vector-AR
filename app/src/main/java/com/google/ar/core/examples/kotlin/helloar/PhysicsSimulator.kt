@@ -25,21 +25,21 @@ class PhysicsSimulator {
     val arrows: MutableList<Arrow> = mutableListOf()
     val trajectoryPoints: MutableList<FloatArray> = mutableListOf()
 
-    fun getReadyArrowPose(camera: Camera, xOffset: Float = 0f): Pair<FloatArray, FloatArray> {
+    fun getReadyArrowPose(camera: Camera, yawOffset: Float = 0f): Pair<FloatArray, FloatArray> {
         val camPose = camera.pose
         val forward = FloatArray(3).apply { camPose.getTransformedAxis(2, -1f, this, 0) }
         val up = FloatArray(3).apply { camPose.getTransformedAxis(1, 1f, this, 0) }
         val right = FloatArray(3).apply { camPose.getTransformedAxis(0, 1f, this, 0) }
-        val horizontalOffset = xOffset.coerceIn(-MAX_X_OFFSET, MAX_X_OFFSET)
         val startPosition = floatArrayOf(
-            camPose.tx() + forward[0] * SPAWN_OFFSET_FORWARD + up[0] * horizontalOffset + right[0] * SPAWN_OFFSET_DOWN,
-            camPose.ty() + forward[1] * SPAWN_OFFSET_FORWARD + up[1] * horizontalOffset + right[1] * SPAWN_OFFSET_DOWN,
-            camPose.tz() + forward[2] * SPAWN_OFFSET_FORWARD + up[2] * horizontalOffset + right[2] * SPAWN_OFFSET_DOWN
+            camPose.tx() + forward[0] * SPAWN_OFFSET_FORWARD + right[0] * SPAWN_OFFSET_DOWN,
+            camPose.ty() + forward[1] * SPAWN_OFFSET_FORWARD + right[1] * SPAWN_OFFSET_DOWN,
+            camPose.tz() + forward[2] * SPAWN_OFFSET_FORWARD + right[2] * SPAWN_OFFSET_DOWN
         )
-        return Pair(startPosition, forward)
+        val rotatedForward = MathUtils.rotateVectorYaw(forward, yawOffset)
+        return Pair(startPosition, rotatedForward)
     }
 
-    fun launchArrow(camera: Camera, gameState: GameState, xOffset: Float = 0f) {
+    fun launchArrow(camera: Camera, gameState: GameState, yawOffset: Float = 0f) {
         if (gameState.arrowsLeft <= 0) {
             Log.d(TAG, "No arrows left to launch.")
             return
@@ -48,16 +48,16 @@ class PhysicsSimulator {
         val forward = FloatArray(3).apply { camPose.getTransformedAxis(2, -1f, this, 0) }
         val up = FloatArray(3).apply { camPose.getTransformedAxis(1, 1f, this, 0) }
         val right = FloatArray(3).apply { camPose.getTransformedAxis(0, 1f, this, 0) }
-        val horizontalOffset = xOffset.coerceIn(-MAX_X_OFFSET, MAX_X_OFFSET)
         val startPosition = floatArrayOf(
-            camPose.tx() + forward[0] * SPAWN_OFFSET_FORWARD + up[0] * horizontalOffset + right[0] * SPAWN_OFFSET_DOWN,
-            camPose.ty() + forward[1] * SPAWN_OFFSET_FORWARD + up[1] * horizontalOffset + right[1] * SPAWN_OFFSET_DOWN,
-            camPose.tz() + forward[2] * SPAWN_OFFSET_FORWARD + up[2] * horizontalOffset + right[2] * SPAWN_OFFSET_DOWN
+            camPose.tx() + forward[0] * SPAWN_OFFSET_FORWARD + right[0] * SPAWN_OFFSET_DOWN,
+            camPose.ty() + forward[1] * SPAWN_OFFSET_FORWARD + right[1] * SPAWN_OFFSET_DOWN,
+            camPose.tz() + forward[2] * SPAWN_OFFSET_FORWARD + right[2] * SPAWN_OFFSET_DOWN
         )
+        val rotatedForward = MathUtils.rotateVectorYaw(forward, yawOffset)
         val startVelocity = floatArrayOf(
-            forward[0] * ARROW_LAUNCH_SPEED,
-            forward[1] * ARROW_LAUNCH_SPEED,
-            forward[2] * ARROW_LAUNCH_SPEED
+            rotatedForward[0] * ARROW_LAUNCH_SPEED,
+            rotatedForward[1] * ARROW_LAUNCH_SPEED,
+            rotatedForward[2] * ARROW_LAUNCH_SPEED
         )
         arrows.add(Arrow(startPosition.copyOf(), startVelocity.copyOf(), ARROW_MASS, true, System.currentTimeMillis()))
         gameState.arrowsLeft--
@@ -69,24 +69,24 @@ class PhysicsSimulator {
         currentPlanets: List<Planet>,
         currentMoons: List<Moon>,
         currentApple: Apple?,
-        xOffset: Float = 0f
+        yawOffset: Float = 0f
     ) {
         // --- Simulate the full path with fine steps ---
         val camPose = startCamera.pose
         val forward = FloatArray(3).apply { camPose.getTransformedAxis(2, -1f, this, 0) }
         val up = FloatArray(3).apply { camPose.getTransformedAxis(1, 1f, this, 0) }
         val right = FloatArray(3).apply { camPose.getTransformedAxis(0, 1f, this, 0) }
-        val horizontalOffset = xOffset.coerceIn(-MAX_X_OFFSET, MAX_X_OFFSET)
         val simPosition = floatArrayOf(
-            camPose.tx() + forward[0] * SPAWN_OFFSET_FORWARD + up[0] * horizontalOffset + right[0] * SPAWN_OFFSET_DOWN,
-            camPose.ty() + forward[1] * SPAWN_OFFSET_FORWARD + up[1] * horizontalOffset + right[1] * SPAWN_OFFSET_DOWN,
-            camPose.tz() + forward[2] * SPAWN_OFFSET_FORWARD + up[2] * horizontalOffset + right[2] * SPAWN_OFFSET_DOWN
+            camPose.tx() + forward[0] * SPAWN_OFFSET_FORWARD + right[0] * SPAWN_OFFSET_DOWN,
+            camPose.ty() + forward[1] * SPAWN_OFFSET_FORWARD + right[1] * SPAWN_OFFSET_DOWN,
+            camPose.tz() + forward[2] * SPAWN_OFFSET_FORWARD + right[2] * SPAWN_OFFSET_DOWN
         )
         val startPosition = simPosition.copyOf()
+        val rotatedForward = MathUtils.rotateVectorYaw(forward, yawOffset)
         val simVelocity = floatArrayOf(
-            forward[0] * ARROW_LAUNCH_SPEED,
-            forward[1] * ARROW_LAUNCH_SPEED,
-            forward[2] * ARROW_LAUNCH_SPEED
+            rotatedForward[0] * ARROW_LAUNCH_SPEED,
+            rotatedForward[1] * ARROW_LAUNCH_SPEED,
+            rotatedForward[2] * ARROW_LAUNCH_SPEED
         )
         val simulatedArrowMass = ARROW_MASS
         val oversampleSteps = GameConstants.TRAJECTORY_SIMULATION_STEPS * 10

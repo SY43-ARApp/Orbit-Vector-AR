@@ -242,7 +242,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
 
         // Simulate trajectory only when playing
         if (gameState.state == PuzzleState.PLAYING && anchorIsTracking) {
-            physicsSimulator.simulateArrowTrajectory(camera, currentPlanets, currentMoons, currentApple, arrowYOffset)
+            physicsSimulator.simulateArrowTrajectory(camera, currentPlanets, currentMoons, currentApple, arrowYawOffset)
         } else {
             physicsSimulator.clearTrajectory()
         }
@@ -354,7 +354,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
             // Draw Trajectory
             gameObjectRenderer.drawTrajectory(render, physicsSimulator.trajectoryPoints, virtualObjectShader, viewMatrix, projectionMatrix, virtualSceneFramebuffer)
             // Draw Ready arrow
-            val (readyArrowPos, readyArrowDir) = physicsSimulator.getReadyArrowPose(camera, arrowYOffset)
+            val (readyArrowPos, readyArrowDir) = physicsSimulator.getReadyArrowPose(camera, arrowYawOffset)
             gameObjectRenderer.drawReadyArrow(render, readyArrowPos, readyArrowDir, virtualObjectShader, viewMatrix, projectionMatrix, virtualSceneFramebuffer)
         }
 
@@ -414,9 +414,8 @@ class HelloArRenderer(val activity: HelloArActivity) :
         updateUIText()
     }
 
-    // Helper to get the current vertical offset from the view's slider
-    private val arrowYOffset: Float
-        get() = activity.view.arrowYOffset
+    private val arrowYawOffset: Float
+        get() = activity.view.arrowYawOffset
 
     private fun handleTap(frame: Frame, camera: Camera, session: Session) {
         if (camera.trackingState != TrackingState.TRACKING) return
@@ -424,7 +423,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
             when (gameState.state) {
                 PuzzleState.PLAYING -> {
                     if (anchorManager.isAnchorTracking() && gameState.arrowsLeft > 0) {
-                        physicsSimulator.launchArrow(camera, gameState, arrowYOffset)
+                        physicsSimulator.launchArrow(camera, gameState, arrowYawOffset)
                         updateUIText()
                     } else if (!anchorManager.isAnchorTracking()){
                          activity.view.snackbarHelper.showMessage(activity, "Wait for stable tracking to shoot.")

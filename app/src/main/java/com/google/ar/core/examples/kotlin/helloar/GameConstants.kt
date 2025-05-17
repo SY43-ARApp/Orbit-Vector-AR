@@ -63,7 +63,7 @@ object GameConstants {
 
     // --- Arrow spawn/visual constants ---
     const val SPAWN_OFFSET_FORWARD = 0.6f
-    const val SPAWN_OFFSET_DOWN = 0.4f
+    const val SPAWN_OFFSET_DOWN = 0.35f
     const val MAX_X_OFFSET = 0.2f
 
     // --- MOON SYSTEM ---
