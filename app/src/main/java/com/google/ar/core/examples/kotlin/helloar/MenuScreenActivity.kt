@@ -11,11 +11,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -57,13 +57,25 @@ fun MenuScreen(
     // --- font
     val font = DisketFont
 
+    // --- music/sfx state
+    var musicEnabled by remember { mutableStateOf(AudioManager.isMusicEnabled()) }
+    var sfxEnabled by remember { mutableStateOf(AudioManager.isSfxEnabled()) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
     ) {
         // --- parallax
         ParallaxBackground()
-        AudioManager.playBackground(R.raw.menubgmusic)
+        // Only play if enabled
+        DisposableEffect(musicEnabled) {
+            if (musicEnabled) {
+                AudioManager.playBackground(R.raw.menubgmusic)
+            } else {
+                AudioManager.stopBackground()
+            }
+            onDispose { }
+        }
 
         // --- gamertag area
         Row(
@@ -90,6 +102,50 @@ fun MenuScreen(
                     color = Color.White.copy(alpha = 0.7f)
                 )
             }
+        }
+
+        // --- top right music/sfx toggle buttons
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(end = 16.dp, top = 24.dp),
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // --- Music toggle button
+            Image(
+                painter = painterResource(
+                    id = if (musicEnabled) R.drawable.ic_music_on else R.drawable.ic_music_off
+                ),
+                contentDescription = "Toggle Music",
+                modifier = Modifier
+                    .size(48.dp)
+                    .clickable {
+                        val newState = !musicEnabled
+                        AudioManager.setMusicEnabled(newState)
+                        musicEnabled = newState
+                        if (newState) {
+                            AudioManager.playBackground(R.raw.menubgmusic)
+                        } else {
+                            AudioManager.stopBackground()
+                        }
+                    }
+            )
+            // --- SFX toggle button
+            Image(
+                painter = painterResource(
+                    id = if (sfxEnabled) R.drawable.ic_sfx_on else R.drawable.ic_sfx_off
+                ),
+                contentDescription = "Toggle SFX",
+                modifier = Modifier
+                    .size(48.dp)
+                    .clickable {
+                        val newState = !sfxEnabled
+                        AudioManager.setSfxEnabled(newState)
+                        AudioManager.playSfx("tap")
+                        sfxEnabled = newState
+                    }
+            )
         }
 
         // --- logo
