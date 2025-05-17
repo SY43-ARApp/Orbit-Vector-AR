@@ -241,7 +241,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
         val currentMoons = levelGenerator.getCurrentMoonsWorld(timeSeconds)
 
         // Simulate trajectory only when playing
-        if (gameState.state == PuzzleState.PLAYING && anchorIsTracking) {
+        if (gameState.state == PuzzleState.PLAYING && anchorIsTracking && gameState.arrowsLeft > 0) {
             physicsSimulator.simulateArrowTrajectory(camera, currentPlanets, currentMoons, currentApple, arrowYawOffset)
         } else {
             physicsSimulator.clearTrajectory()
@@ -351,11 +351,12 @@ class HelloArRenderer(val activity: HelloArActivity) :
             gameObjectRenderer.drawApple(render, currentApple, virtualObjectShader, viewMatrix, projectionMatrix, virtualSceneFramebuffer)
             // Draw Arrows
             gameObjectRenderer.drawArrows(render, physicsSimulator.arrows, virtualObjectShader, viewMatrix, projectionMatrix, virtualSceneFramebuffer)
-            // Draw Trajectory
-            gameObjectRenderer.drawTrajectory(render, physicsSimulator.trajectoryPoints, virtualObjectShader, viewMatrix, projectionMatrix, virtualSceneFramebuffer)
-            // Draw Ready arrow
-            val (readyArrowPos, readyArrowDir) = physicsSimulator.getReadyArrowPose(camera, arrowYawOffset)
-            gameObjectRenderer.drawReadyArrow(render, readyArrowPos, readyArrowDir, virtualObjectShader, viewMatrix, projectionMatrix, virtualSceneFramebuffer)
+            // Draw Trajectory and Ready Arrow only if allowed
+            if (physicsSimulator.shouldShowTrajectory(gameState)) {
+                gameObjectRenderer.drawTrajectory(render, physicsSimulator.trajectoryPoints, virtualObjectShader, viewMatrix, projectionMatrix, virtualSceneFramebuffer)
+                val (readyArrowPos, readyArrowDir) = physicsSimulator.getReadyArrowPose(camera, arrowYawOffset)
+                gameObjectRenderer.drawReadyArrow(render, readyArrowPos, readyArrowDir, virtualObjectShader, viewMatrix, projectionMatrix, virtualSceneFramebuffer)
+            }
         }
 
         // --- Composite virtual scene with camera feed ---

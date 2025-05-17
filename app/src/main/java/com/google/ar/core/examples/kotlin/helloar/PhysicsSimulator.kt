@@ -84,6 +84,40 @@ class PhysicsSimulator {
         Log.i(TAG, "Arrow launched. Arrows left: ${gameState.arrowsLeft})")
     }
 
+    fun shouldShowTrajectory(gameState: GameState): Boolean {
+        // Show trajectory only if there are arrows left and the game is in PLAYING state
+        return gameState.state == PuzzleState.PLAYING && gameState.arrowsLeft > 0
+    }
+
+    private fun checkCollision(
+        position: FloatArray,
+        planets: List<Planet>,
+        moons: List<Moon>,
+        apple: Apple?
+    ): Boolean {
+        // Check collisions
+        apple?.let {
+            val collisionDistSq = (ARROW_VISUAL_AND_COLLISION_RADIUS + it.targetRadius).pow(2)
+            if (MathUtils.calculateDistanceSquared(position, it.worldPosition) < collisionDistSq) {
+                return true
+            }
+        }
+        for (planet in planets) {
+            val collisionDistSq = (ARROW_VISUAL_AND_COLLISION_RADIUS + planet.targetRadius).pow(2)
+            if (MathUtils.calculateDistanceSquared(position, planet.worldPosition) < collisionDistSq) {
+                return true
+            }
+        }
+        for (moon in moons) {
+            val moonPos = moon.getWorldPosition()
+            val collisionDistSq = (ARROW_VISUAL_AND_COLLISION_RADIUS + moon.targetRadius).pow(2)
+            if (MathUtils.calculateDistanceSquared(position, moonPos) < collisionDistSq) {
+                return true
+            }
+        }
+        return false
+    }
+
     fun simulateArrowTrajectory(
         startCamera: Camera,
         currentPlanets: List<Planet>,
@@ -136,6 +170,11 @@ class PhysicsSimulator {
             simPosition[2] += simVelocity[2] * TRAJECTORY_SIMULATION_TIMESTEP
             totalDistanceTraveled = MathUtils.calculateDistance(simPosition, arrowInitialPosition)
             if (totalDistanceTraveled > GameConstants.MAX_TRAJECTORY_DISTANCE) {
+                break
+            }
+
+            if (checkCollision(simPosition, currentPlanets, currentMoons, currentApple)) {
+                allPositions.add(simPosition.copyOf())
                 break
             }
             allPositions.add(simPosition.copyOf())
@@ -228,6 +267,14 @@ class PhysicsSimulator {
             arrow.position[0] += arrow.velocity[0] * dt
             arrow.position[1] += arrow.velocity[1] * dt
             arrow.position[2] += arrow.velocity[2] * dt
+            // Stop arrow if it collides with any object
+            if (checkCollision(arrow.position, currentPlanets, currentMoons, currentApple)) {
+                arrow.active = false
+                if (currentApple != null && MathUtils.calculateDistanceSquared(arrow.position, currentApple.worldPosition) < (ARROW_VISUAL_AND_COLLISION_RADIUS + currentApple.targetRadius).pow(2)) {
+                    appleHitThisFrame = true
+                }
+                return@forEach
+            }
             currentApple?.let { apple ->
                 val collisionDistanceSq = (ARROW_VISUAL_AND_COLLISION_RADIUS + apple.targetRadius).pow(2)
                 if (MathUtils.calculateDistanceSquared(arrow.position, apple.worldPosition) < collisionDistanceSq) {

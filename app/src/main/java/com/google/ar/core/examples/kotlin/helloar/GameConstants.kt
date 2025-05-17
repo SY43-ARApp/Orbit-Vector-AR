@@ -8,8 +8,8 @@ object GameConstants {
     const val ANCHOR_LOST_RESET_THRESHOLD = 120
 
     // --- LEVEL GENERATION ---
-    const val MAX_PLANETS_CAP = 50
-    const val INITIAL_PLANET_COUNT = 2
+    const val MAX_PLANETS_CAP = 25
+    const val INITIAL_PLANET_COUNT = 3
     const val LEVELS_PER_NEW_PLANET = 1
 
     // --- CLUSTER GENERATION ---
