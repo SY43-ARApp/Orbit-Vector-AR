@@ -17,26 +17,55 @@ class PhysicsSimulator {
         private const val TAG = "PhysicsSimulator"
     }
 
-    // --- Arrow spawn/visual constants ---
     private val SPAWN_OFFSET_FORWARD = GameConstants.SPAWN_OFFSET_FORWARD
     private val SPAWN_OFFSET_DOWN = GameConstants.SPAWN_OFFSET_DOWN
-    private val MAX_X_OFFSET = GameConstants.MAX_X_OFFSET
 
     val arrows: MutableList<Arrow> = mutableListOf()
     val trajectoryPoints: MutableList<FloatArray> = mutableListOf()
 
-    fun getReadyArrowPose(camera: Camera, yawOffset: Float = 0f): Pair<FloatArray, FloatArray> {
+    private fun calculateInitialArrowSpawnData(camera: Camera, yawOffset: Float): Pair<FloatArray, FloatArray> {
         val camPose = camera.pose
-        val forward = FloatArray(3).apply { camPose.getTransformedAxis(2, -1f, this, 0) }
-        val up = FloatArray(3).apply { camPose.getTransformedAxis(1, 1f, this, 0) }
-        val right = FloatArray(3).apply { camPose.getTransformedAxis(0, 1f, this, 0) }
-        val startPosition = floatArrayOf(
-            camPose.tx() + forward[0] * SPAWN_OFFSET_FORWARD + right[0] * SPAWN_OFFSET_DOWN,
-            camPose.ty() + forward[1] * SPAWN_OFFSET_FORWARD + right[1] * SPAWN_OFFSET_DOWN,
-            camPose.tz() + forward[2] * SPAWN_OFFSET_FORWARD + right[2] * SPAWN_OFFSET_DOWN
+        val camForward = FloatArray(3).apply { camPose.getTransformedAxis(2, -1f, this, 0) }
+        val camRight = FloatArray(3).apply { camPose.getTransformedAxis(0, 1f, this, 0) }
+        val spawnPosition = floatArrayOf(
+            camPose.tx() + camForward[0] * SPAWN_OFFSET_FORWARD + camRight[0] * SPAWN_OFFSET_DOWN,
+            camPose.ty() + camForward[1] * SPAWN_OFFSET_FORWARD + camRight[1] * SPAWN_OFFSET_DOWN,
+            camPose.tz() + camForward[2] * SPAWN_OFFSET_FORWARD + camRight[2] * SPAWN_OFFSET_DOWN
         )
-        val rotatedForward = MathUtils.rotateVectorYaw(forward, yawOffset)
-        return Pair(startPosition, rotatedForward)
+        val launchDirection = MathUtils.rotateVectorYaw(camForward, yawOffset)
+        return Pair(spawnPosition, launchDirection)
+    }
+
+    private fun calculateGravitationalAcceleration(
+        objectPosition: FloatArray,
+        celestialBodyPosition: FloatArray,
+        celestialBodyMass: Float,
+        bodyForceFieldMinRadius: Float
+    ): FloatArray {
+        // Newton's law of universal gravitation: a = (G * M) / r^3 * (r_vec)
+        val dx = celestialBodyPosition[0] - objectPosition[0]
+        val dy = celestialBodyPosition[1] - objectPosition[1]
+        val dz = celestialBodyPosition[2] - objectPosition[2]
+        var distSq = dx * dx + dy * dy + dz * dz
+        val minForceApplicationDistSq = bodyForceFieldMinRadius.pow(2)
+        if (distSq < minForceApplicationDistSq && minForceApplicationDistSq > 0.000001f) {
+            distSq = minForceApplicationDistSq
+        }
+        distSq += 0.01f
+        val dist = sqrt(distSq)
+        if (dist < 0.00001f) {
+            return floatArrayOf(0f, 0f, 0f)
+        }
+        val commonFactor = GRAVITY_CONSTANT * celestialBodyMass / (distSq * dist)
+        return floatArrayOf(
+            commonFactor * dx,
+            commonFactor * dy,
+            commonFactor * dz
+        )
+    }
+
+    fun getReadyArrowPose(camera: Camera, yawOffset: Float = 0f): Pair<FloatArray, FloatArray> {
+        return calculateInitialArrowSpawnData(camera, yawOffset)
     }
 
     fun launchArrow(camera: Camera, gameState: GameState, yawOffset: Float = 0f) {
@@ -44,20 +73,11 @@ class PhysicsSimulator {
             Log.d(TAG, "No arrows left to launch.")
             return
         }
-        val camPose = camera.pose
-        val forward = FloatArray(3).apply { camPose.getTransformedAxis(2, -1f, this, 0) }
-        val up = FloatArray(3).apply { camPose.getTransformedAxis(1, 1f, this, 0) }
-        val right = FloatArray(3).apply { camPose.getTransformedAxis(0, 1f, this, 0) }
-        val startPosition = floatArrayOf(
-            camPose.tx() + forward[0] * SPAWN_OFFSET_FORWARD + right[0] * SPAWN_OFFSET_DOWN,
-            camPose.ty() + forward[1] * SPAWN_OFFSET_FORWARD + right[1] * SPAWN_OFFSET_DOWN,
-            camPose.tz() + forward[2] * SPAWN_OFFSET_FORWARD + right[2] * SPAWN_OFFSET_DOWN
-        )
-        val rotatedForward = MathUtils.rotateVectorYaw(forward, yawOffset)
+        val (startPosition, launchDirection) = calculateInitialArrowSpawnData(camera, yawOffset)
         val startVelocity = floatArrayOf(
-            rotatedForward[0] * ARROW_LAUNCH_SPEED,
-            rotatedForward[1] * ARROW_LAUNCH_SPEED,
-            rotatedForward[2] * ARROW_LAUNCH_SPEED
+            launchDirection[0] * ARROW_LAUNCH_SPEED,
+            launchDirection[1] * ARROW_LAUNCH_SPEED,
+            launchDirection[2] * ARROW_LAUNCH_SPEED
         )
         arrows.add(Arrow(startPosition.copyOf(), startVelocity.copyOf(), ARROW_MASS, true, System.currentTimeMillis()))
         gameState.arrowsLeft--
@@ -71,100 +91,98 @@ class PhysicsSimulator {
         currentApple: Apple?,
         yawOffset: Float = 0f
     ) {
-        // --- Simulate the full path with fine steps ---
-        val camPose = startCamera.pose
-        val forward = FloatArray(3).apply { camPose.getTransformedAxis(2, -1f, this, 0) }
-        val up = FloatArray(3).apply { camPose.getTransformedAxis(1, 1f, this, 0) }
-        val right = FloatArray(3).apply { camPose.getTransformedAxis(0, 1f, this, 0) }
-        val simPosition = floatArrayOf(
-            camPose.tx() + forward[0] * SPAWN_OFFSET_FORWARD + right[0] * SPAWN_OFFSET_DOWN,
-            camPose.ty() + forward[1] * SPAWN_OFFSET_FORWARD + right[1] * SPAWN_OFFSET_DOWN,
-            camPose.tz() + forward[2] * SPAWN_OFFSET_FORWARD + right[2] * SPAWN_OFFSET_DOWN
-        )
-        val startPosition = simPosition.copyOf()
-        val rotatedForward = MathUtils.rotateVectorYaw(forward, yawOffset)
+        // Kinematic equations: x = x0 + v * t + 0.5 * a * t^2 (Euler integration step)
+        val (arrowInitialPosition, launchDirection) = calculateInitialArrowSpawnData(startCamera, yawOffset)
+        val simPosition = arrowInitialPosition.copyOf()
         val simVelocity = floatArrayOf(
-            rotatedForward[0] * ARROW_LAUNCH_SPEED,
-            rotatedForward[1] * ARROW_LAUNCH_SPEED,
-            rotatedForward[2] * ARROW_LAUNCH_SPEED
+            launchDirection[0] * ARROW_LAUNCH_SPEED,
+            launchDirection[1] * ARROW_LAUNCH_SPEED,
+            launchDirection[2] * ARROW_LAUNCH_SPEED
         )
-        val simulatedArrowMass = ARROW_MASS
-        val oversampleSteps = GameConstants.TRAJECTORY_SIMULATION_STEPS * 10
+        val oversampleSteps = TRAJECTORY_SIMULATION_STEPS * 10
         val allPositions = mutableListOf<FloatArray>()
         allPositions.add(simPosition.copyOf())
-        var totalDistance = 0f
+        var totalDistanceTraveled = 0f
         for (step in 1..oversampleSteps) {
-            // Physics step
+            val accumulatedAcceleration = floatArrayOf(0f, 0f, 0f)
             currentPlanets.forEach { planet ->
-                val dx = planet.worldPosition[0] - simPosition[0]
-                val dy = planet.worldPosition[1] - simPosition[1]
-                val dz = planet.worldPosition[2] - simPosition[2]
-                var distSq = dx * dx + dy * dy + dz * dz
-                val minCollisionDistSq = (planet.targetRadius * 0.5f).pow(2)
-                if (distSq < minCollisionDistSq) distSq = minCollisionDistSq
-                distSq += 0.01f
-                val dist = sqrt(distSq)
-                if (dist > 0.0001f) {
-                    val forceMagnitude = GRAVITY_CONSTANT * planet.mass * simulatedArrowMass / distSq
-                    simVelocity[0] += (forceMagnitude * dx / dist) * TRAJECTORY_SIMULATION_TIMESTEP
-                    simVelocity[1] += (forceMagnitude * dy / dist) * TRAJECTORY_SIMULATION_TIMESTEP
-                    simVelocity[2] += (forceMagnitude * dz / dist) * TRAJECTORY_SIMULATION_TIMESTEP
-                }
+                val accel = calculateGravitationalAcceleration(
+                    simPosition,
+                    planet.worldPosition,
+                    planet.mass,
+                    planet.targetRadius * 0.5f
+                )
+                accumulatedAcceleration[0] += accel[0]
+                accumulatedAcceleration[1] += accel[1]
+                accumulatedAcceleration[2] += accel[2]
             }
             currentMoons.forEach { moon ->
                 val moonPos = moon.getWorldPosition()
-                val dx = moonPos[0] - simPosition[0]
-                val dy = moonPos[1] - simPosition[1]
-                val dz = moonPos[2] - simPosition[2]
-                var distSq = dx * dx + dy * dy + dz * dz
-                val minCollisionDistSq = (moon.targetRadius * 0.5f).pow(2)
-                if (distSq < minCollisionDistSq) distSq = minCollisionDistSq
-                distSq += 0.01f
-                val dist = sqrt(distSq)
-                if (dist > 0.0001f) {
-                    val forceMagnitude = GRAVITY_CONSTANT * moon.mass * simulatedArrowMass / distSq
-                    simVelocity[0] += (forceMagnitude * dx / dist) * TRAJECTORY_SIMULATION_TIMESTEP
-                    simVelocity[1] += (forceMagnitude * dy / dist) * TRAJECTORY_SIMULATION_TIMESTEP
-                    simVelocity[2] += (forceMagnitude * dz / dist) * TRAJECTORY_SIMULATION_TIMESTEP
-                }
+                val accel = calculateGravitationalAcceleration(
+                    simPosition,
+                    moonPos,
+                    moon.mass,
+                    moon.targetRadius * 0.5f
+                )
+                accumulatedAcceleration[0] += accel[0]
+                accumulatedAcceleration[1] += accel[1]
+                accumulatedAcceleration[2] += accel[2]
             }
+            simVelocity[0] += accumulatedAcceleration[0] * TRAJECTORY_SIMULATION_TIMESTEP
+            simVelocity[1] += accumulatedAcceleration[1] * TRAJECTORY_SIMULATION_TIMESTEP
+            simVelocity[2] += accumulatedAcceleration[2] * TRAJECTORY_SIMULATION_TIMESTEP
             simPosition[0] += simVelocity[0] * TRAJECTORY_SIMULATION_TIMESTEP
             simPosition[1] += simVelocity[1] * TRAJECTORY_SIMULATION_TIMESTEP
             simPosition[2] += simVelocity[2] * TRAJECTORY_SIMULATION_TIMESTEP
-            totalDistance = MathUtils.calculateDistance(simPosition, startPosition)
-            if (totalDistance > GameConstants.MAX_TRAJECTORY_DISTANCE) break
+            totalDistanceTraveled = MathUtils.calculateDistance(simPosition, arrowInitialPosition)
+            if (totalDistanceTraveled > GameConstants.MAX_TRAJECTORY_DISTANCE) {
+                break
+            }
             allPositions.add(simPosition.copyOf())
             currentApple?.let { apple ->
                 val collisionDistSq = (ARROW_VISUAL_AND_COLLISION_RADIUS + apple.targetRadius).pow(2)
                 if (MathUtils.calculateDistanceSquared(simPosition, apple.worldPosition) < collisionDistSq) {
-                    //break
                 }
             }
         }
-        // --- Resample to get exactly TRAJECTORY_SIMULATION_STEPS points, evenly spaced from 0 to MAX_TRAJECTORY_DISTANCE ---
+        trajectoryPoints.clear()
+        if (allPositions.size < 2) {
+            if(allPositions.isNotEmpty()) trajectoryPoints.add(allPositions.first().copyOf())
+            return
+        }
         val cumulativeDistances = FloatArray(allPositions.size)
         cumulativeDistances[0] = 0f
         for (i in 1 until allPositions.size) {
             cumulativeDistances[i] = cumulativeDistances[i-1] + MathUtils.calculateDistance(allPositions[i], allPositions[i-1])
         }
-        trajectoryPoints.clear()
-        val steps = GameConstants.TRAJECTORY_SIMULATION_STEPS
-        for (i in 0 until steps) {
-            val targetDist = GameConstants.MAX_TRAJECTORY_DISTANCE * i / (steps - 1).coerceAtLeast(1)
-            // Find segment containing this distance
-            var seg = 0
-            while (seg < cumulativeDistances.size - 2 && cumulativeDistances[seg+1] < targetDist) seg++
-            val t = if (cumulativeDistances[seg+1] > cumulativeDistances[seg])
-                (targetDist - cumulativeDistances[seg]) / (cumulativeDistances[seg+1] - cumulativeDistances[seg])
-            else 0f
-            val p0 = allPositions[seg]
-            val p1 = allPositions[seg+1]
-            val interp = floatArrayOf(
+        val totalActualPathLength = cumulativeDistances.last()
+        val maxDistForResampling = totalActualPathLength.coerceAtMost(GameConstants.MAX_TRAJECTORY_DISTANCE)
+        val numResampleOutputPoints = TRAJECTORY_SIMULATION_STEPS
+        if (numResampleOutputPoints <= 0) return
+        for (i in 0 until numResampleOutputPoints) {
+            val targetDist = if (numResampleOutputPoints == 1) 0f 
+                             else maxDistForResampling * i / (numResampleOutputPoints - 1)
+            var segmentIndex = 0
+            while (segmentIndex < cumulativeDistances.size - 2 && cumulativeDistances[segmentIndex+1] < targetDist) {
+                segmentIndex++
+            }
+            val p0 = allPositions[segmentIndex]
+            val p1 = allPositions[segmentIndex+1]
+            val segmentActualLength = cumulativeDistances[segmentIndex+1] - cumulativeDistances[segmentIndex]
+            val t = if (segmentActualLength > 0.00001f) {
+                (targetDist - cumulativeDistances[segmentIndex]) / segmentActualLength
+            } else {
+                0f
+            }.coerceIn(0f, 1f)
+            val interpolatedPoint = floatArrayOf(
                 p0[0] + (p1[0] - p0[0]) * t,
                 p0[1] + (p1[1] - p0[1]) * t,
                 p0[2] + (p1[2] - p0[2]) * t
             )
-            trajectoryPoints.add(interp)
+            trajectoryPoints.add(interpolatedPoint)
+        }
+        if (trajectoryPoints.isEmpty() && allPositions.isNotEmpty()) {
+             trajectoryPoints.add(allPositions.first().copyOf())
         }
     }
 
@@ -174,68 +192,53 @@ class PhysicsSimulator {
         currentMoons: List<Moon>,
         currentApple: Apple?,
         levelOriginAnchorPose: Pose?,
-        gameState: GameState // To modify state on hit
+        gameState: GameState
     ): Boolean {
+        // Kinematic update: v = v0 + a*dt, x = x0 + v*dt
         if (gameState.state != PuzzleState.PLAYING) return false
-
         var appleHitThisFrame = false
-
         arrows.filter { it.active }.forEach { arrow ->
-            // Newtonian gravity: F = G * m1 * m2 / r^2, update velocity
+            val accumulatedAcceleration = floatArrayOf(0f, 0f, 0f)
             currentPlanets.forEach { planet ->
-                val dx = planet.worldPosition[0] - arrow.position[0]
-                val dy = planet.worldPosition[1] - arrow.position[1]
-                val dz = planet.worldPosition[2] - arrow.position[2]
-                var distSq = dx * dx + dy * dy + dz * dz
-                val minCollisionDistSq = (planet.targetRadius * 0.5f).pow(2)
-                if (distSq < minCollisionDistSq) distSq = minCollisionDistSq
-                distSq += 0.01f
-
-                val dist = sqrt(distSq)
-                if (dist > 0.0001f) {
-                    val forceMagnitude = GRAVITY_CONSTANT * planet.mass * arrow.mass / distSq
-                    arrow.velocity[0] += (forceMagnitude * dx / dist) * dt
-                    arrow.velocity[1] += (forceMagnitude * dy / dist) * dt
-                    arrow.velocity[2] += (forceMagnitude * dz / dist) * dt
-                }
+                val accel = calculateGravitationalAcceleration(
+                    arrow.position,
+                    planet.worldPosition,
+                    planet.mass,
+                    planet.targetRadius * 0.5f
+                )
+                accumulatedAcceleration[0] += accel[0]
+                accumulatedAcceleration[1] += accel[1]
+                accumulatedAcceleration[2] += accel[2]
             }
             currentMoons.forEach { moon ->
                 val moonPos = moon.getWorldPosition()
-                val dx = moonPos[0] - arrow.position[0]
-                val dy = moonPos[1] - arrow.position[1]
-                val dz = moonPos[2] - arrow.position[2]
-                var distSq = dx * dx + dy * dy + dz * dz
-                val minCollisionDistSq = (moon.targetRadius * 0.5f).pow(2)
-                if (distSq < minCollisionDistSq) distSq = minCollisionDistSq
-                distSq += 0.01f
-                val dist = sqrt(distSq)
-                if (dist > 0.0001f) {
-                    val forceMagnitude = GRAVITY_CONSTANT * moon.mass * arrow.mass / distSq
-                    arrow.velocity[0] += (forceMagnitude * dx / dist) * dt
-                    arrow.velocity[1] += (forceMagnitude * dy / dist) * dt
-                    arrow.velocity[2] += (forceMagnitude * dz / dist) * dt
-                }
+                val accel = calculateGravitationalAcceleration(
+                    arrow.position,
+                    moonPos,
+                    moon.mass,
+                    moon.targetRadius * 0.5f
+                )
+                accumulatedAcceleration[0] += accel[0]
+                accumulatedAcceleration[1] += accel[1]
+                accumulatedAcceleration[2] += accel[2]
             }
-
-            // Euler integration: update position by velocity * dt
+            arrow.velocity[0] += accumulatedAcceleration[0] * dt
+            arrow.velocity[1] += accumulatedAcceleration[1] * dt
+            arrow.velocity[2] += accumulatedAcceleration[2] * dt
             arrow.position[0] += arrow.velocity[0] * dt
             arrow.position[1] += arrow.velocity[1] * dt
             arrow.position[2] += arrow.velocity[2] * dt
-
-            // check collision with apple (sphere-sphere)
             currentApple?.let { apple ->
                 val collisionDistanceSq = (ARROW_VISUAL_AND_COLLISION_RADIUS + apple.targetRadius).pow(2)
                 if (MathUtils.calculateDistanceSquared(arrow.position, apple.worldPosition) < collisionDistanceSq) {
-                    Log.i(TAG, "Apple hit!");
+                    Log.i(TAG, "Apple hit!")
                     gameState.points += 100 * gameState.level
                     arrow.active = false
                     appleHitThisFrame = true
                 }
             }
-
-            // Deactivate arrow if its lifetime is over
-            val now = System.currentTimeMillis()
-            if ((now - arrow.launchTime) / 1000f > GameConstants.ARROW_LIFETIME_SECONDS) {
+            val currentTime = System.currentTimeMillis()
+            if ((currentTime - arrow.launchTime) / 1000f > GameConstants.ARROW_LIFETIME_SECONDS) {
                 arrow.active = false
                 Log.d(TAG, "Arrow deactivated, lifetime expired.")
             }
