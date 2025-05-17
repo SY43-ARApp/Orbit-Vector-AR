@@ -71,15 +71,14 @@ object GameConstants {
     const val LEVELS_PER_NEW_MOON = 3
     const val MAX_MOONS_CAP = 8
     val MOON_TEXTURE_FILES = listOf(
-        "models/textures/planet_texture_1.jpg",
-        "models/textures/planet_texture_1.jpg",
-        "models/textures/planet_texture_1.jpg"
+        "models/textures/Icy.png",
+        "models/textures/moon_mercury.jpg"
     )
     const val MOON_ORBIT_RADIUS_MIN = 0.7f
     const val MOON_ORBIT_RADIUS_MAX = 2.2f
     const val MOON_ORBIT_SPEED_MIN = 0.3f // radians/sec
     const val MOON_ORBIT_SPEED_MAX = 1.0f
     const val MOON_TARGET_RADIUS_MIN = 0.20f
-    const val MOON_TARGET_RADIUS_MAX = 0.82f
+    const val MOON_TARGET_RADIUS_MAX = 0.52f
     const val MOON_MASS_SCALE_FACTOR = 4200.0f
 }
