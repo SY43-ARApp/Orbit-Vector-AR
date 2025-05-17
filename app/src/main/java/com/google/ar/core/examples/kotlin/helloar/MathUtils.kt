@@ -16,6 +16,11 @@ object MathUtils {
         return dx * dx + dy * dy + dz * dz
     }
 
+    fun calculateDistance(pos1: FloatArray, pos2: FloatArray): Float {
+        // Euclidean distance
+        return sqrt(calculateDistanceSquared(pos1, pos2))
+    }
+
     fun rotationMatrixFromTo(from: FloatArray, to: FloatArray, outMatrix: FloatArray) {
         // Rodrigues' rotation formula: axis-angle to matrix
 

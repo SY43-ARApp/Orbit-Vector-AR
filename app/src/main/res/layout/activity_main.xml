@@ -82,4 +82,19 @@
             android:src="@drawable/arrow_icon" />
     </LinearLayout>
 
+    <SeekBar
+        android:id="@+id/arrow_x_slider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="16dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:max="200"
+        android:progress="100"
+        android:thumbTint="#FFF1F1"
+        android:progressTint="#FFF1F1"
+        android:backgroundTint="#33000000"
+        android:contentDescription="Adjust arrow launch X position"/>
+
 </RelativeLayout>
