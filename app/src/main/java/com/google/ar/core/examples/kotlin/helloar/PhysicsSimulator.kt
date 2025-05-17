@@ -59,7 +59,7 @@ class PhysicsSimulator {
             forward[1] * ARROW_LAUNCH_SPEED,
             forward[2] * ARROW_LAUNCH_SPEED
         )
-        arrows.add(Arrow(startPosition.copyOf(), startVelocity.copyOf(), ARROW_MASS))
+        arrows.add(Arrow(startPosition.copyOf(), startVelocity.copyOf(), ARROW_MASS, true, System.currentTimeMillis()))
         gameState.arrowsLeft--
         Log.i(TAG, "Arrow launched. Arrows left: ${gameState.arrowsLeft})")
     }
@@ -227,19 +227,18 @@ class PhysicsSimulator {
                 val collisionDistanceSq = (ARROW_VISUAL_AND_COLLISION_RADIUS + apple.targetRadius).pow(2)
                 if (MathUtils.calculateDistanceSquared(arrow.position, apple.worldPosition) < collisionDistanceSq) {
                     Log.i(TAG, "Apple hit!");
-                    gameState.score += 100 * gameState.level
+                    gameState.points += 100 * gameState.level
                     arrow.active = false
                     appleHitThisFrame = true
                 }
             }
 
-            // Deactivate arrow if it flies too far
-            // levelOriginAnchorPose?.translation?.let { origin ->
-            //     if (MathUtils.calculateDistanceSquared(arrow.position, origin) > 50f.pow(2)) {
-            //         arrow.active = false
-            //         Log.d(TAG, "Arrow deactivated, too far from origin.")
-            //     }
-            // }
+            // Deactivate arrow if its lifetime is over
+            val now = System.currentTimeMillis()
+            if ((now - arrow.launchTime) / 1000f > GameConstants.ARROW_LIFETIME_SECONDS) {
+                arrow.active = false
+                Log.d(TAG, "Arrow deactivated, lifetime expired.")
+            }
         }
         return appleHitThisFrame
     }

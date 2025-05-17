@@ -33,7 +33,8 @@ data class Arrow(
     var position: FloatArray,
     var velocity: FloatArray,
     val mass: Float,
-    var active: Boolean = true
+    var active: Boolean = true,
+    val launchTime: Long = System.currentTimeMillis()
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -92,8 +93,8 @@ enum class PuzzleState {
 
 data class GameState(
     var level: Int = 1,
+    var points: Int = 0,
     var arrowsLeft: Int = INITIAL_ARROWS_PER_LEVEL,
-    var score: Int = 0,
     var state: PuzzleState = PuzzleState.WAITING_FOR_ANCHOR
 )
 

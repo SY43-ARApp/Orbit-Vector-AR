@@ -37,6 +37,7 @@ object GameConstants {
     const val ARROW_MASS = 0.5f
     var GRAVITY_CONSTANT = 0.05f
     const val INITIAL_ARROWS_PER_LEVEL = 10
+    const val ARROW_LIFETIME_SECONDS = 5f
 
     // --- TRAJECTORY SIMULATION ---
     const val TRAJECTORY_SIMULATION_START_AT_STEP = 2

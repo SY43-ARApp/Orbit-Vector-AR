@@ -9,6 +9,7 @@
 - **Defeat**: Run out of arrows.
 - **Replayability**: Procedural levels, increasing difficulty.
 - **Visuals**: Custom 3D models (arrow, apple, planets, moons), random planet and moon textures.
+- **Modern UI**: Jetpack Compose-based screens for title, menu, and end/game over, with custom fonts and animated effects.
 
 ## Main Kotlin Classes & Structure
 
@@ -24,17 +25,23 @@
 - **GameConstants.kt**: Centralized constants for gameplay, physics, and rendering, including moon parameters.
 - **AssetLoader.kt**: Loads 3D models and textures from assets, including moon textures.
 - **AnchorManager.kt**: Manages ARCore anchors and tracking state.
+- **TitleScreenActivity.kt**: Jetpack Compose title screen with animated logo and tap-to-play.
+- **MenuScreenActivity.kt**: Jetpack Compose menu screen with Play button.
+- **EndScreenActivity.kt**: Jetpack Compose end/game over screen showing score, points, and back-to-menu navigation.
+- **ui/theme/Type.kt**: Custom font and typography definitions for Compose UI.
+- **ui/theme/OrbitVectorARTheme.kt**: Light/dark color schemes and theme setup for Compose UI.
 
 ## Assets & Resources
 - **assets/models/**: 3D models (arrow, apple, planets), DFG texture, shaders.
 - **res/layout/**: UI layouts (activity_main, overlays).
 - **res/values/**: Strings, arrays, and other resources.
+- **res/drawable/**: App icons, logos, and Compose UI images.
 
 ## Game Loop & Flow
 - **Main Loop**: On each frame, updates physics, checks collisions, draws AR scene.
 - **Tap**: Launches an arrow from camera position toward aim direction.
 - **Level Generation**: Each level randomizes planets (position, size, texture), moons (if enabled), and apple location.
-- **UI**: Displays level, arrows left, and game state messages.
+- **UI**: Displays level, arrows left, and game state messages. Compose screens for title, menu, and end/game over.
 
 ## Directory Structure (Key Files)
 
@@ -51,8 +58,14 @@
   - GameConstants.kt
   - AssetLoader.kt
   - AnchorManager.kt
+  - TitleScreenActivity.kt
+  - MenuScreenActivity.kt
+  - EndScreenActivity.kt
+  - ui/theme/Type.kt
+  - ui/theme/OrbitVectorARTheme.kt
 - `app/src/main/res/layout/`
 - `app/src/main/res/values/`
+- `app/src/main/res/drawable/`
 - `app/src/main/assets/models/`
 
 ---
@@ -60,4 +73,4 @@
 - **Docs**: Design docs, UML, and slides in `/docs` and `/uml`.
 
 ---
-**Note:** This overview reflects the current modular structure and file responsibilities as of May 2025, including the moons feature.
+**Note:** This overview reflects the current modular structure and file responsibilities as of May 2025, including the Compose UI screens and moons feature.
