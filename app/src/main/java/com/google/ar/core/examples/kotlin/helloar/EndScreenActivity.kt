@@ -35,7 +35,6 @@ class EndScreenActivity : ComponentActivity() {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     EndScreen(score = score, points = points, onHome = {
                         startActivity(Intent(this, MenuScreenActivity::class.java))
-                        AudioManager.playSfx("tap")
                         finish()
                     })
                 }
@@ -92,8 +91,11 @@ fun EndScreen(score: Int, points: Int, onHome: () -> Unit) {
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 80.dp)
-                .size(120.dp)
-                .clickable { onHome() }
+                .size(120.dp)  
+                .clickable {  
+                    AudioManager.playSfx("tap")
+                    onHome() 
+                }
         )
     }
 }
