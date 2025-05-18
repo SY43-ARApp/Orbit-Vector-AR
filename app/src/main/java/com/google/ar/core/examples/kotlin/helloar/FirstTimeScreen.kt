@@ -221,7 +221,7 @@ fun FirstTimeScreen(onRegistered: () -> Unit) {
                     OutlinedTextField(
                         value = username,
                         onValueChange = {
-                            if (it.length <= 16) {
+                            if (it.length <= 10) {
                                 username = it
                                 usernameChecked = false
                                 usernameError = null

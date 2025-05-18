@@ -47,12 +47,18 @@ class MenuScreenActivity : ComponentActivity() {
         setContent {
             OrbitVectorARTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    MenuScreen(onPlay = {
-                        AudioManager.stopBackground()
-                        AudioManager.playSfx("titletap")
-                        startActivity(Intent(this, HelloArActivity::class.java))
-                        finish()
-                    })
+                    MenuScreen(
+                        onPlay = {
+                            AudioManager.stopBackground()
+                            AudioManager.playSfx("titletap")
+                            startActivity(Intent(this, HelloArActivity::class.java))
+                            finish()
+                        },
+                        onLeaderboard = {
+                            AudioManager.playSfx("tap")
+                            startActivity(Intent(this, LeaderboardActivity::class.java))
+                        }
+                    )
                 }
             }
         }
@@ -63,7 +69,7 @@ class MenuScreenActivity : ComponentActivity() {
 fun MenuScreen(
     onPlay: () -> Unit = { },
     onLeaderboard: () -> Unit = { AudioManager.playSfx("tap") },
-    onBattlePass: () -> Unit = { AudioManager.playSfx("tap") }
+    onStats: () -> Unit = { AudioManager.playSfx("tap") }
 ) {
     // font
     val font = DisketFont
@@ -132,7 +138,7 @@ fun MenuScreen(
     // --- anim: button press scale (additive) ---
     val playButtonPress = remember { Animatable(1f) }
     val leaderboardPress = remember { Animatable(1f) }
-    val battlePassPress = remember { Animatable(1f) }
+    val statsPress = remember { Animatable(1f) }
 
     // --- anim: button rotation ---
     val buttonRotation = remember { Animatable(0f) }
@@ -351,7 +357,7 @@ fun MenuScreen(
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
-            // --- leaderboard & battlepass ---
+            // --- leaderboard & stats ---
             Row(
                 horizontalArrangement = Arrangement.spacedBy(48.dp)
             ) {
@@ -381,29 +387,29 @@ fun MenuScreen(
                         modifier = Modifier.fillMaxSize()
                     )
                 }
-                // --- battlepass ---
+                // --- stats ---
                 Box(
                     modifier = Modifier
                         .size(100.dp)
                         .graphicsLayer(
-                            scaleX = battlePassPress.value,
-                            scaleY = battlePassPress.value,
+                            scaleX = statsPress.value,
+                            scaleY = statsPress.value,
                             rotationZ = buttonRotation.value
                         )
                         .pointerInput(Unit) {
                             detectTapGestures(
                                 onPress = {
-                                    battlePassPress.animateTo(1.25f, animationSpec = tween(120))
+                                    statsPress.animateTo(1.25f, animationSpec = tween(120))
                                     tryAwaitRelease()
-                                    battlePassPress.animateTo(1f, animationSpec = tween(120))
+                                    statsPress.animateTo(1f, animationSpec = tween(120))
                                 },
-                                onTap = { onBattlePass() }
+                                onTap = { onStats() }
                             )
                         }
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.ui_battlepass),
-                        contentDescription = "BattlePass Button",
+                        painter = painterResource(id = R.drawable.ui_stats),
+                        contentDescription = "Stats Button",
                         modifier = Modifier.fillMaxSize()
                     )
                 }

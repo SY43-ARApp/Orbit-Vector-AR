@@ -56,6 +56,11 @@
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:screenOrientation="locked" />
     <activity
+        android:name="com.google.ar.core.examples.kotlin.helloar.LeaderboardActivity"
+        android:exported="false"
+        android:theme="@style/Theme.AppCompat.NoActionBar"
+        android:screenOrientation="locked" />
+    <activity
         android:name="com.google.ar.core.examples.kotlin.helloar.EndScreenActivity"
         android:exported="false"
         android:theme="@style/Theme.AppCompat.NoActionBar"
