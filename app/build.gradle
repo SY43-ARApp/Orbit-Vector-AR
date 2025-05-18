@@ -79,4 +79,17 @@ dependencies {
     implementation 'androidx.compose.runtime:runtime-livedata'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
     debugImplementation 'androidx.compose.ui:ui-tooling'
+
+    // Google Play Services app Set ID
+    implementation 'com.google.android.gms:play-services-appset:16.0.1'
+
+    // Retrofit & Moshi
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-moshi:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-scalars:2.9.0'
+    implementation 'com.squareup.moshi:moshi:1.15.0'
+    implementation 'com.squareup.moshi:moshi-kotlin:1.15.0'
+
+    // Accompanist for onFocusChanged
+    implementation 'com.google.accompanist:accompanist-systemuicontroller:0.34.0'
 }

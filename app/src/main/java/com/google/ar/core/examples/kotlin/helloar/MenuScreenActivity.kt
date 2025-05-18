@@ -36,6 +36,10 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import kotlinx.coroutines.launch
 import androidx.compose.ui.zIndex
+import com.google.ar.core.examples.kotlin.helloar.data.UserPreferences
+import com.google.ar.core.examples.kotlin.helloar.data.ApiService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class MenuScreenActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,12 +47,22 @@ class MenuScreenActivity : ComponentActivity() {
         setContent {
             OrbitVectorARTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    MenuScreen(onPlay = {
-                        AudioManager.stopBackground()
-                        AudioManager.playSfx("titletap")
-                        startActivity(Intent(this, HelloArActivity::class.java))
-                        finish()
-                    })
+                    MenuScreen(
+                        onPlay = {
+                            AudioManager.stopBackground()
+                            AudioManager.playSfx("titletap")
+                            startActivity(Intent(this, HelloArActivity::class.java))
+                            finish()
+                        },
+                        onLeaderboard = {
+                            AudioManager.playSfx("tap")
+                            startActivity(Intent(this, LeaderboardActivity::class.java))
+                        },
+                        onStats = {
+                            AudioManager.playSfx("tap")
+                            startActivity(Intent(this, StatsActivity::class.java))
+                        }
+                    )
                 }
             }
         }
@@ -59,12 +73,46 @@ class MenuScreenActivity : ComponentActivity() {
 fun MenuScreen(
     onPlay: () -> Unit = { },
     onLeaderboard: () -> Unit = { AudioManager.playSfx("tap") },
-    onBattlePass: () -> Unit = { AudioManager.playSfx("tap") }
+    onStats: () -> Unit = { AudioManager.playSfx("tap") }
 ) {
     // font
     val font = DisketFont
 
-    // music/sfx state
+    // --- user info ---
+    val context = LocalContext.current
+    val prefs = remember { UserPreferences(context) }
+    val username = prefs.username ?: "Unknown"
+    val uuid = prefs.uuid
+
+    // --- player rank state ---
+    var playerRank by remember { mutableStateOf<Int?>(null) }
+    var totalPlayers by remember { mutableStateOf<Int?>(null) }
+
+    // --- api for rank ---
+    val api = remember {
+        val moshi = com.squareup.moshi.Moshi.Builder()
+            .add(com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory())
+            .build()
+        retrofit2.Retrofit.Builder()
+            .baseUrl(ApiService.BASE_URL)
+            .addConverterFactory(retrofit2.converter.scalars.ScalarsConverterFactory.create())
+            .addConverterFactory(retrofit2.converter.moshi.MoshiConverterFactory.create(moshi).asLenient())
+            .build()
+            .create(ApiService::class.java)
+    }
+
+    // --- fetch player rank on launch ---
+    LaunchedEffect(uuid) {
+        try {
+            val resp = api.getPlayerRank(uuid)
+            if (resp.isSuccessful) {
+                playerRank = resp.body()?.rank
+                totalPlayers = resp.body()?.totalPlayers
+            }
+        } catch (_: Exception) { }
+    }
+
+    // --- music/sfx state ---
     var musicEnabled by remember { mutableStateOf(AudioManager.isMusicEnabled()) }
     var sfxEnabled by remember { mutableStateOf(AudioManager.isSfxEnabled()) }
 
@@ -81,7 +129,7 @@ fun MenuScreen(
         ), label = "logoScale"
     )
 
-    // --- anim: play button pulse (exaggerated, only play) ---
+    // --- anim: play button pulse ---
     val playButtonPulse by rememberInfiniteTransition(label = "buttonPulse").animateFloat(
         initialValue = 1f,
         targetValue = 1.18f,
@@ -94,7 +142,7 @@ fun MenuScreen(
     // --- anim: button press scale (additive) ---
     val playButtonPress = remember { Animatable(1f) }
     val leaderboardPress = remember { Animatable(1f) }
-    val battlePassPress = remember { Animatable(1f) }
+    val statsPress = remember { Animatable(1f) }
 
     // --- anim: button rotation ---
     val buttonRotation = remember { Animatable(0f) }
@@ -102,7 +150,7 @@ fun MenuScreen(
     // --- anim: spin all buttons every 8.6s ---
     LaunchedEffect(spinAnimKey) {
         while (true) {
-            delay(8657)
+            delay(8567)
             buttonRotation.animateTo(
                 360f,
                 animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing)
@@ -124,17 +172,13 @@ fun MenuScreen(
         label = "fadeAlpha"
     )
 
-    val context = LocalContext.current
-
-    // --- fix: trigger VFX and scene change on tap, ensure press VFX always works ---
-    // Use a local lambda for play to ensure coroutine scope and VFX
     val scope = rememberCoroutineScope()
 
     // --- TEMP ---
-    val playerPos = 50
-    val totalPlayers = 100
-    val rankImageRes = remember(playerPos, totalPlayers) {
-        RankImageUtil.getRankImageRes(playerPos, totalPlayers)
+    val playerPos = playerRank ?: 0
+    val totalPlayersTemp = totalPlayers ?: 100
+    val rankImageRes = remember(playerPos, totalPlayersTemp) {
+        RankImageUtil.getRankImageRes(playerPos, totalPlayersTemp)
     }
 
     Box(
@@ -169,13 +213,13 @@ fun MenuScreen(
             Spacer(modifier = Modifier.width(8.dp))
             Column {
                 Text(
-                    text = "GAMERTAG",
+                    text = username,
                     style = TextStyle(fontFamily = font, fontSize = 20.sp),
                     color = Color.White
                 )
                 Text(
-                    text = "# 2D54FS64FDFDSDFS",
-                    style = TextStyle(fontFamily = font, fontSize = 12.sp),
+                    text = uuid,
+                    style = TextStyle(fontFamily = font, fontSize = 8.sp),
                     color = Color.White.copy(alpha = 0.7f)
                 )
             }
@@ -241,27 +285,29 @@ fun MenuScreen(
         )
 
         // --- rank image and text ---
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 300.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Image(
-                painter = painterResource(id = rankImageRes),
-                contentDescription = "Rank Badge",
-                modifier = Modifier.size(90.dp)
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = "RANK #$playerPos",
-                style = TextStyle(
-                    fontFamily = DisketFont,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold
-                ),
-                color = Color.White
-            )
+        if (playerRank != null && totalPlayers != null) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 300.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Image(
+                    painter = painterResource(id = rankImageRes),
+                    contentDescription = "Rank Badge",
+                    modifier = Modifier.size(90.dp)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "RANK #$playerRank",
+                    style = TextStyle(
+                        fontFamily = DisketFont,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = Color.White
+                )
+            }
         }
 
         // --- main menu buttons ---
@@ -314,7 +360,7 @@ fun MenuScreen(
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
-            // --- leaderboard & battlepass ---
+            // --- leaderboard & stats ---
             Row(
                 horizontalArrangement = Arrangement.spacedBy(48.dp)
             ) {
@@ -344,29 +390,29 @@ fun MenuScreen(
                         modifier = Modifier.fillMaxSize()
                     )
                 }
-                // --- battlepass ---
+                // --- stats ---
                 Box(
                     modifier = Modifier
                         .size(100.dp)
                         .graphicsLayer(
-                            scaleX = battlePassPress.value,
-                            scaleY = battlePassPress.value,
+                            scaleX = statsPress.value,
+                            scaleY = statsPress.value,
                             rotationZ = buttonRotation.value
                         )
                         .pointerInput(Unit) {
                             detectTapGestures(
                                 onPress = {
-                                    battlePassPress.animateTo(1.25f, animationSpec = tween(120))
+                                    statsPress.animateTo(1.25f, animationSpec = tween(120))
                                     tryAwaitRelease()
-                                    battlePassPress.animateTo(1f, animationSpec = tween(120))
+                                    statsPress.animateTo(1f, animationSpec = tween(120))
                                 },
-                                onTap = { onBattlePass() }
+                                onTap = { onStats() }
                             )
                         }
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.ui_battlepass),
-                        contentDescription = "BattlePass Button",
+                        painter = painterResource(id = R.drawable.ui_stats),
+                        contentDescription = "Stats Button",
                         modifier = Modifier.fillMaxSize()
                     )
                 }
