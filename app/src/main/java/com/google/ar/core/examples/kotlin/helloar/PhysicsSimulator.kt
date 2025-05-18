@@ -85,6 +85,7 @@ class PhysicsSimulator {
         )
         arrows.add(Arrow(startPosition.copyOf(), startVelocity.copyOf(), ARROW_MASS, true, System.currentTimeMillis()))
         gameState.arrowsLeft--
+        gameState.points += 10
         Log.i(TAG, "Arrow launched. Arrows left: ${gameState.arrowsLeft})")
     }
 
@@ -113,18 +114,21 @@ class PhysicsSimulator {
         arrowTip: FloatArray,
         planets: List<Planet>,
         moons: List<Moon>,
-        apple: Apple?
+        apple: Apple?,
+        gameState: GameState
     ): Boolean {
         // Check collisions
         apple?.let {
             val collisionDistSq = (ARROW_TARGET_RADIUS + APPLE_FORGIVING_COLLISION_RADIUS).pow(2)
             if (MathUtils.calculateDistanceSquared(arrowTip, it.worldPosition) < collisionDistSq) {
+                gameState.points += 20
                 return true
             }
         }
         for (planet in planets) {
             val collisionDistSq = (ARROW_TARGET_RADIUS + PLANET_FORGIVING_COLLISION_RADIUS).pow(2)
             if (MathUtils.calculateDistanceSquared(arrowTip, planet.worldPosition) < collisionDistSq) {
+                gameState.points += 20
                 return true
             }
         }
@@ -132,6 +136,7 @@ class PhysicsSimulator {
             val moonPos = moon.getWorldPosition()
             val collisionDistSq = (ARROW_TARGET_RADIUS + MOON_FORGIVING_COLLISION_RADIUS).pow(2)
             if (MathUtils.calculateDistanceSquared(arrowTip, moonPos) < collisionDistSq) {
+                gameState.points += 20
                 return true
             }
         }
@@ -143,7 +148,8 @@ class PhysicsSimulator {
         currentPlanets: List<Planet>,
         currentMoons: List<Moon>,
         currentApple: Apple?,
-        yawOffset: Float = 0f
+        yawOffset: Float = 0f,
+        gameState: GameState
     ) {
         // Kinematic equations: x = x0 + v * t + 0.5 * a * t^2 (Euler integration step)
         val (arrowInitialPosition, launchDirection) = calculateInitialArrowSpawnData(startCamera, yawOffset)
@@ -194,7 +200,7 @@ class PhysicsSimulator {
             }
 
             val arrowTip = getArrowTipPosition(simPosition, simVelocity)
-            if (checkCollision(arrowTip, currentPlanets, currentMoons, currentApple)) {
+            if (checkCollision(arrowTip, currentPlanets, currentMoons, currentApple, gameState)) {
                 allPositions.add(simPosition.copyOf())
                 break
             }
@@ -295,11 +301,11 @@ class PhysicsSimulator {
             arrow.position[2] += arrow.velocity[2] * dt
             // Stop arrow if it collides with any object
             val arrowTip = getArrowTipPosition(arrow.position, arrow.velocity)
-            if (checkCollision(arrowTip, currentPlanets, currentMoons, currentApple)) {
+            if (checkCollision(arrowTip, currentPlanets, currentMoons, currentApple, gameState)) {
                 arrow.active = false
                 AudioManager.playSfx("arrowhit")
                 if (currentApple != null && MathUtils.calculateDistanceSquared(arrowTip, currentApple.worldPosition) < (ARROW_TARGET_RADIUS + APPLE_FORGIVING_COLLISION_RADIUS).pow(2)) {
-                    appleHitThisFrame = true
+                        appleHitThisFrame = true
                 }
                 return@forEach
             }
@@ -307,7 +313,6 @@ class PhysicsSimulator {
                 val collisionDistanceSq = (ARROW_TARGET_RADIUS + APPLE_FORGIVING_COLLISION_RADIUS).pow(2)
                 if (MathUtils.calculateDistanceSquared(arrowTip, apple.worldPosition) < collisionDistanceSq) {
                     Log.i(TAG, "Apple hit!")
-                    gameState.points += 100 * gameState.level
                     arrow.active = false
                     appleHitThisFrame = true
                 }

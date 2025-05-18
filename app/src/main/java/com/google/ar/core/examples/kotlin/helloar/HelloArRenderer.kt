@@ -271,7 +271,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
 
         // Simulate trajectory only when playing
         if (gameState.state == PuzzleState.PLAYING && anchorIsTracking && gameState.arrowsLeft > 0) {
-            physicsSimulator.simulateArrowTrajectory(camera, currentPlanets, currentMoons, currentApple, arrowYawOffset)
+            physicsSimulator.simulateArrowTrajectory(camera, currentPlanets, currentMoons, currentApple, arrowYawOffset, gameState)
         } else {
             physicsSimulator.clearTrajectory()
         }
@@ -411,6 +411,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
         // ----------------- Post-render & game state updates ---
         if (gameState.state == PuzzleState.VICTORY) {
             Log.i(TAG, "Victory on Level ${gameState.level}!")
+            gameState.points += 100 
             gameState.level++ 
             resetLevel(localSession, camera)
         } else if (gameState.state == PuzzleState.DEFEAT) {
