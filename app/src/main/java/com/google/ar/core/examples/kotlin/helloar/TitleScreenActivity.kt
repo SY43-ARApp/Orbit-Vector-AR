@@ -52,7 +52,7 @@ class TitleScreenActivity : ComponentActivity() {
         // first time user
         val prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         val isFirstTime = prefs.getBoolean("first_time", true)
-        if (true) {
+        if (isFirstTime) {
             prefs.edit().putBoolean("first_time", false).apply()
             startActivity(Intent(this, FirstTimeScreenActivity::class.java))
             finish()

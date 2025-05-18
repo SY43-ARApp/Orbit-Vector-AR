@@ -40,6 +40,11 @@ interface ApiService {
         @Query("username") username: String
     ): Response<CheckUsernameResponse>
 
+    @GET("get_player_rank.php")
+    suspend fun getPlayerRank(
+        @Query("uuid") uuid: String
+    ): Response<PlayerRankResponse>
+
     companion object {
         const val BASE_URL = "https://chaelpixserver.ddns.net/apis/ovar/"
     }

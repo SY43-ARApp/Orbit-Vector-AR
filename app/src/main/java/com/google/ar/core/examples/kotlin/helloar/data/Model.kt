@@ -24,3 +24,8 @@ data class CheckUsernameResponse(
     val available: Boolean,
     val message: String? = null
 )
+
+data class PlayerRankResponse(
+    val rank: Int,
+    val totalPlayers: Int
+)

@@ -36,6 +36,10 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import kotlinx.coroutines.launch
 import androidx.compose.ui.zIndex
+import com.google.ar.core.examples.kotlin.helloar.data.UserPreferences
+import com.google.ar.core.examples.kotlin.helloar.data.ApiService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class MenuScreenActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,7 +68,41 @@ fun MenuScreen(
     // font
     val font = DisketFont
 
-    // music/sfx state
+    // --- user info ---
+    val context = LocalContext.current
+    val prefs = remember { UserPreferences(context) }
+    val username = prefs.username ?: "Unknown"
+    val uuid = prefs.uuid
+
+    // --- player rank state ---
+    var playerRank by remember { mutableStateOf<Int?>(null) }
+    var totalPlayers by remember { mutableStateOf<Int?>(null) }
+
+    // --- api for rank ---
+    val api = remember {
+        val moshi = com.squareup.moshi.Moshi.Builder()
+            .add(com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory())
+            .build()
+        retrofit2.Retrofit.Builder()
+            .baseUrl(ApiService.BASE_URL)
+            .addConverterFactory(retrofit2.converter.scalars.ScalarsConverterFactory.create())
+            .addConverterFactory(retrofit2.converter.moshi.MoshiConverterFactory.create(moshi).asLenient())
+            .build()
+            .create(ApiService::class.java)
+    }
+
+    // --- fetch player rank on launch ---
+    LaunchedEffect(uuid) {
+        try {
+            val resp = api.getPlayerRank(uuid)
+            if (resp.isSuccessful) {
+                playerRank = resp.body()?.rank
+                totalPlayers = resp.body()?.totalPlayers
+            }
+        } catch (_: Exception) { }
+    }
+
+    // --- music/sfx state ---
     var musicEnabled by remember { mutableStateOf(AudioManager.isMusicEnabled()) }
     var sfxEnabled by remember { mutableStateOf(AudioManager.isSfxEnabled()) }
 
@@ -102,7 +140,7 @@ fun MenuScreen(
     // --- anim: spin all buttons every 8.6s ---
     LaunchedEffect(spinAnimKey) {
         while (true) {
-            delay(8657)
+            delay(8567)
             buttonRotation.animateTo(
                 360f,
                 animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing)
@@ -124,14 +162,13 @@ fun MenuScreen(
         label = "fadeAlpha"
     )
 
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     // --- TEMP ---
-    val playerPos = 50
-    val totalPlayers = 100
-    val rankImageRes = remember(playerPos, totalPlayers) {
-        RankImageUtil.getRankImageRes(playerPos, totalPlayers)
+    val playerPos = playerRank ?: 0
+    val totalPlayersTemp = totalPlayers ?: 100
+    val rankImageRes = remember(playerPos, totalPlayersTemp) {
+        RankImageUtil.getRankImageRes(playerPos, totalPlayersTemp)
     }
 
     Box(
@@ -166,13 +203,13 @@ fun MenuScreen(
             Spacer(modifier = Modifier.width(8.dp))
             Column {
                 Text(
-                    text = "GAMERTAG",
+                    text = username,
                     style = TextStyle(fontFamily = font, fontSize = 20.sp),
                     color = Color.White
                 )
                 Text(
-                    text = "# 2D54FS64FDFDSDFS",
-                    style = TextStyle(fontFamily = font, fontSize = 12.sp),
+                    text = uuid,
+                    style = TextStyle(fontFamily = font, fontSize = 8.sp),
                     color = Color.White.copy(alpha = 0.7f)
                 )
             }
@@ -251,7 +288,10 @@ fun MenuScreen(
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "RANK #$playerPos",
+                text = if (playerRank != null && totalPlayers != null)
+                    "RANK #$playerRank"
+                else
+                    "RANK --",
                 style = TextStyle(
                     fontFamily = DisketFont,
                     fontSize = 28.sp,
