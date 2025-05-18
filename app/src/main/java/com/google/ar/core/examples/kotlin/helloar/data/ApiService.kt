@@ -19,7 +19,10 @@ interface ApiService {
     @GET("send_score.php")
     suspend fun sendScore(
         @Query("uuid") uuid: String,
-        @Query("score") score: Int
+        @Query("score") score: Int,
+        @Query("arrows_thrown") arrowsThrown: Int,
+        @Query("planets_hit") planetsHit: Int,
+        @Query("levels_passed") levelsPassed: Int
     ): Response<String>
 
     @GET("get_global_scores.php")

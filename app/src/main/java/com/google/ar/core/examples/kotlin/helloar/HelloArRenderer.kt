@@ -113,6 +113,10 @@ class HelloArRenderer(val activity: HelloArActivity) :
     private var waitingForAnchorStartTime: Long? = null
     private val fallbackAnchorDelayMillis = 3000L 
 
+    private var arrowsThrown: Int = 0
+    private var objectsHit: Int = 0
+    private var levelsPassed: Int = 0
+
     // Initialization
     override fun onSurfaceCreated(render: SampleRender) {
         this.render = render
@@ -324,7 +328,11 @@ class HelloArRenderer(val activity: HelloArActivity) :
         // ----------------- Game logic
         var appleHit = false
         if (gameState.state == PuzzleState.PLAYING && anchorIsTracking) {
+            val beforePoints = gameState.points
             appleHit = physicsSimulator.updateGamePhysics(1f / 60f, currentPlanets, currentMoons, currentApple, anchorPose, gameState)
+            if (gameState.points > beforePoints) {
+                objectsHit += 1
+            }
             if (appleHit) {
                 gameState.state = PuzzleState.VICTORY
                 AudioManager.playSfx("victory")
@@ -338,6 +346,9 @@ class HelloArRenderer(val activity: HelloArActivity) :
             val intent = android.content.Intent(activity, EndScreenActivity::class.java)
             intent.putExtra("score", gameState.level)
             intent.putExtra("points", gameState.points)
+            intent.putExtra("arrowsThrown", arrowsThrown)
+            intent.putExtra("objectsHit", objectsHit)
+            intent.putExtra("levelsPassed", levelsPassed)
             AudioManager.stopBackground()
             activity.startActivity(intent)
             activity.finish()
@@ -431,6 +442,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
             Log.i(TAG, "Victory on Level ${gameState.level}!")
             gameState.points += 100 
             gameState.level++ 
+            levelsPassed += 1
             resetLevel(localSession, camera)
         } else if (gameState.state == PuzzleState.DEFEAT) {
             Log.i(TAG, "Defeat on Level ${gameState.level}.")
@@ -477,6 +489,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
                         physicsSimulator.launchArrow(camera, gameState, arrowYawOffset)
                         updateUIText()
                         AudioManager.playSfx("arrow")
+                        arrowsThrown += 1
                     } else if (!anchorManager.isAnchorTracking()){
                          activity.view.snackbarHelper.showMessage(activity, "Wait for stable tracking to shoot.")
                     } else {

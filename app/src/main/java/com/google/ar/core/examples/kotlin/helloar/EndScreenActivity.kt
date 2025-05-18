@@ -11,6 +11,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -19,6 +20,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.layout.ContentScale
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import com.google.ar.core.examples.kotlin.helloar.data.ApiService
+import com.google.ar.core.examples.kotlin.helloar.data.UserPreferences
 
 import com.google.ar.core.examples.kotlin.helloar.ui.theme.DisketFont
 import com.google.ar.core.examples.kotlin.helloar.ui.theme.OrbitVectorARTheme
@@ -29,14 +35,51 @@ class EndScreenActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val score = intent.getIntExtra("score", 0)
         val points = intent.getIntExtra("points", 0)
+        val arrowsThrown = intent.getIntExtra("arrowsThrown", 0)
+        val objectsHit = intent.getIntExtra("objectsHit", 0)
+        val levelsPassed = intent.getIntExtra("levelsPassed", 0)
         AudioManager.playSfx("gameover")
+
+        // --- Send score to server ---
+        val prefs = UserPreferences(this)
+        val uuid = prefs.uuid
+        val api = ApiService.run {
+            val moshi = com.squareup.moshi.Moshi.Builder()
+                .add(com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory())
+                .build()
+            retrofit2.Retrofit.Builder()
+                .baseUrl(ApiService.BASE_URL)
+                .addConverterFactory(retrofit2.converter.scalars.ScalarsConverterFactory.create())
+                .addConverterFactory(retrofit2.converter.moshi.MoshiConverterFactory.create(moshi).asLenient())
+                .build()
+                .create(ApiService::class.java)
+        }
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                api.sendScore(
+                    uuid = uuid,
+                    score = points,
+                    arrowsThrown = arrowsThrown,
+                    planetsHit = objectsHit,
+                    levelsPassed = levelsPassed
+                )
+            } catch (_: Exception) { }
+        }
+
         setContent {
             OrbitVectorARTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    EndScreen(score = score, points = points, onHome = {
-                        startActivity(Intent(this, MenuScreenActivity::class.java))
-                        finish()
-                    })
+                    EndScreen(
+                        score = score,
+                        points = points,
+                        arrowsThrown = arrowsThrown,
+                        objectsHit = objectsHit,
+                        levelsPassed = levelsPassed,
+                        onHome = {
+                            startActivity(Intent(this, MenuScreenActivity::class.java))
+                            finish()
+                        }
+                    )
                 }
             }
         }
@@ -44,7 +87,14 @@ class EndScreenActivity : ComponentActivity() {
 }
 
 @Composable
-fun EndScreen(score: Int, points: Int, onHome: () -> Unit) {
+fun EndScreen(
+    score: Int,
+    points: Int,
+    arrowsThrown: Int = 0,
+    objectsHit: Int = 0,
+    levelsPassed: Int = 0,
+    onHome: () -> Unit
+) {
     // --- font
     val font = DisketFont
     Box(
@@ -65,7 +115,7 @@ fun EndScreen(score: Int, points: Int, onHome: () -> Unit) {
                 .padding(top = 60.dp)
         )
 
-        // --- Score and Points
+        // --- Score, Points, and Stats
         Column(
             modifier = Modifier
                 .align(Alignment.Center)
@@ -73,14 +123,25 @@ fun EndScreen(score: Int, points: Int, onHome: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "SCORE:  $score",
+                text = "SCORE :  $points",
                 style = TextStyle(fontFamily = font, fontSize = 32.sp, color = Color.White),
                 modifier = Modifier.padding(vertical = 8.dp)
             )
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "POINTS :  $points",
-                style = TextStyle(fontFamily = font, fontSize = 32.sp, color = Color.White),
-                modifier = Modifier.padding(vertical = 8.dp)
+                text = "ARROWS THROWN: $arrowsThrown",
+                style = TextStyle(fontFamily = font, fontSize = 22.sp, color = Color.White),
+                modifier = Modifier.padding(vertical = 2.dp)
+            )
+            Text(
+                text = "OBJECTS HIT: $objectsHit",
+                style = TextStyle(fontFamily = font, fontSize = 22.sp, color = Color.White),
+                modifier = Modifier.padding(vertical = 2.dp)
+            )
+            Text(
+                text = "LEVELS PASSED: $levelsPassed",
+                style = TextStyle(fontFamily = font, fontSize = 22.sp, color = Color.White),
+                modifier = Modifier.padding(vertical = 2.dp)
             )
         }
 
