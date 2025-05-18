@@ -39,3 +39,7 @@ data class Skin
     val price: Int,
     val minimalScore: Int
 )
+
+data class UserSkins(
+    val skinId: Int
+)
