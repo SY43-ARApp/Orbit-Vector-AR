@@ -151,109 +151,77 @@ class PhysicsSimulator {
         yawOffset: Float = 0f,
         gameState: GameState
     ) {
-        // Kinematic equations: x = x0 + v * t + 0.5 * a * t^2 (Euler integration step)
+        // --- NEW TRAJECTORY LOGIC: sample at fixed distance intervals, stop at collision ---
         val (arrowInitialPosition, launchDirection) = calculateInitialArrowSpawnData(startCamera, yawOffset)
+        val startTip = getArrowTipPosition(arrowInitialPosition, launchDirection)
+        val maxDistance = GameConstants.MAX_TRAJECTORY_DISTANCE
+        val numDots = GameConstants.TRAJECTORY_SIMULATION_STEPS
+        if (numDots < 1) return
+        val interval = maxDistance / numDots
+
+        // Simulate using small time steps, and place a dot every 'interval' meters along the path
         val simPosition = arrowInitialPosition.copyOf()
         val simVelocity = floatArrayOf(
             launchDirection[0] * ARROW_LAUNCH_SPEED,
             launchDirection[1] * ARROW_LAUNCH_SPEED,
             launchDirection[2] * ARROW_LAUNCH_SPEED
         )
-        val oversampleSteps = TRAJECTORY_SIMULATION_STEPS * 10
-        val allPositions = mutableListOf<FloatArray>()
-        allPositions.add(simPosition.copyOf())
-        var totalDistanceTraveled = 0f
-        for (step in 1..oversampleSteps) {
-            val accumulatedAcceleration = floatArrayOf(0f, 0f, 0f)
+        val timeStep = 0.01f // small for accuracy
+        var traveled = 0f
+        var lastTip = getArrowTipPosition(simPosition, simVelocity)
+        trajectoryPoints.clear()
+        trajectoryPoints.add(lastTip.copyOf()) // always add the starting tip
+
+        var nextDotDist = interval
+        var dotsPlaced = 1
+        var collision = false
+
+        // Simulate until maxDistance or collision or all dots placed
+        while (traveled < maxDistance && dotsPlaced < numDots && !collision) {
+            // Integrate physics
+            val acc = floatArrayOf(0f, 0f, 0f)
             currentPlanets.forEach { planet ->
-                val accel = calculateGravitationalAcceleration(
-                    simPosition,
-                    planet.worldPosition,
-                    planet.mass,
-                    planet.targetRadius * 0.5f
+                val a = calculateGravitationalAcceleration(
+                    simPosition, planet.worldPosition, planet.mass, planet.targetRadius * 0.5f
                 )
-                accumulatedAcceleration[0] += accel[0]
-                accumulatedAcceleration[1] += accel[1]
-                accumulatedAcceleration[2] += accel[2]
+                acc[0] += a[0]; acc[1] += a[1]; acc[2] += a[2]
             }
             currentMoons.forEach { moon ->
                 val moonPos = moon.getWorldPosition()
-                val accel = calculateGravitationalAcceleration(
-                    simPosition,
-                    moonPos,
-                    moon.mass,
-                    moon.targetRadius * 0.5f
+                val a = calculateGravitationalAcceleration(
+                    simPosition, moonPos, moon.mass, moon.targetRadius * 0.5f
                 )
-                accumulatedAcceleration[0] += accel[0]
-                accumulatedAcceleration[1] += accel[1]
-                accumulatedAcceleration[2] += accel[2]
+                acc[0] += a[0]; acc[1] += a[1]; acc[2] += a[2]
             }
-            simVelocity[0] += accumulatedAcceleration[0] * TRAJECTORY_SIMULATION_TIMESTEP
-            simVelocity[1] += accumulatedAcceleration[1] * TRAJECTORY_SIMULATION_TIMESTEP
-            simVelocity[2] += accumulatedAcceleration[2] * TRAJECTORY_SIMULATION_TIMESTEP
-            simPosition[0] += simVelocity[0] * TRAJECTORY_SIMULATION_TIMESTEP
-            simPosition[1] += simVelocity[1] * TRAJECTORY_SIMULATION_TIMESTEP
-            simPosition[2] += simVelocity[2] * TRAJECTORY_SIMULATION_TIMESTEP
-            totalDistanceTraveled = MathUtils.calculateDistance(simPosition, arrowInitialPosition)
-            if (totalDistanceTraveled > GameConstants.MAX_TRAJECTORY_DISTANCE) {
+            simVelocity[0] += acc[0] * timeStep
+            simVelocity[1] += acc[1] * timeStep
+            simVelocity[2] += acc[2] * timeStep
+            simPosition[0] += simVelocity[0] * timeStep
+            simPosition[1] += simVelocity[1] * timeStep
+            simPosition[2] += simVelocity[2] * timeStep
+
+            val tip = getArrowTipPosition(simPosition, simVelocity)
+            val stepDist = MathUtils.calculateDistance(lastTip, tip)
+            traveled += stepDist
+
+            // Check for collision at this tip
+            if (checkCollision(tip, currentPlanets, currentMoons, currentApple, gameState)) {
+                collision = true
+                trajectoryPoints.add(tip.copyOf())
                 break
             }
 
-            val arrowTip = getArrowTipPosition(simPosition, simVelocity)
-            if (checkCollision(arrowTip, currentPlanets, currentMoons, currentApple, gameState)) {
-                allPositions.add(simPosition.copyOf())
-                break
+            // Place a dot if passed the next interval
+            if (traveled + 1e-4f >= nextDotDist) {
+                trajectoryPoints.add(tip.copyOf())
+                dotsPlaced++
+                nextDotDist += interval
             }
-            allPositions.add(simPosition.copyOf())
-            currentApple?.let { apple ->
-                val collisionDistSq = (ARROW_TARGET_RADIUS + apple.targetRadius).pow(2)
-                if (MathUtils.calculateDistanceSquared(simPosition, apple.worldPosition) < collisionDistSq) {
-                }
-            }
+            lastTip = tip
         }
-        trajectoryPoints.clear()
-        if (allPositions.size < 2) {
-            if(allPositions.isNotEmpty()) {
-                val tip = getArrowTipPosition(allPositions.first(), launchDirection)
-                trajectoryPoints.add(tip)
-            }
-            return
-        }
-        val cumulativeDistances = FloatArray(allPositions.size)
-        cumulativeDistances[0] = 0f
-        for (i in 1 until allPositions.size) {
-            cumulativeDistances[i] = cumulativeDistances[i-1] + MathUtils.calculateDistance(allPositions[i], allPositions[i-1])
-        }
-        val totalActualPathLength = cumulativeDistances.last()
-        val maxDistForResampling = totalActualPathLength.coerceAtMost(GameConstants.MAX_TRAJECTORY_DISTANCE)
-        val numResampleOutputPoints = TRAJECTORY_SIMULATION_STEPS
-        if (numResampleOutputPoints <= 0) return
-        for (i in 0 until numResampleOutputPoints) {
-            val targetDist = if (numResampleOutputPoints == 1) 0f 
-                             else maxDistForResampling * i / (numResampleOutputPoints - 1)
-            var segmentIndex = 0
-            while (segmentIndex < cumulativeDistances.size - 2 && cumulativeDistances[segmentIndex+1] < targetDist) {
-                segmentIndex++
-            }
-            val p0 = allPositions[segmentIndex]
-            val p1 = allPositions[segmentIndex+1]
-            val segmentActualLength = cumulativeDistances[segmentIndex+1] - cumulativeDistances[segmentIndex]
-            val t = if (segmentActualLength > 0.00001f) {
-                (targetDist - cumulativeDistances[segmentIndex]) / segmentActualLength
-            } else {
-                0f
-            }.coerceIn(0f, 1f)
-            val interpolatedPoint = floatArrayOf(
-                p0[0] + (p1[0] - p0[0]) * t,
-                p0[1] + (p1[1] - p0[1]) * t,
-                p0[2] + (p1[2] - p0[2]) * t
-            )
-            val tip = getArrowTipPosition(interpolatedPoint, launchDirection)
-            trajectoryPoints.add(tip)
-        }
-        if (trajectoryPoints.isEmpty() && allPositions.isNotEmpty()) {
-            val tip = getArrowTipPosition(allPositions.first(), launchDirection)
-            trajectoryPoints.add(tip)
+        // If no collision and not enough dots, fill up to numDots with last tip
+        while (trajectoryPoints.size < numDots) {
+            trajectoryPoints.add(lastTip.copyOf())
         }
     }
 
