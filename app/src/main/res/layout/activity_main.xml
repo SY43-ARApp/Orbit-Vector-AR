@@ -27,15 +27,38 @@
         android:layout_height="fill_parent"
         android:layout_gravity="top" />
 
-    <ImageButton
-        android:id="@+id/settings_button"
+    <LinearLayout
+        android:id="@+id/audio_toggle_buttons"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
-        android:layout_margin="25dp"
-        android:background="@android:color/transparent"
-        android:src="@drawable/ic_settings" />
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="16dp"
+        android:gravity="end">
+
+        <ImageButton
+            android:id="@+id/music_toggle_button"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="toggle_music"
+            android:src="@drawable/ic_music_on"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true" />
+
+        <ImageButton
+            android:id="@+id/sfx_toggle_button"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginTop="12dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="toggle_sfx"
+            android:src="@drawable/ic_sfx_on"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/level_text"
@@ -91,16 +114,14 @@
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"
         android:layout_marginBottom="18dp"
-        android:background="@drawable/slider"
-        android:backgroundTint="#FFF9EE"
+        android:backgroundTint="#00FFF9EE"
         android:contentDescription="Adjust arrow launch X position"
         android:elevation="8dp"
         android:max="200"
         android:progress="100"
-        android:progressDrawable="@drawable/empty"
         android:scaleY="1.0"
         android:splitTrack="false"
-        android:thumb="@drawable/slider_carret"
-        android:thumbTint="@null" />
+        android:thumb="@android:drawable/btn_default"
+        android:thumbTint="#F41313" />
 
 </RelativeLayout>

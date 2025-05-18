@@ -31,28 +31,32 @@ import com.google.ar.core.examples.java.common.helpers.TapHelper
 class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
   val root = View.inflate(activity, R.layout.activity_main, null)
   val surfaceView = root.findViewById<GLSurfaceView>(R.id.surfaceview)
-  val settingsButton =
-    root.findViewById<ImageButton>(R.id.settings_button).apply {
-      setOnClickListener { v ->
-        PopupMenu(activity, v).apply {
-          setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-              R.id.depth_settings -> launchDepthSettingsMenuDialog()
-              R.id.instant_placement_settings -> launchInstantPlacementSettingsMenuDialog()
-              else -> null
-            } != null
-          }
-          inflate(R.menu.settings_menu)
-          show()
-        }
-      }
-    }
+
+  // val settingsButton =
+  //   root.findViewById<ImageButton>(R.id.settings_button).apply {
+  //     setOnClickListener { v ->
+  //       PopupMenu(activity, v).apply {
+  //         setOnMenuItemClickListener { item ->
+  //           when (item.itemId) {
+  //             R.id.depth_settings -> launchDepthSettingsMenuDialog()
+  //             R.id.instant_placement_settings -> launchInstantPlacementSettingsMenuDialog()
+  //             else -> null
+  //           } != null
+  //         }
+  //         inflate(R.menu.settings_menu)
+  //         show()
+  //       }
+  //     }
+  //   }
 
   val session
     get() = activity.arCoreSessionHelper.session
 
   val snackbarHelper = SnackbarHelper()
   val tapHelper = TapHelper(activity).also { surfaceView.setOnTouchListener(it) }
+
+  val musicToggleButton = root.findViewById<ImageButton>(R.id.music_toggle_button)
+  val sfxToggleButton = root.findViewById<ImageButton>(R.id.sfx_toggle_button)
 
   val arrowXSlider = root.findViewById<android.widget.SeekBar>(R.id.arrow_x_slider)
   var arrowYawOffset: Float = 0f
@@ -70,6 +74,40 @@ class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
         override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
       })
     }
+
+    // --- Music toggle logic
+    updateMusicButtonIcon()
+    musicToggleButton.setOnClickListener {
+      val enabled = !AudioManager.isMusicEnabled()
+      AudioManager.setMusicEnabled(enabled)
+      updateMusicButtonIcon()
+      if (enabled) {
+        AudioManager.playBackground(R.raw.gamebgmusic)
+      } else {
+        AudioManager.stopBackground()
+      }
+    }
+
+    // --- SFX toggle logic
+    updateSfxButtonIcon()
+    sfxToggleButton.setOnClickListener {
+      val enabled = !AudioManager.isSfxEnabled()
+      AudioManager.setSfxEnabled(enabled)
+      updateSfxButtonIcon()
+      AudioManager.playSfx("tap")
+    }
+  }
+
+  private fun updateMusicButtonIcon() {
+    musicToggleButton.setImageResource(
+      if (AudioManager.isMusicEnabled()) R.drawable.ic_music_on else R.drawable.ic_music_off
+    )
+  }
+
+  private fun updateSfxButtonIcon() {
+    sfxToggleButton.setImageResource(
+      if (AudioManager.isSfxEnabled()) R.drawable.ic_sfx_on else R.drawable.ic_sfx_off
+    )
   }
 
   override fun onResume(owner: LifecycleOwner) {
