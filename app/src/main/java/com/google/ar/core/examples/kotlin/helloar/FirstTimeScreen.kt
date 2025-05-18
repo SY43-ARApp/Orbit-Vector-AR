@@ -291,7 +291,7 @@ fun FirstTimeScreen(onRegistered: () -> Unit) {
                     fontSize = 16.sp,
                     textDecoration = TextDecoration.Underline,
                     modifier = Modifier.clickable {
-                        val url = "https://your-terms-url.com"
+                        val url = "https://chaelpixserver.ddns.net/apis/ovar/terms.html"
                         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                     }
                 )
@@ -327,7 +327,7 @@ fun FirstTimeScreen(onRegistered: () -> Unit) {
                     fontSize = 16.sp,
                     textDecoration = TextDecoration.Underline,
                     modifier = Modifier.clickable {
-                        val url = "https://your-policy-url.com"
+                        val url = "https://chaelpixserver.ddns.net/apis/ovar/policy.html"
                         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                     }
                 )
