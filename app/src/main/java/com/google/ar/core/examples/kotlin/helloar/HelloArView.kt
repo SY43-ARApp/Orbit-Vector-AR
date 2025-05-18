@@ -58,22 +58,78 @@ class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
   val musicToggleButton = root.findViewById<ImageButton>(R.id.music_toggle_button)
   val sfxToggleButton = root.findViewById<ImageButton>(R.id.sfx_toggle_button)
 
-  val arrowXSlider = root.findViewById<android.widget.SeekBar>(R.id.arrow_x_slider)
+  val arrowLeftButton = root.findViewById<ImageButton>(R.id.arrow_left_button)
+  val arrowRightButton = root.findViewById<ImageButton>(R.id.arrow_right_button)
+  val arrowAngleText = root.findViewById<android.widget.TextView>(R.id.arrow_angle_text)
+
   var arrowYawOffset: Float = 0f
   private val maxYawDeg = 30f
   private val maxYawRad = Math.toRadians(maxYawDeg.toDouble()).toFloat()
+  private val minYawRad = -maxYawRad
+  private val yawStepRad = Math.toRadians(1.0).toFloat()
+  private var leftHoldRunnable: Runnable? = null
+  private var rightHoldRunnable: Runnable? = null
+
   init {
-    arrowXSlider?.let { slider ->
-      slider.max = 200
-      slider.progress = slider.max / 2
-      slider.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
-        override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
-          arrowYawOffset = (progress - slider.max / 2) * (2 * maxYawRad) / slider.max
-        }
-        override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
-        override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
-      })
+    fun updateArrowAngleUI() {
+      val angleDeg = Math.round(Math.toDegrees(arrowYawOffset.toDouble())).toInt()
+      arrowAngleText.text = "${angleDeg}°"
+      if (arrowYawOffset <= minYawRad + 0.0001f) {
+        arrowLeftButton.isEnabled = false
+        arrowLeftButton.alpha = 0.3f
+      } else {
+        arrowLeftButton.isEnabled = true
+        arrowLeftButton.alpha = 1.0f
+      }
+      if (arrowYawOffset >= maxYawRad - 0.0001f) {
+        arrowRightButton.isEnabled = false
+        arrowRightButton.alpha = 0.3f
+      } else {
+        arrowRightButton.isEnabled = true
+        arrowRightButton.alpha = 1.0f
+      }
     }
+
+    fun changeYaw(delta: Float) {
+      arrowYawOffset = (arrowYawOffset + delta).coerceIn(minYawRad, maxYawRad)
+      updateArrowAngleUI()
+    }
+
+    fun setHoldListener(button: ImageButton, delta: Float) {
+      var isHolding = false
+      val handler = android.os.Handler()
+      val repeatInterval = 30L // ms
+
+      val holdRunnable = object : Runnable {
+        override fun run() {
+          if (isHolding && button.isEnabled) {
+            changeYaw(delta)
+            handler.postDelayed(this, repeatInterval)
+          }
+        }
+      }
+
+      button.setOnTouchListener { v, event ->
+        when (event.action) {
+          android.view.MotionEvent.ACTION_DOWN -> {
+            isHolding = true
+            changeYaw(delta)
+            handler.postDelayed(holdRunnable, repeatInterval)
+            true
+          }
+          android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+            isHolding = false
+            handler.removeCallbacks(holdRunnable)
+            true
+          }
+          else -> false
+        }
+      }
+    }
+
+    setHoldListener(arrowLeftButton, -yawStepRad)
+    setHoldListener(arrowRightButton, yawStepRad)
+    updateArrowAngleUI()
 
     // --- Music toggle logic
     updateMusicButtonIcon()
