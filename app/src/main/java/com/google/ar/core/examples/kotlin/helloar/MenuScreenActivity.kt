@@ -130,6 +130,13 @@ fun MenuScreen(
     // Use a local lambda for play to ensure coroutine scope and VFX
     val scope = rememberCoroutineScope()
 
+    // --- TEMP ---
+    val playerPos = 50
+    val totalPlayers = 100
+    val rankImageRes = remember(playerPos, totalPlayers) {
+        RankImageUtil.getRankImageRes(playerPos, totalPlayers)
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -225,13 +232,37 @@ fun MenuScreen(
             contentDescription = "Logo",
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 80.dp)
-                .size(260.dp)
+                .padding(top = 100.dp) 
+                .size(150.dp)
                 .graphicsLayer(
                     scaleX = logoScale,
                     scaleY = logoScale
                 )
         )
+
+        // --- rank image and text ---
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 300.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                painter = painterResource(id = rankImageRes),
+                contentDescription = "Rank Badge",
+                modifier = Modifier.size(90.dp)
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "RANK #$playerPos",
+                style = TextStyle(
+                    fontFamily = DisketFont,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold
+                ),
+                color = Color.White
+            )
+        }
 
         // --- main menu buttons ---
         Column(
