@@ -7,7 +7,7 @@ data class Planet(
     val worldPosition: FloatArray,
     val mass: Float,
     val textureIdx: Int,
-    val targetRadius: Float
+    val targetRadius: Float // Used for both rendering and collision
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -35,6 +35,7 @@ data class Arrow(
     val mass: Float,
     var active: Boolean = true,
     val launchTime: Long = System.currentTimeMillis()
+    // Arrow collision uses ARROW_TARGET_RADIUS (from GameConstants)
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -51,7 +52,7 @@ data class Arrow(
 
 data class Apple(
     var worldPosition: FloatArray,
-    val targetRadius: Float
+    val targetRadius: Float // Used for both rendering and collision
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -73,7 +74,7 @@ data class Moon(
     var orbitPhase: Float, // Initial phase offset (radians)
     var mass: Float,
     var textureIdx: Int,
-    var targetRadius: Float,
+    var targetRadius: Float, // Used for both rendering and collision
     var currentAngle: Float = 0f
 ) {
     fun getWorldPosition(): FloatArray {

@@ -5,7 +5,7 @@ import com.google.ar.core.Camera
 import com.google.ar.core.Pose
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.ARROW_LAUNCH_SPEED
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.ARROW_MASS
-import com.google.ar.core.examples.kotlin.helloar.GameConstants.ARROW_VISUAL_AND_COLLISION_RADIUS
+import com.google.ar.core.examples.kotlin.helloar.GameConstants.ARROW_TARGET_RADIUS
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.GRAVITY_CONSTANT
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.TRAJECTORY_SIMULATION_STEPS
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.TRAJECTORY_SIMULATION_TIMESTEP
@@ -97,20 +97,20 @@ class PhysicsSimulator {
     ): Boolean {
         // Check collisions
         apple?.let {
-            val collisionDistSq = (ARROW_VISUAL_AND_COLLISION_RADIUS + it.targetRadius).pow(2)
+            val collisionDistSq = (ARROW_TARGET_RADIUS + it.targetRadius).pow(2)
             if (MathUtils.calculateDistanceSquared(position, it.worldPosition) < collisionDistSq) {
                 return true
             }
         }
         for (planet in planets) {
-            val collisionDistSq = (ARROW_VISUAL_AND_COLLISION_RADIUS + planet.targetRadius).pow(2)
+            val collisionDistSq = (ARROW_TARGET_RADIUS + planet.targetRadius).pow(2)
             if (MathUtils.calculateDistanceSquared(position, planet.worldPosition) < collisionDistSq) {
                 return true
             }
         }
         for (moon in moons) {
             val moonPos = moon.getWorldPosition()
-            val collisionDistSq = (ARROW_VISUAL_AND_COLLISION_RADIUS + moon.targetRadius).pow(2)
+            val collisionDistSq = (ARROW_TARGET_RADIUS + moon.targetRadius).pow(2)
             if (MathUtils.calculateDistanceSquared(position, moonPos) < collisionDistSq) {
                 return true
             }
@@ -179,14 +179,21 @@ class PhysicsSimulator {
             }
             allPositions.add(simPosition.copyOf())
             currentApple?.let { apple ->
-                val collisionDistSq = (ARROW_VISUAL_AND_COLLISION_RADIUS + apple.targetRadius).pow(2)
+                val collisionDistSq = (ARROW_TARGET_RADIUS + apple.targetRadius).pow(2)
                 if (MathUtils.calculateDistanceSquared(simPosition, apple.worldPosition) < collisionDistSq) {
                 }
             }
         }
         trajectoryPoints.clear()
         if (allPositions.size < 2) {
-            if(allPositions.isNotEmpty()) trajectoryPoints.add(allPositions.first().copyOf())
+            if(allPositions.isNotEmpty()) {
+                val tip = floatArrayOf(
+                    allPositions.first()[0] + launchDirection[0] * ARROW_TARGET_RADIUS,
+                    allPositions.first()[1] + launchDirection[1] * ARROW_TARGET_RADIUS,
+                    allPositions.first()[2] + launchDirection[2] * ARROW_TARGET_RADIUS
+                )
+                trajectoryPoints.add(tip)
+            }
             return
         }
         val cumulativeDistances = FloatArray(allPositions.size)
@@ -218,10 +225,20 @@ class PhysicsSimulator {
                 p0[1] + (p1[1] - p0[1]) * t,
                 p0[2] + (p1[2] - p0[2]) * t
             )
-            trajectoryPoints.add(interpolatedPoint)
+            val tip = floatArrayOf(
+                interpolatedPoint[0] + launchDirection[0] * ARROW_TARGET_RADIUS,
+                interpolatedPoint[1] + launchDirection[1] * ARROW_TARGET_RADIUS,
+                interpolatedPoint[2] + launchDirection[2] * ARROW_TARGET_RADIUS
+            )
+            trajectoryPoints.add(tip)
         }
         if (trajectoryPoints.isEmpty() && allPositions.isNotEmpty()) {
-             trajectoryPoints.add(allPositions.first().copyOf())
+            val tip = floatArrayOf(
+                allPositions.first()[0] + launchDirection[0] * ARROW_TARGET_RADIUS,
+                allPositions.first()[1] + launchDirection[1] * ARROW_TARGET_RADIUS,
+                allPositions.first()[2] + launchDirection[2] * ARROW_TARGET_RADIUS
+            )
+            trajectoryPoints.add(tip)
         }
     }
 
@@ -271,13 +288,13 @@ class PhysicsSimulator {
             if (checkCollision(arrow.position, currentPlanets, currentMoons, currentApple)) {
                 arrow.active = false
                 AudioManager.playSfx("arrowhit")
-                if (currentApple != null && MathUtils.calculateDistanceSquared(arrow.position, currentApple.worldPosition) < (ARROW_VISUAL_AND_COLLISION_RADIUS + currentApple.targetRadius).pow(2)) {
+                if (currentApple != null && MathUtils.calculateDistanceSquared(arrow.position, currentApple.worldPosition) < (ARROW_TARGET_RADIUS + currentApple.targetRadius).pow(2)) {
                     appleHitThisFrame = true
                 }
                 return@forEach
             }
             currentApple?.let { apple ->
-                val collisionDistanceSq = (ARROW_VISUAL_AND_COLLISION_RADIUS + apple.targetRadius).pow(2)
+                val collisionDistanceSq = (ARROW_TARGET_RADIUS + apple.targetRadius).pow(2)
                 if (MathUtils.calculateDistanceSquared(arrow.position, apple.worldPosition) < collisionDistanceSq) {
                     Log.i(TAG, "Apple hit!")
                     gameState.points += 100 * gameState.level

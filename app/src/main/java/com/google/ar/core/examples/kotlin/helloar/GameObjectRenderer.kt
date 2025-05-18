@@ -7,7 +7,7 @@ import com.google.ar.core.examples.java.common.samplerender.SampleRender
 import com.google.ar.core.examples.java.common.samplerender.Shader
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.APPLE_MODEL_DEFAULT_RADIUS
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.ARROW_MODEL_DEFAULT_RADIUS
-import com.google.ar.core.examples.kotlin.helloar.GameConstants.ARROW_VISUAL_AND_COLLISION_RADIUS
+import com.google.ar.core.examples.kotlin.helloar.GameConstants.ARROW_TARGET_RADIUS
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.PLANET_MODEL_DEFAULT_RADIUS
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.TRAJECTORY_DOT_MODEL_DEFAULT_RADIUS
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.TRAJECTORY_DOT_TARGET_RADIUS
@@ -82,7 +82,7 @@ class GameObjectRenderer(private val assetLoader: AssetLoader) {
         projectionMatrix: FloatArray,
         framebuffer: Framebuffer
     ) {
-        val scaleFactor = ARROW_VISUAL_AND_COLLISION_RADIUS / ARROW_MODEL_DEFAULT_RADIUS
+        val scaleFactor = ARROW_TARGET_RADIUS / ARROW_MODEL_DEFAULT_RADIUS
         arrows.filter { it.active }.forEach { arrow ->
             Matrix.setIdentityM(modelMatrix, 0)
             Matrix.translateM(modelMatrix, 0, arrow.position[0], arrow.position[1], arrow.position[2])
@@ -150,7 +150,7 @@ class GameObjectRenderer(private val assetLoader: AssetLoader) {
         projectionMatrix: FloatArray,
         framebuffer: Framebuffer
     ) {
-        val scaleFactor = ARROW_VISUAL_AND_COLLISION_RADIUS / ARROW_MODEL_DEFAULT_RADIUS
+        val scaleFactor = ARROW_TARGET_RADIUS / ARROW_MODEL_DEFAULT_RADIUS
         Matrix.setIdentityM(modelMatrix, 0)
         Matrix.translateM(modelMatrix, 0, position[0], position[1], position[2])
         // rotate arrow to match direction
