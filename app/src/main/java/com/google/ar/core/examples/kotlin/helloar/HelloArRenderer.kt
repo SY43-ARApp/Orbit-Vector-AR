@@ -73,10 +73,10 @@ class HelloArRenderer(val activity: HelloArActivity) :
     private var hasSetTextureNames = false
 
     // Point Cloud
-    // private lateinit var pointCloudVertexBuffer: VertexBuffer
-    // private lateinit var pointCloudMesh: Mesh
-    // private lateinit var pointCloudShader: Shader
-    // private var lastPointCloudTimestamp: Long = 0
+    private lateinit var pointCloudVertexBuffer: VertexBuffer
+    private lateinit var pointCloudMesh: Mesh
+    private lateinit var pointCloudShader: Shader
+    private var lastPointCloudTimestamp: Long = 0
 
     // ----------------- Shaders and Textures and Maths
     private lateinit var virtualObjectShader: Shader
@@ -107,6 +107,9 @@ class HelloArRenderer(val activity: HelloArActivity) :
     private lateinit var gameObjectRenderer: GameObjectRenderer
     private val lightManager = LightManager()
 
+    // Add this with other renderer fields
+    private lateinit var planeRenderer: com.google.ar.core.examples.java.common.samplerender.arcore.PlaneRenderer
+
     // Initialization
     override fun onSurfaceCreated(render: SampleRender) {
         this.render = render
@@ -123,7 +126,6 @@ class HelloArRenderer(val activity: HelloArActivity) :
 
             // ARCore rendering setup
             backgroundRenderer = BackgroundRenderer(render)
-            // planeRenderer = PlaneRenderer(render) // to render planes debug
             virtualSceneFramebuffer = Framebuffer(render, /*width=*/1, /*height=*/1) // Will be resized
 
             // Cubemap and DFG texture for PBR lighting
@@ -152,12 +154,20 @@ class HelloArRenderer(val activity: HelloArActivity) :
             )
             GLError.maybeThrowGLException("Failed to populate DFG texture", "glTexImage2D")
 
-            // Point cloud renderer (DEBUG)
-            // pointCloudShader = Shader.createFromAssets(render, "shaders/point_cloud.vert", "shaders/point_cloud.frag",  null)
-            //    .setVec4("u_Color", floatArrayOf(0.12f, 0.74f, 0.82f, 1.0f)) // Light blue
-            //    .setFloat("u_PointSize", 5.0f)
-            // pointCloudVertexBuffer = VertexBuffer(render, 4, null) // X,Y,Z,Confidence
-            // pointCloudMesh = Mesh(render, Mesh.PrimitiveMode.POINTS, null, arrayOf(pointCloudVertexBuffer))
+            // Plane renderer for visualizing detected planes
+            planeRenderer = com.google.ar.core.examples.java.common.samplerender.arcore.PlaneRenderer(render)
+
+            // Point cloud renderer for visualizing feature points
+            pointCloudShader = Shader.createFromAssets(
+                render,
+                "shaders/point_cloud.vert",
+                "shaders/point_cloud.frag",
+                null
+            )
+                .setVec4("u_Color", floatArrayOf(0.12f, 0.74f, 0.82f, 1.0f))
+                .setFloat("u_PointSize", 5.0f)
+            pointCloudVertexBuffer = VertexBuffer(render, 4, null) // X,Y,Z,Confidence
+            pointCloudMesh = Mesh(render, Mesh.PrimitiveMode.POINTS, null, arrayOf(pointCloudVertexBuffer))
 
             // Virtual object shader (PBR)
             virtualObjectShader = Shader.createFromAssets(
@@ -182,15 +192,22 @@ class HelloArRenderer(val activity: HelloArActivity) :
     override fun onResume(owner: LifecycleOwner) {
         displayRotationHelper.onResume()
         hasSetTextureNames = false
+        session?.let { anchorManager.tryRestoreAnchorFromSavedPose(it) }
     }
 
     override fun onPause(owner: LifecycleOwner) {
         displayRotationHelper.onPause()
+        anchorManager.saveAnchorPoseIfTracking()
     }
+
+    private var screenWidth: Int = 0
+    private var screenHeight: Int = 0
 
     override fun onSurfaceChanged(render: SampleRender, width: Int, height: Int) {
         displayRotationHelper.onSurfaceChanged(width, height)
         virtualSceneFramebuffer.resize(width, height)
+        screenWidth = width
+        screenHeight = height
     }
 
 
@@ -216,7 +233,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
         }
         val camera = frame.camera
 
-        // Anchor status
+        // --- ANCHOR PLACEMENT LOGIC ---
         anchorManager.updateTrackingStability(camera.trackingState, gameState.state)
         val previousStateBeforeAnchorUpdate = gameState.state
         gameState.state = anchorManager.updateAnchorLostStatus(gameState.state)
@@ -224,13 +241,24 @@ class HelloArRenderer(val activity: HelloArActivity) :
             physicsSimulator.clearTrajectory()
         }
 
-
-        // Handle game state transitions related to anchor
+        // If waiting for anchor, try to place anchor on a detected plane
         if (gameState.state == PuzzleState.WAITING_FOR_ANCHOR) {
-            if (anchorManager.attemptPlaceOrRestoreAnchor(localSession, camera)) {
-                Log.i(TAG, "Anchor successfully placed/restored. Resetting level.")
+            val anchorPlaced = anchorManager.tryPlaceAnchorOnPlane(localSession, frame, screenWidth, screenHeight)
+            if (anchorPlaced) {
+                Log.i(TAG, "Anchor successfully placed on plane. Resetting level.")
+                activity.view.hideTrackingOverlay()
                 resetLevel(localSession, camera)
+            } else {
+                val trackingState = camera.trackingState
+                val (msg, progress) = when (trackingState) {
+                    TrackingState.PAUSED -> "Scanning environment... Move your device slowly in a circle to help AR map the space." to 0.3f
+                    TrackingState.TRACKING -> "Point your camera at a flat surface to place the game." to 0.7f
+                    else -> "Initializing AR tracking..." to 0.1f
+                }
+                activity.view.showTrackingOverlay(progress, msg)
             }
+        } else {
+            activity.view.hideTrackingOverlay()
         }
         val anchorIsTracking = anchorManager.isAnchorTracking()
         val anchorPose = anchorManager.getAnchorPose()
@@ -243,7 +271,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
 
         // Simulate trajectory only when playing
         if (gameState.state == PuzzleState.PLAYING && anchorIsTracking && gameState.arrowsLeft > 0) {
-            physicsSimulator.simulateArrowTrajectory(camera, currentPlanets, currentMoons, currentApple, arrowYawOffset)
+            physicsSimulator.simulateArrowTrajectory(camera, currentPlanets, currentMoons, currentApple, arrowYawOffset, gameState)
         } else {
             physicsSimulator.clearTrajectory()
         }
@@ -383,6 +411,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
         // ----------------- Post-render & game state updates ---
         if (gameState.state == PuzzleState.VICTORY) {
             Log.i(TAG, "Victory on Level ${gameState.level}!")
+            gameState.points += 100 
             gameState.level++ 
             resetLevel(localSession, camera)
         } else if (gameState.state == PuzzleState.DEFEAT) {
@@ -402,6 +431,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
 
         if (camera != null && anchorManager.isAnchorTracking()) {
             anchorManager.getAnchor()?.let { anchor ->
+                // Pass the anchor, not a pose, to generateLevelLayout
                 levelGenerator.generateLevelLayout(anchor, gameState)
 
                 // Calculate arrows for this level (difficulty scaling)
@@ -440,11 +470,8 @@ class HelloArRenderer(val activity: HelloArActivity) :
                 }
                 PuzzleState.WAITING_FOR_ANCHOR -> {
                     Log.d(TAG, "Tap while WAITING_FOR_ANCHOR.")
-                    if (anchorManager.attemptPlaceOrRestoreAnchor(session, camera)) {
-                        resetLevel(session, camera)
-                    } else {
-                        activity.view.snackbarHelper.showMessage(activity, "Still trying to find a stable surface...")
-                    }
+                    // No tap-to-place; anchor is placed automatically when plane is found
+                    activity.view.snackbarHelper.showMessage(activity, "Move your device to find a surface...")
                 }
                  PuzzleState.VICTORY -> {
                     Log.d(TAG, "Tap during VICTORY (auto-advancing).")

@@ -26,27 +26,32 @@ import androidx.lifecycle.LifecycleOwner
 import com.google.ar.core.Config
 import com.google.ar.core.examples.java.common.helpers.SnackbarHelper
 import com.google.ar.core.examples.java.common.helpers.TapHelper
+import android.widget.ProgressBar
+import android.widget.TextView
+import android.view.ViewGroup
+import android.view.LayoutInflater
 
 /** Contains UI elements for Hello AR. */
 class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
   val root = View.inflate(activity, R.layout.activity_main, null)
   val surfaceView = root.findViewById<GLSurfaceView>(R.id.surfaceview)
-  val settingsButton =
-    root.findViewById<ImageButton>(R.id.settings_button).apply {
-      setOnClickListener { v ->
-        PopupMenu(activity, v).apply {
-          setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-              R.id.depth_settings -> launchDepthSettingsMenuDialog()
-              R.id.instant_placement_settings -> launchInstantPlacementSettingsMenuDialog()
-              else -> null
-            } != null
-          }
-          inflate(R.menu.settings_menu)
-          show()
-        }
-      }
-    }
+
+  // val settingsButton =
+  //   root.findViewById<ImageButton>(R.id.settings_button).apply {
+  //     setOnClickListener { v ->
+  //       PopupMenu(activity, v).apply {
+  //         setOnMenuItemClickListener { item ->
+  //           when (item.itemId) {
+  //             R.id.depth_settings -> launchDepthSettingsMenuDialog()
+  //             R.id.instant_placement_settings -> launchInstantPlacementSettingsMenuDialog()
+  //             else -> null
+  //           } != null
+  //         }
+  //         inflate(R.menu.settings_menu)
+  //         show()
+  //       }
+  //     }
+  //   }
 
   val session
     get() = activity.arCoreSessionHelper.session
@@ -54,21 +59,155 @@ class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
   val snackbarHelper = SnackbarHelper()
   val tapHelper = TapHelper(activity).also { surfaceView.setOnTouchListener(it) }
 
-  val arrowXSlider = root.findViewById<android.widget.SeekBar>(R.id.arrow_x_slider)
+  val musicToggleButton = root.findViewById<ImageButton>(R.id.music_toggle_button)
+  val sfxToggleButton = root.findViewById<ImageButton>(R.id.sfx_toggle_button)
+
+  val arrowLeftButton = root.findViewById<ImageButton>(R.id.arrow_left_button)
+  val arrowRightButton = root.findViewById<ImageButton>(R.id.arrow_right_button)
+  val arrowAngleText = root.findViewById<android.widget.TextView>(R.id.arrow_angle_text)
+
+  val leaveButton = root.findViewById<ImageButton>(R.id.stg_leave_button)
+
   var arrowYawOffset: Float = 0f
   private val maxYawDeg = 30f
   private val maxYawRad = Math.toRadians(maxYawDeg.toDouble()).toFloat()
+  private val minYawRad = -maxYawRad
+  private val yawStepRad = Math.toRadians(1.0).toFloat()
+  private var leftHoldRunnable: Runnable? = null
+  private var rightHoldRunnable: Runnable? = null
+
+  // --- Tracking overlay UI ---
+  private val trackingOverlay: View = LayoutInflater.from(activity).inflate(R.layout.tracking_overlay, null)
+  private val trackingProgressBar: ProgressBar = trackingOverlay.findViewById(R.id.tracking_progress_bar)
+  private val trackingText: TextView = trackingOverlay.findViewById(R.id.tracking_text)
+
   init {
-    arrowXSlider?.let { slider ->
-      slider.max = 200
-      slider.progress = slider.max / 2
-      slider.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
-        override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
-          arrowYawOffset = (progress - slider.max / 2) * (2 * maxYawRad) / slider.max
+    fun updateArrowAngleUI() {
+      val angleDeg = Math.round(Math.toDegrees(arrowYawOffset.toDouble())).toInt()
+      arrowAngleText.text = "${angleDeg}°"
+      if (arrowYawOffset <= minYawRad + 0.0001f) {
+        arrowLeftButton.isEnabled = false
+        arrowLeftButton.alpha = 0.3f
+      } else {
+        arrowLeftButton.isEnabled = true
+        arrowLeftButton.alpha = 1.0f
+      }
+      if (arrowYawOffset >= maxYawRad - 0.0001f) {
+        arrowRightButton.isEnabled = false
+        arrowRightButton.alpha = 0.3f
+      } else {
+        arrowRightButton.isEnabled = true
+        arrowRightButton.alpha = 1.0f
+      }
+    }
+
+    fun changeYaw(delta: Float) {
+      arrowYawOffset = (arrowYawOffset + delta).coerceIn(minYawRad, maxYawRad)
+      updateArrowAngleUI()
+    }
+
+    fun setHoldListener(button: ImageButton, delta: Float) {
+      var isHolding = false
+      val handler = android.os.Handler()
+      val repeatInterval = 30L // ms
+
+      val holdRunnable = object : Runnable {
+        override fun run() {
+          if (isHolding && button.isEnabled) {
+            changeYaw(delta)
+            handler.postDelayed(this, repeatInterval)
+          }
         }
-        override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
-        override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
-      })
+      }
+
+      button.setOnTouchListener { v, event ->
+        when (event.action) {
+          android.view.MotionEvent.ACTION_DOWN -> {
+            isHolding = true
+            changeYaw(delta)
+            handler.postDelayed(holdRunnable, repeatInterval)
+            true
+          }
+          android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+            isHolding = false
+            handler.removeCallbacks(holdRunnable)
+            true
+          }
+          else -> false
+        }
+      }
+    }
+
+    setHoldListener(arrowLeftButton, -yawStepRad)
+    setHoldListener(arrowRightButton, yawStepRad)
+    updateArrowAngleUI()
+
+    // --- Music toggle logic
+    updateMusicButtonIcon()
+    musicToggleButton.setOnClickListener {
+      val enabled = !AudioManager.isMusicEnabled()
+      AudioManager.setMusicEnabled(enabled)
+      updateMusicButtonIcon()
+      if (enabled) {
+        AudioManager.playBackground(R.raw.gamebgmusic)
+      } else {
+        AudioManager.stopBackground()
+      }
+    }
+
+    // --- SFX toggle logic
+    updateSfxButtonIcon()
+    sfxToggleButton.setOnClickListener {
+      val enabled = !AudioManager.isSfxEnabled()
+      AudioManager.setSfxEnabled(enabled)
+      updateSfxButtonIcon()
+      AudioManager.playSfx("tap")
+    }
+
+    // --- Leave button logic
+    leaveButton.setOnClickListener {
+      AudioManager.playSfx("tap")
+      val intent = android.content.Intent(activity, MenuScreenActivity::class.java)
+      intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+      activity.startActivity(intent)
+      activity.finish()
+    }
+
+    if (trackingOverlay.parent != null) {
+      (trackingOverlay.parent as? ViewGroup)?.removeView(trackingOverlay)
+    }
+    trackingOverlay.layoutParams = ViewGroup.LayoutParams(
+      ViewGroup.LayoutParams.MATCH_PARENT,
+      ViewGroup.LayoutParams.MATCH_PARENT
+    )
+    (root as ViewGroup).addView(trackingOverlay)
+    trackingOverlay.visibility = View.GONE
+  }
+
+  private fun updateMusicButtonIcon() {
+    musicToggleButton.setImageResource(
+      if (AudioManager.isMusicEnabled()) R.drawable.ic_music_on else R.drawable.ic_music_off
+    )
+  }
+
+  private fun updateSfxButtonIcon() {
+    sfxToggleButton.setImageResource(
+      if (AudioManager.isSfxEnabled()) R.drawable.ic_sfx_on else R.drawable.ic_sfx_off
+    )
+  }
+
+  fun showTrackingOverlay(progress: Float, msg: String) {
+    activity.runOnUiThread {
+      trackingOverlay.visibility = View.VISIBLE
+      trackingProgressBar.progress = (progress * 100).toInt().coerceIn(0, 100)
+      trackingText.text = msg
+      // TODO: Show ARCore plane visualization (dots/mesh) here for user feedback.
+    }
+  }
+
+  fun hideTrackingOverlay() {
+    activity.runOnUiThread {
+      trackingOverlay.visibility = View.GONE
     }
   }
 

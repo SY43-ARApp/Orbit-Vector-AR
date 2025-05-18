@@ -50,7 +50,8 @@ class LevelGenerator(private val assetLoader: AssetLoader) {
         val planetTargetRadiusMax = PLANET_TARGET_RADIUS_MAX + (level * 0.03f).coerceAtMost(1.2f)
         val planetMassScale = PLANET_MASS_SCALE_FACTOR + (level * 400f)
         val appleClusterRadius = CLUSTER_MAX_RADIUS_APPLE + (level * 0.03f).coerceAtMost(2.0f)
-        val appleRadius = APPLE_TARGET_RADIUS
+        // appleRadius is always APPLE_MODEL_DEFAULT_RADIUS (for both rendering and collision)
+        val appleRadius = GameConstants.APPLE_TARGET_RADIUS
 
         val placedObjectLocalsAndRadii = mutableListOf<Pair<FloatArray, Float>>() // world positions for checking
         val planetLocals = mutableListOf<Triple<FloatArray, Float, Int>>() // localPos, mass, textureIdx
@@ -113,6 +114,7 @@ class LevelGenerator(private val assetLoader: AssetLoader) {
                 (planetTargetRadiusMax * 0.85f) + Random.nextFloat() * (planetTargetRadiusMax * 0.15f) // Larger strong planets
             else
                 Random.nextFloat() * (planetTargetRadiusMax - planetTargetRadiusMin) + planetTargetRadiusMin
+            // planetRad is used as targetRadius for both rendering and collision
 
             var planetLocalAttemptPos: FloatArray? = null
             for (attempt in 0..300) { // Max placement attempts per planet
@@ -191,6 +193,7 @@ class LevelGenerator(private val assetLoader: AssetLoader) {
                     val orbitSpeed = Random.nextFloat() * (MOON_ORBIT_SPEED_MAX - MOON_ORBIT_SPEED_MIN) + MOON_ORBIT_SPEED_MIN
                     val orbitPhase = Random.nextFloat() * 2f * PI.toFloat()
                     val moonRad = Random.nextFloat() * (GameConstants.MOON_TARGET_RADIUS_MAX - GameConstants.MOON_TARGET_RADIUS_MIN) + GameConstants.MOON_TARGET_RADIUS_MIN
+                    // moonRad is used as targetRadius for both rendering and collision
                     val moonMass = GameConstants.MOON_MASS_SCALE_FACTOR * moonRad.pow(2.0f)
                     val theta = Random.nextFloat() * 2f * PI.toFloat()
                     val phi = Random.nextFloat() * PI.toFloat() * 0.5f - (PI.toFloat() * 0.25f)
