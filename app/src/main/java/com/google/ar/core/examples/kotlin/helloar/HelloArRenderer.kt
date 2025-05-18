@@ -188,9 +188,14 @@ class HelloArRenderer(val activity: HelloArActivity) :
         displayRotationHelper.onPause()
     }
 
+    private var screenWidth: Int = 0
+    private var screenHeight: Int = 0
+
     override fun onSurfaceChanged(render: SampleRender, width: Int, height: Int) {
         displayRotationHelper.onSurfaceChanged(width, height)
         virtualSceneFramebuffer.resize(width, height)
+        screenWidth = width
+        screenHeight = height
     }
 
 
@@ -216,7 +221,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
         }
         val camera = frame.camera
 
-        // Anchor status
+        // --- ANCHOR PLACEMENT LOGIC ---
         anchorManager.updateTrackingStability(camera.trackingState, gameState.state)
         val previousStateBeforeAnchorUpdate = gameState.state
         gameState.state = anchorManager.updateAnchorLostStatus(gameState.state)
@@ -224,12 +229,15 @@ class HelloArRenderer(val activity: HelloArActivity) :
             physicsSimulator.clearTrajectory()
         }
 
-
-        // Handle game state transitions related to anchor
+        // If waiting for anchor, try to place anchor on a detected plane
         if (gameState.state == PuzzleState.WAITING_FOR_ANCHOR) {
-            if (anchorManager.attemptPlaceOrRestoreAnchor(localSession, camera)) {
-                Log.i(TAG, "Anchor successfully placed/restored. Resetting level.")
+            val anchorPlaced = anchorManager.tryPlaceAnchorOnPlane(localSession, frame, screenWidth, screenHeight)
+            if (anchorPlaced) {
+                Log.i(TAG, "Anchor successfully placed on plane. Resetting level.")
                 resetLevel(localSession, camera)
+            } else {
+                // Show message to user to move device to find a surface
+                activity.view.snackbarHelper.showMessage(activity, "Move your device to find a surface...")
             }
         }
         val anchorIsTracking = anchorManager.isAnchorTracking()
@@ -440,11 +448,8 @@ class HelloArRenderer(val activity: HelloArActivity) :
                 }
                 PuzzleState.WAITING_FOR_ANCHOR -> {
                     Log.d(TAG, "Tap while WAITING_FOR_ANCHOR.")
-                    if (anchorManager.attemptPlaceOrRestoreAnchor(session, camera)) {
-                        resetLevel(session, camera)
-                    } else {
-                        activity.view.snackbarHelper.showMessage(activity, "Still trying to find a stable surface...")
-                    }
+                    // No tap-to-place; anchor is placed automatically when plane is found
+                    activity.view.snackbarHelper.showMessage(activity, "Move your device to find a surface...")
                 }
                  PuzzleState.VICTORY -> {
                     Log.d(TAG, "Tap during VICTORY (auto-advancing).")

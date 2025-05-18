@@ -3,6 +3,7 @@ package com.google.ar.core.examples.kotlin.helloar
 import android.util.Log
 import com.google.ar.core.Anchor
 import com.google.ar.core.Camera
+import com.google.ar.core.HitResult
 import com.google.ar.core.Pose
 import com.google.ar.core.Session
 import com.google.ar.core.TrackingState
@@ -10,6 +11,8 @@ import com.google.ar.core.examples.kotlin.helloar.GameConstants.ANCHOR_LOST_RESE
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.LEVEL_ANCHOR_DISTANCE_FORWARD
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.LEVEL_ANCHOR_DISTANCE_UP
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.MIN_TRACKING_FRAMES_FOR_ANCHOR_PLACEMENT
+import com.google.ar.core.Frame
+import com.google.ar.core.Plane
 
 class AnchorManager {
     companion object {
@@ -57,39 +60,25 @@ class AnchorManager {
         return newPuzzleState
     }
 
-    fun attemptPlaceOrRestoreAnchor(session: Session, camera: Camera): Boolean {
-        // anchor ok
-        if (levelOriginAnchor != null && levelOriginAnchor!!.trackingState == TrackingState.TRACKING) 
-        {
-            anchorWasLostFrames = 0 
+
+    fun tryPlaceAnchorOnPlane(session: Session, frame: Frame, screenWidth: Int, screenHeight: Int): Boolean {
+        if (levelOriginAnchor != null && levelOriginAnchor!!.trackingState == TrackingState.TRACKING) {
+            anchorWasLostFrames = 0
             return true
         }
 
-        // missing anchor
-        if (levelOriginAnchor == null || anchorWasLostFrames > ANCHOR_LOST_RESET_THRESHOLD) 
-        {
-            levelOriginAnchor?.detach()
-            levelOriginAnchor = null
-
-            // place anchor when camera is tracking and has been stable for enough frames
-            if (camera.trackingState == TrackingState.TRACKING && framesSinceTrackingStable >= MIN_TRACKING_FRAMES_FOR_ANCHOR_PLACEMENT) 
-            {
-                val cameraPose = camera.pose
-                val translationInCameraFrame = floatArrayOf(0f, LEVEL_ANCHOR_DISTANCE_UP, -LEVEL_ANCHOR_DISTANCE_FORWARD)
-                val anchorPoseInWorld = cameraPose.compose(Pose.makeTranslation(translationInCameraFrame))
-
-                return try {
-                    levelOriginAnchor = session.createAnchor(anchorPoseInWorld)
-                    Log.i(TAG, "Level anchor created/restored at ${anchorPoseInWorld.translation.joinToString()}")
-                    anchorWasLostFrames = 0 
-                    true
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to create level anchor", e)
-                    false
-                }
+        val hits = frame.hitTest((screenWidth / 2).toFloat(), (screenHeight / 2).toFloat())
+        for (hit in hits) {
+            val trackable = hit.trackable
+            if (trackable is Plane && trackable.isPoseInPolygon(hit.hitPose) && trackable.trackingState == TrackingState.TRACKING) {
+                levelOriginAnchor?.detach()
+                levelOriginAnchor = hit.createAnchor()
+                Log.i(TAG, "Anchor placed on plane at ${levelOriginAnchor?.pose?.translation?.joinToString()}")
+                anchorWasLostFrames = 0
+                return true
             }
         }
-        return false 
+        return false
     }
 
     fun detachCurrentAnchor() {

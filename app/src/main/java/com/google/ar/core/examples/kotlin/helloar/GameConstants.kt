@@ -26,8 +26,8 @@ object GameConstants {
 
     // --- OBJECT TARGET/COLLISION RADII ---
     const val APPLE_TARGET_RADIUS = 0.2f
-    const val PLANET_TARGET_RADIUS_MIN = 0.15f
-    const val PLANET_TARGET_RADIUS_MAX = 0.55f
+    const val PLANET_TARGET_RADIUS_MIN = 0.05f
+    const val PLANET_TARGET_RADIUS_MAX = 0.35f
     const val ARROW_VISUAL_AND_COLLISION_RADIUS = 0.1f
     const val TRAJECTORY_DOT_TARGET_RADIUS = 0.01f
 
