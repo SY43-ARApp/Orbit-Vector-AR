@@ -26,6 +26,10 @@ import androidx.lifecycle.LifecycleOwner
 import com.google.ar.core.Config
 import com.google.ar.core.examples.java.common.helpers.SnackbarHelper
 import com.google.ar.core.examples.java.common.helpers.TapHelper
+import android.widget.ProgressBar
+import android.widget.TextView
+import android.view.ViewGroup
+import android.view.LayoutInflater
 
 /** Contains UI elements for Hello AR. */
 class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
@@ -71,6 +75,11 @@ class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
   private val yawStepRad = Math.toRadians(1.0).toFloat()
   private var leftHoldRunnable: Runnable? = null
   private var rightHoldRunnable: Runnable? = null
+
+  // --- Tracking overlay UI ---
+  private val trackingOverlay: View = LayoutInflater.from(activity).inflate(R.layout.tracking_overlay, null)
+  private val trackingProgressBar: ProgressBar = trackingOverlay.findViewById(R.id.tracking_progress_bar)
+  private val trackingText: TextView = trackingOverlay.findViewById(R.id.tracking_text)
 
   init {
     fun updateArrowAngleUI() {
@@ -163,6 +172,16 @@ class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
       activity.startActivity(intent)
       activity.finish()
     }
+
+    if (trackingOverlay.parent != null) {
+      (trackingOverlay.parent as? ViewGroup)?.removeView(trackingOverlay)
+    }
+    trackingOverlay.layoutParams = ViewGroup.LayoutParams(
+      ViewGroup.LayoutParams.MATCH_PARENT,
+      ViewGroup.LayoutParams.MATCH_PARENT
+    )
+    (root as ViewGroup).addView(trackingOverlay)
+    trackingOverlay.visibility = View.GONE
   }
 
   private fun updateMusicButtonIcon() {
@@ -175,6 +194,20 @@ class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
     sfxToggleButton.setImageResource(
       if (AudioManager.isSfxEnabled()) R.drawable.ic_sfx_on else R.drawable.ic_sfx_off
     )
+  }
+
+  fun showTrackingOverlay(progress: Float, msg: String) {
+    activity.runOnUiThread {
+      trackingOverlay.visibility = View.VISIBLE
+      trackingProgressBar.progress = (progress * 100).toInt().coerceIn(0, 100)
+      trackingText.text = msg
+    }
+  }
+
+  fun hideTrackingOverlay() {
+    activity.runOnUiThread {
+      trackingOverlay.visibility = View.GONE
+    }
   }
 
   override fun onResume(owner: LifecycleOwner) {

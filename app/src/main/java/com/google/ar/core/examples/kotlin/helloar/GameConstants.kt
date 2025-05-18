@@ -7,6 +7,10 @@ object GameConstants {
     const val LEVEL_ANCHOR_DISTANCE_UP = 1.5f
     const val ANCHOR_LOST_RESET_THRESHOLD = 120
 
+    // --- AR ANCHOR PLACEMENT TWEAKS ---
+    const val ANCHOR_PLACEMENT_OFFSET_METERS = 1.5f 
+    const val ANCHOR_PLACEMENT_HEIGHT_ABOVE_PLANE = 0.5f 
+
     // --- LEVEL GENERATION ---
     const val MAX_PLANETS_CAP = 25
     const val INITIAL_PLANET_COUNT = 3
@@ -19,16 +23,16 @@ object GameConstants {
     const val CLUSTER_VERTICAL_SPREAD_FACTOR = 0.8f
 
     // --- OBJECT MODEL DEFAULT RADII (for scaling) ---
-    const val APPLE_MODEL_DEFAULT_RADIUS = 0.1f
-    const val PLANET_MODEL_DEFAULT_RADIUS = 0.1f
-    const val ARROW_MODEL_DEFAULT_RADIUS = 0.1f
+    const val APPLE_MODEL_DEFAULT_RADIUS = 0.15f
+    const val PLANET_MODEL_DEFAULT_RADIUS = 0.2f
+    const val ARROW_MODEL_DEFAULT_RADIUS = 0.03f
     const val TRAJECTORY_DOT_MODEL_DEFAULT_RADIUS = 0.05f
 
     // --- OBJECT TARGET/COLLISION RADII ---
-    const val APPLE_TARGET_RADIUS = 0.2f
-    const val PLANET_TARGET_RADIUS_MIN = 0.05f
-    const val PLANET_TARGET_RADIUS_MAX = 0.35f
-    const val ARROW_VISUAL_AND_COLLISION_RADIUS = 0.1f
+    const val APPLE_TARGET_RADIUS = 0.1f
+    const val PLANET_TARGET_RADIUS_MIN = 0.5f
+    const val PLANET_TARGET_RADIUS_MAX = 0.6f
+    const val ARROW_VISUAL_AND_COLLISION_RADIUS = 0.03f
     const val TRAJECTORY_DOT_TARGET_RADIUS = 0.01f
 
     // --- PHYSICS AND GAMEPLAY ---

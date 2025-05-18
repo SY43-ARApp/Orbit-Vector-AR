@@ -182,10 +182,12 @@ class HelloArRenderer(val activity: HelloArActivity) :
     override fun onResume(owner: LifecycleOwner) {
         displayRotationHelper.onResume()
         hasSetTextureNames = false
+        session?.let { anchorManager.tryRestoreAnchorFromSavedPose(it) }
     }
 
     override fun onPause(owner: LifecycleOwner) {
         displayRotationHelper.onPause()
+        anchorManager.saveAnchorPoseIfTracking()
     }
 
     private var screenWidth: Int = 0
@@ -234,11 +236,19 @@ class HelloArRenderer(val activity: HelloArActivity) :
             val anchorPlaced = anchorManager.tryPlaceAnchorOnPlane(localSession, frame, screenWidth, screenHeight)
             if (anchorPlaced) {
                 Log.i(TAG, "Anchor successfully placed on plane. Resetting level.")
+                activity.view.hideTrackingOverlay()
                 resetLevel(localSession, camera)
             } else {
-                // Show message to user to move device to find a surface
-                activity.view.snackbarHelper.showMessage(activity, "Move your device to find a surface...")
+                val trackingState = camera.trackingState
+                val (msg, progress) = when (trackingState) {
+                    TrackingState.PAUSED -> "Scanning environment... Move your device slowly in a circle to help AR map the space." to 0.3f
+                    TrackingState.TRACKING -> "Point your camera at a flat surface to place the game." to 0.7f
+                    else -> "Initializing AR tracking..." to 0.1f
+                }
+                activity.view.showTrackingOverlay(progress, msg)
             }
+        } else {
+            activity.view.hideTrackingOverlay()
         }
         val anchorIsTracking = anchorManager.isAnchorTracking()
         val anchorPose = anchorManager.getAnchorPose()
