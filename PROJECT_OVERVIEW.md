@@ -28,7 +28,9 @@
 - **AssetLoader.kt**: Loads 3D models and textures from assets, including moon textures.
 - **AnchorManager.kt**: Manages ARCore anchors and tracking state.
 - **TitleScreenActivity.kt**: Jetpack Compose title screen with animated logo and tap-to-play.
-- **MenuScreenActivity.kt**: Jetpack Compose menu screen with Play button, leaderboard, and battle pass.
+- **MenuScreenActivity.kt**: Jetpack Compose menu screen with Play button, leaderboard, and stats.
+- **LeaderboardScreen.kt**: Jetpack Compose screen displaying the global leaderboard. Fetches and displays the top players, highlights the current user, and provides navigation back to the menu.
+- **StatsScreen.kt / StatsActivity.kt**: Jetpack Compose screen displaying the user's personal game history and statistics. 
 - **FirstTimeScreenActivity.kt**: Jetpack Compose registration screen for first-time users, with username check, App Set ID/UUID, T&C and policy checkboxes, and animated loading overlay.
 - **EndScreenActivity.kt**: Jetpack Compose end/game over screen showing score, points, and back-to-menu navigation.
 - **data/ApiService.kt**: Retrofit API interface for registration, login, score submission, leaderboard, and username availability.
@@ -60,6 +62,8 @@
 - **Scoreboards**:  
   - Global and user-specific leaderboards fetched from server.
   - Scores submitted after each game session.
+  - **LeaderboardScreen**: Presents the global leaderboard in a styled Compose UI, with player highlighting, rank badges, and smooth scrolling to the user's position. Accessible from the menu.
+  - **StatsScreen**: Presents the user's personal stats and score history in a styled Compose UI, including total games, planets hit, apples hit, arrows thrown, and a table of all previous scores. Accessible from the menu.
 
 ## Directory Structure (Key Files)
 
@@ -78,6 +82,8 @@
   - AnchorManager.kt
   - TitleScreenActivity.kt
   - MenuScreenActivity.kt
+  - **LeaderboardScreen.kt** (LeaderboardScreen, LeaderboardActivity)
+  - **StatsScreen.kt / StatsActivity.kt** (User stats/history screen)
   - FirstTimeScreenActivity.kt
   - EndScreenActivity.kt
   - data/ApiService.kt
@@ -96,4 +102,4 @@
 - **Docs**: Design docs, UML, and slides in `/docs` and `/uml`.
 
 ---
-**Note:** This overview reflects the current modular structure and file responsibilities as of May 2025, including the Compose UI screens, moons feature, improved anchor/level system, and the full online registration/scoreboard flow.
+**Note:** This overview reflects the current modular structure and file responsibilities as of May 2025, including the Compose UI screens, moons feature, improved anchor/level system, the full online registration/scoreboard flow, and the new user stats/history page.

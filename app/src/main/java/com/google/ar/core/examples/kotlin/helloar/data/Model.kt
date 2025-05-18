@@ -10,7 +10,10 @@ data class GlobalScore(
 
 data class UserScore(
     val score: Int? = 0,
-    val time: String
+    val time: String,
+    val arrows_thrown: Int? = null,
+    val planets_hit: Int? = null,
+    val levels_passed: Int? = null
 ) {
     val actualScore: Int
         get() = score ?: 0

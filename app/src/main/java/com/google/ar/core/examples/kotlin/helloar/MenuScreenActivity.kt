@@ -57,6 +57,10 @@ class MenuScreenActivity : ComponentActivity() {
                         onLeaderboard = {
                             AudioManager.playSfx("tap")
                             startActivity(Intent(this, LeaderboardActivity::class.java))
+                        },
+                        onStats = {
+                            AudioManager.playSfx("tap")
+                            startActivity(Intent(this, StatsActivity::class.java))
                         }
                     )
                 }
@@ -281,30 +285,29 @@ fun MenuScreen(
         )
 
         // --- rank image and text ---
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 300.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Image(
-                painter = painterResource(id = rankImageRes),
-                contentDescription = "Rank Badge",
-                modifier = Modifier.size(90.dp)
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = if (playerRank != null && totalPlayers != null)
-                    "RANK #$playerRank"
-                else
-                    "RANK --",
-                style = TextStyle(
-                    fontFamily = DisketFont,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold
-                ),
-                color = Color.White
-            )
+        if (playerRank != null && totalPlayers != null) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 300.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Image(
+                    painter = painterResource(id = rankImageRes),
+                    contentDescription = "Rank Badge",
+                    modifier = Modifier.size(90.dp)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "RANK #$playerRank",
+                    style = TextStyle(
+                        fontFamily = DisketFont,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = Color.White
+                )
+            }
         }
 
         // --- main menu buttons ---
