@@ -81,7 +81,7 @@ fun MenuScreen(
         ), label = "logoScale"
     )
 
-    // --- anim: play button pulse (exaggerated, only play) ---
+    // --- anim: play button pulse ---
     val playButtonPulse by rememberInfiniteTransition(label = "buttonPulse").animateFloat(
         initialValue = 1f,
         targetValue = 1.18f,
@@ -125,9 +125,6 @@ fun MenuScreen(
     )
 
     val context = LocalContext.current
-
-    // --- fix: trigger VFX and scene change on tap, ensure press VFX always works ---
-    // Use a local lambda for play to ensure coroutine scope and VFX
     val scope = rememberCoroutineScope()
 
     // --- TEMP ---

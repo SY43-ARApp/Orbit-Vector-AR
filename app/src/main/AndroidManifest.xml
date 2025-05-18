@@ -19,6 +19,7 @@
     package="com.google.ar.core.examples.kotlin.helloar">
 
   <uses-permission android:name="android.permission.CAMERA"/>
+  <uses-permission android:name="android.permission.INTERNET"/>
   <!-- Required to post notifications for Android T+ devices -->
 
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -62,6 +63,11 @@
     <activity
         android:name="com.google.ar.core.examples.kotlin.helloar.HelloArActivity"
         android:configChanges="orientation|screenSize"
+        android:exported="false"
+        android:theme="@style/Theme.AppCompat.NoActionBar"
+        android:screenOrientation="locked" />
+    <activity
+        android:name="com.google.ar.core.examples.kotlin.helloar.FirstTimeScreenActivity"
         android:exported="false"
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:screenOrientation="locked" />
