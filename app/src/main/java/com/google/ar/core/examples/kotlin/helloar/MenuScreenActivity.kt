@@ -68,6 +68,9 @@ fun MenuScreen(
     var musicEnabled by remember { mutableStateOf(AudioManager.isMusicEnabled()) }
     var sfxEnabled by remember { mutableStateOf(AudioManager.isSfxEnabled()) }
 
+    // --- spin animation sync key ---
+    var spinAnimKey by remember { mutableStateOf(0) }
+
     // --- anim: logo pulse ---
     val logoScale by rememberInfiniteTransition(label = "logoPulse").animateFloat(
         initialValue = 1f,
@@ -97,7 +100,7 @@ fun MenuScreen(
     val buttonRotation = remember { Animatable(0f) }
 
     // --- anim: spin all buttons every 8.6s ---
-    LaunchedEffect(Unit) {
+    LaunchedEffect(spinAnimKey) {
         while (true) {
             delay(8657)
             buttonRotation.animateTo(
@@ -137,6 +140,7 @@ fun MenuScreen(
         DisposableEffect(musicEnabled) {
             if (musicEnabled) {
                 AudioManager.playBackground(R.raw.menubgmusic)
+                spinAnimKey++
             } else {
                 AudioManager.stopBackground()
             }
@@ -192,6 +196,7 @@ fun MenuScreen(
                         musicEnabled = newState
                         if (newState) {
                             AudioManager.playBackground(R.raw.menubgmusic)
+                            spinAnimKey++
                         } else {
                             AudioManager.stopBackground()
                         }
