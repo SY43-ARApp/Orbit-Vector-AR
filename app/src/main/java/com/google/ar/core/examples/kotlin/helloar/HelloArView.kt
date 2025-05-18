@@ -201,6 +201,7 @@ class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
       trackingOverlay.visibility = View.VISIBLE
       trackingProgressBar.progress = (progress * 100).toInt().coerceIn(0, 100)
       trackingText.text = msg
+      // TODO: Show ARCore plane visualization (dots/mesh) here for user feedback.
     }
   }
 

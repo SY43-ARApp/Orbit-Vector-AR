@@ -8,8 +8,6 @@ import com.google.ar.core.Pose
 import com.google.ar.core.Session
 import com.google.ar.core.TrackingState
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.ANCHOR_LOST_RESET_THRESHOLD
-import com.google.ar.core.examples.kotlin.helloar.GameConstants.LEVEL_ANCHOR_DISTANCE_FORWARD
-import com.google.ar.core.examples.kotlin.helloar.GameConstants.LEVEL_ANCHOR_DISTANCE_UP
 import com.google.ar.core.examples.kotlin.helloar.GameConstants.MIN_TRACKING_FRAMES_FOR_ANCHOR_PLACEMENT
 import com.google.ar.core.Frame
 import com.google.ar.core.Plane
@@ -70,6 +68,7 @@ class AnchorManager {
             return true
         }
 
+        // Try hit test at screen center first
         val hits = frame.hitTest((screenWidth / 2).toFloat(), (screenHeight / 2).toFloat())
         for (hit in hits) {
             val trackable = hit.trackable
@@ -78,7 +77,7 @@ class AnchorManager {
                 val forward = floatArrayOf(0f, 0f, -1f)
                 val worldForward = cameraPose.rotateVector(forward)
                 val offsetPose = hit.hitPose
-                    .compose(com.google.ar.core.Pose.makeTranslation(
+                    .compose(Pose.makeTranslation(
                         worldForward[0] * ANCHOR_PLACEMENT_OFFSET_METERS,
                         ANCHOR_PLACEMENT_HEIGHT_ABOVE_PLANE,
                         worldForward[2] * ANCHOR_PLACEMENT_OFFSET_METERS
@@ -90,7 +89,58 @@ class AnchorManager {
                 return true
             }
         }
+
+        // Fallback: Try to place anchor on *any* tracked plane in the frame
+        for (plane in frame.getUpdatedTrackables(Plane::class.java)) {
+            if (plane.trackingState == TrackingState.TRACKING && plane.subsumedBy == null) {
+                // Place anchor at center of plane, offset in front of camera
+                val cameraPose = frame.camera.pose
+                val forward = floatArrayOf(0f, 0f, -1f)
+                val worldForward = cameraPose.rotateVector(forward)
+                val planePose = plane.centerPose
+                val offsetPose = planePose.compose(Pose.makeTranslation(
+                    worldForward[0] * ANCHOR_PLACEMENT_OFFSET_METERS,
+                    ANCHOR_PLACEMENT_HEIGHT_ABOVE_PLANE,
+                    worldForward[2] * ANCHOR_PLACEMENT_OFFSET_METERS
+                ))
+                levelOriginAnchor?.detach()
+                levelOriginAnchor = session.createAnchor(offsetPose)
+                Log.i(TAG, "Anchor placed at plane center with offset: ${levelOriginAnchor?.pose?.translation?.joinToString()}")
+                anchorWasLostFrames = 0
+                return true
+            }
+        }
+
+        // Fallback: If no plane, place anchor at fixed distance in front of camera (low quality, but avoids waiting)
+        if (frame.camera.trackingState == TrackingState.TRACKING) {
+            val cameraPose = frame.camera.pose
+            val forward = floatArrayOf(0f, 0f, -1f)
+            val worldForward = cameraPose.rotateVector(forward)
+            val fallbackDistance = 2.5f // Increased from 1.0f to 2.5f
+            val fallbackPose = cameraPose.compose(Pose.makeTranslation(
+                worldForward[0] * fallbackDistance, // farther in front
+                0f,
+                worldForward[2] * fallbackDistance
+            ))
+            levelOriginAnchor?.detach()
+            levelOriginAnchor = session.createAnchor(fallbackPose)
+            Log.i(TAG, "Fallback anchor placed in front of camera.")
+            anchorWasLostFrames = 0
+            return true
+        }
+
         return false
+    }
+
+    // Returns a pose in front of the camera for spawning objects (not at anchor position)
+    fun getSpawnPoseInFrontOfCamera(cameraPose: Pose, distance: Float = 2.5f): Pose {
+        val forward = floatArrayOf(0f, 0f, -1f)
+        val worldForward = cameraPose.rotateVector(forward)
+        return cameraPose.compose(Pose.makeTranslation(
+            worldForward[0] * distance,
+            0f,
+            worldForward[2] * distance
+        ))
     }
 
     fun detachCurrentAnchor() {

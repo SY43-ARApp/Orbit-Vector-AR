@@ -73,10 +73,10 @@ class HelloArRenderer(val activity: HelloArActivity) :
     private var hasSetTextureNames = false
 
     // Point Cloud
-    // private lateinit var pointCloudVertexBuffer: VertexBuffer
-    // private lateinit var pointCloudMesh: Mesh
-    // private lateinit var pointCloudShader: Shader
-    // private var lastPointCloudTimestamp: Long = 0
+    private lateinit var pointCloudVertexBuffer: VertexBuffer
+    private lateinit var pointCloudMesh: Mesh
+    private lateinit var pointCloudShader: Shader
+    private var lastPointCloudTimestamp: Long = 0
 
     // ----------------- Shaders and Textures and Maths
     private lateinit var virtualObjectShader: Shader
@@ -107,6 +107,9 @@ class HelloArRenderer(val activity: HelloArActivity) :
     private lateinit var gameObjectRenderer: GameObjectRenderer
     private val lightManager = LightManager()
 
+    // Add this with other renderer fields
+    private lateinit var planeRenderer: com.google.ar.core.examples.java.common.samplerender.arcore.PlaneRenderer
+
     // Initialization
     override fun onSurfaceCreated(render: SampleRender) {
         this.render = render
@@ -123,7 +126,6 @@ class HelloArRenderer(val activity: HelloArActivity) :
 
             // ARCore rendering setup
             backgroundRenderer = BackgroundRenderer(render)
-            // planeRenderer = PlaneRenderer(render) // to render planes debug
             virtualSceneFramebuffer = Framebuffer(render, /*width=*/1, /*height=*/1) // Will be resized
 
             // Cubemap and DFG texture for PBR lighting
@@ -152,12 +154,20 @@ class HelloArRenderer(val activity: HelloArActivity) :
             )
             GLError.maybeThrowGLException("Failed to populate DFG texture", "glTexImage2D")
 
-            // Point cloud renderer (DEBUG)
-            // pointCloudShader = Shader.createFromAssets(render, "shaders/point_cloud.vert", "shaders/point_cloud.frag",  null)
-            //    .setVec4("u_Color", floatArrayOf(0.12f, 0.74f, 0.82f, 1.0f)) // Light blue
-            //    .setFloat("u_PointSize", 5.0f)
-            // pointCloudVertexBuffer = VertexBuffer(render, 4, null) // X,Y,Z,Confidence
-            // pointCloudMesh = Mesh(render, Mesh.PrimitiveMode.POINTS, null, arrayOf(pointCloudVertexBuffer))
+            // Plane renderer for visualizing detected planes
+            planeRenderer = com.google.ar.core.examples.java.common.samplerender.arcore.PlaneRenderer(render)
+
+            // Point cloud renderer for visualizing feature points
+            pointCloudShader = Shader.createFromAssets(
+                render,
+                "shaders/point_cloud.vert",
+                "shaders/point_cloud.frag",
+                null
+            )
+                .setVec4("u_Color", floatArrayOf(0.12f, 0.74f, 0.82f, 1.0f))
+                .setFloat("u_PointSize", 5.0f)
+            pointCloudVertexBuffer = VertexBuffer(render, 4, null) // X,Y,Z,Confidence
+            pointCloudMesh = Mesh(render, Mesh.PrimitiveMode.POINTS, null, arrayOf(pointCloudVertexBuffer))
 
             // Virtual object shader (PBR)
             virtualObjectShader = Shader.createFromAssets(
@@ -420,6 +430,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
 
         if (camera != null && anchorManager.isAnchorTracking()) {
             anchorManager.getAnchor()?.let { anchor ->
+                // Pass the anchor, not a pose, to generateLevelLayout
                 levelGenerator.generateLevelLayout(anchor, gameState)
 
                 // Calculate arrows for this level (difficulty scaling)

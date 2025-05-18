@@ -3,8 +3,6 @@ package com.google.ar.core.examples.kotlin.helloar
 object GameConstants {
     // --- AR PLACEMENT AND STABILITY ---
     const val MIN_TRACKING_FRAMES_FOR_ANCHOR_PLACEMENT = 60
-    const val LEVEL_ANCHOR_DISTANCE_FORWARD = 8.5f
-    const val LEVEL_ANCHOR_DISTANCE_UP = 1.5f
     const val ANCHOR_LOST_RESET_THRESHOLD = 120
 
     // --- AR ANCHOR PLACEMENT TWEAKS ---
@@ -17,10 +15,10 @@ object GameConstants {
     const val LEVELS_PER_NEW_PLANET = 1
 
     // --- CLUSTER GENERATION ---
-    const val CLUSTER_MAX_RADIUS_APPLE = 1.5f
-    const val CLUSTER_MAX_RADIUS_PLANETS = 2.0f
-    const val CLUSTER_MIN_DIST_PLANETS_FROM_ANCHOR = 0.5f
-    const val CLUSTER_VERTICAL_SPREAD_FACTOR = 0.8f
+    const val CLUSTER_MAX_RADIUS_APPLE = 1.0f
+    const val CLUSTER_MAX_RADIUS_PLANETS = 0.7f
+    const val CLUSTER_MIN_DIST_PLANETS_FROM_ANCHOR = 0.3f
+    const val CLUSTER_VERTICAL_SPREAD_FACTOR = 0.5f
 
     // --- OBJECT MODEL DEFAULT RADII (from Blender, in meters) ---
     const val APPLE_MODEL_DEFAULT_RADIUS = 0.15f 
@@ -36,7 +34,7 @@ object GameConstants {
     const val TRAJECTORY_DOT_TARGET_RADIUS = 0.01f
 
     // --- PHYSICS AND GAMEPLAY ---
-    const val PLANET_MASS_SCALE_FACTOR = 4500.0f
+    const val PLANET_MASS_SCALE_FACTOR = 2000.0f
     const val ARROW_LAUNCH_SPEED = 10.0f
     const val ARROW_MASS = 0.5f
     var GRAVITY_CONSTANT = 0.05f
@@ -45,9 +43,9 @@ object GameConstants {
 
     // --- TRAJECTORY SIMULATION ---
     const val TRAJECTORY_SIMULATION_START_AT_STEP = 2
-    var TRAJECTORY_SIMULATION_STEPS = 70 
+    var TRAJECTORY_SIMULATION_STEPS = 30 
     var TRAJECTORY_SIMULATION_TIMESTEP = 0.10f
-    const val MAX_TRAJECTORY_DISTANCE = 15.0f
+    const val MAX_TRAJECTORY_DISTANCE = 5.0f
 
     // --- ASSET PATHS ---
     val PLANET_TEXTURE_FILES = listOf(
@@ -84,5 +82,5 @@ object GameConstants {
     const val MOON_ORBIT_SPEED_MAX = 1.0f
     const val MOON_TARGET_RADIUS_MIN = 0.20f
     const val MOON_TARGET_RADIUS_MAX = 0.52f
-    const val MOON_MASS_SCALE_FACTOR = 4200.0f
+    const val MOON_MASS_SCALE_FACTOR = 1800.0f
 }
