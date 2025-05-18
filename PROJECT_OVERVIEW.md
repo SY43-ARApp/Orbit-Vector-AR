@@ -15,16 +15,18 @@
 
 - **HelloArActivity.kt**: Main AR activity. Sets up ARCore session, renderer, and view.
 - **HelloArView.kt**: Handles UI, overlays, and user interaction (sliders, tap, dialogs).
-- **HelloArRenderer.kt**: Core game logic, rendering loop, physics, object placement, model/texture loading. Manages game state, level reset, and frame updates. Handles both planets and moons.
+- **HelloArRenderer.kt**: Core game logic, rendering loop, physics, object placement, model/texture loading. Manages game state, level reset, and frame updates. Handles both planets and moons.  
+  - **Anchor Placement**: Anchor is placed on a detected plane if possible, or at a fallback distance (default 2.5m) in front of the camera for instant start.
 - **GameObjectRenderer.kt**: Handles rendering of planets, moons, apples, arrows, and trajectory in the AR scene.
-- **LevelManager.kt** (LevelGenerator): Procedurally generates planet, moon, and apple positions and properties for each level, including moon orbit logic.
+- **LevelManager.kt** (LevelGenerator): Procedurally generates planet, moon, and apple positions and properties for each level, including moon orbit logic. Now uses the anchor directly for world placement.
 - **PhysicsSimulator.kt**: Simulates arrow physics, gravity, collision, and trajectory prediction, including moving moons.
 - **LightManager.kt**: Handles AR lighting estimation and shader updates.
 - **MathUtils.kt**: Math helpers for vector/matrix operations and rotations.
 - **GameData.kt**: Data classes for `Planet`, `Moon`, `Arrow`, `Apple`, `GameState`, `PuzzleState`, and `LevelCluster`.
-- **GameConstants.kt**: Centralized constants for gameplay, physics, and rendering, including moon parameters.
+- **GameConstants.kt**: Centralized constants for gameplay, physics, and rendering, including moon parameters.  
+  - **Cleaned Up**: Removed unused constants from old anchor/level logic; only relevant constants remain.
 - **AssetLoader.kt**: Loads 3D models and textures from assets, including moon textures.
-- **AnchorManager.kt**: Manages ARCore anchors and tracking state.
+- **AnchorManager.kt**: Manages ARCore anchors and tracking state.  
 - **TitleScreenActivity.kt**: Jetpack Compose title screen with animated logo and tap-to-play.
 - **MenuScreenActivity.kt**: Jetpack Compose menu screen with Play button.
 - **EndScreenActivity.kt**: Jetpack Compose end/game over screen showing score, points, and back-to-menu navigation.
@@ -33,15 +35,18 @@
 
 ## Assets & Resources
 - **assets/models/**: 3D models (arrow, apple, planets), DFG texture, shaders.
-- **res/layout/**: UI layouts (activity_main, overlays).
+- **res/layout/**: UI layouts (activity_main, overlays, tracking_overlay).
 - **res/values/**: Strings, arrays, and other resources.
 - **res/drawable/**: App icons, logos, and Compose UI images.
 
 ## Game Loop & Flow
 - **Main Loop**: On each frame, updates physics, checks collisions, draws AR scene.
 - **Tap**: Launches an arrow from camera position toward aim direction.
-- **Level Generation**: Each level randomizes planets (position, size, texture), moons (if enabled), and apple location.
+- **Level Generation**: Each level randomizes planets (position, size, texture), moons (if enabled), and apple location, using the anchor as the world reference.
 - **UI**: Displays level, arrows left, and game state messages. Compose screens for title, menu, and end/game over.
+- **Anchor Placement**:  
+  - Anchor is placed as soon as a plane is detected, or instantly at a fallback distance in front of the camera if no plane is found.
+  - Plane mesh and point cloud are visualized during placement to provide user feedback.
 
 ## Directory Structure (Key Files)
 
@@ -73,4 +78,4 @@
 - **Docs**: Design docs, UML, and slides in `/docs` and `/uml`.
 
 ---
-**Note:** This overview reflects the current modular structure and file responsibilities as of May 2025, including the Compose UI screens and moons feature.
+**Note:** This overview reflects the current modular structure and file responsibilities as of May 2025, including the Compose UI screens, moons feature, and the improved anchor/level system for faster and more user-friendly AR game startup.
