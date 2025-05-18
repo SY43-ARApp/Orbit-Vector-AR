@@ -110,6 +110,9 @@ class HelloArRenderer(val activity: HelloArActivity) :
     // Add this with other renderer fields
     private lateinit var planeRenderer: com.google.ar.core.examples.java.common.samplerender.arcore.PlaneRenderer
 
+    private var waitingForAnchorStartTime: Long? = null
+    private val fallbackAnchorDelayMillis = 3000L 
+
     // Initialization
     override fun onSurfaceCreated(render: SampleRender) {
         this.render = render
@@ -243,12 +246,26 @@ class HelloArRenderer(val activity: HelloArActivity) :
 
         // If waiting for anchor, try to place anchor on a detected plane
         if (gameState.state == PuzzleState.WAITING_FOR_ANCHOR) {
+            if (waitingForAnchorStartTime == null) {
+                waitingForAnchorStartTime = System.currentTimeMillis()
+            }
             val anchorPlaced = anchorManager.tryPlaceAnchorOnPlane(localSession, frame, screenWidth, screenHeight)
             if (anchorPlaced) {
                 Log.i(TAG, "Anchor successfully placed on plane. Resetting level.")
                 activity.view.hideTrackingOverlay()
+                waitingForAnchorStartTime = null // reset timer
                 resetLevel(localSession, camera)
             } else {
+                val elapsed = System.currentTimeMillis() - (waitingForAnchorStartTime ?: 0L)
+                if (elapsed > fallbackAnchorDelayMillis) {
+                    val fallbackPlaced = anchorManager.tryPlaceFallbackAnchor(localSession, camera)
+                    if (fallbackPlaced) {
+                        Log.i(TAG, "Fallback anchor placed after waiting. Resetting level.")
+                        activity.view.hideTrackingOverlay()
+                        waitingForAnchorStartTime = null
+                        resetLevel(localSession, camera)
+                    }
+                }
                 val trackingState = camera.trackingState
                 val (msg, progress) = when (trackingState) {
                     TrackingState.PAUSED -> "Scanning environment... Move your device slowly in a circle to help AR map the space." to 0.3f
@@ -259,6 +276,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
             }
         } else {
             activity.view.hideTrackingOverlay()
+            waitingForAnchorStartTime = null
         }
         val anchorIsTracking = anchorManager.isAnchorTracking()
         val anchorPose = anchorManager.getAnchorPose()

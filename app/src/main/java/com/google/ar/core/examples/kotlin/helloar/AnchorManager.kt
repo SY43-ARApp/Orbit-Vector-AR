@@ -132,6 +132,31 @@ class AnchorManager {
         return false
     }
 
+    fun tryPlaceFallbackAnchor(session: Session, camera: Camera): Boolean {
+        if (levelOriginAnchor != null && levelOriginAnchor!!.trackingState == TrackingState.TRACKING) {
+            return false
+        }
+        if (camera.trackingState == TrackingState.TRACKING) {
+            val cameraPose = camera.pose
+            val forward = floatArrayOf(0f, 0f, -1f)
+            val worldForward = cameraPose.rotateVector(forward)
+            val fallbackDistance = 2.5f
+            val fallbackPose = cameraPose.compose(
+                Pose.makeTranslation(
+                    worldForward[0] * fallbackDistance,
+                    0f,
+                    worldForward[2] * fallbackDistance
+                )
+            )
+            levelOriginAnchor?.detach()
+            levelOriginAnchor = session.createAnchor(fallbackPose)
+            Log.i(TAG, "Fallback anchor placed in front of camera (tryPlaceFallbackAnchor).")
+            anchorWasLostFrames = 0
+            return true
+        }
+        return false
+    }
+
     // Returns a pose in front of the camera for spawning objects (not at anchor position)
     fun getSpawnPoseInFrontOfCamera(cameraPose: Pose, distance: Float = 2.5f): Pose {
         val forward = floatArrayOf(0f, 0f, -1f)
