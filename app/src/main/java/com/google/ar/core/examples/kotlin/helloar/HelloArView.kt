@@ -62,6 +62,8 @@ class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
   val arrowRightButton = root.findViewById<ImageButton>(R.id.arrow_right_button)
   val arrowAngleText = root.findViewById<android.widget.TextView>(R.id.arrow_angle_text)
 
+  val leaveButton = root.findViewById<ImageButton>(R.id.stg_leave_button)
+
   var arrowYawOffset: Float = 0f
   private val maxYawDeg = 30f
   private val maxYawRad = Math.toRadians(maxYawDeg.toDouble()).toFloat()
@@ -151,6 +153,15 @@ class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
       AudioManager.setSfxEnabled(enabled)
       updateSfxButtonIcon()
       AudioManager.playSfx("tap")
+    }
+
+    // --- Leave button logic
+    leaveButton.setOnClickListener {
+      AudioManager.playSfx("tap")
+      val intent = android.content.Intent(activity, MenuScreenActivity::class.java)
+      intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+      activity.startActivity(intent)
+      activity.finish()
     }
   }
 

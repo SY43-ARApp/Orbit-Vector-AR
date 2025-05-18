@@ -39,9 +39,20 @@
         android:gravity="end">
 
         <ImageButton
+            android:id="@+id/stg_leave_button"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:adjustViewBounds="true"
+            android:background="@android:color/transparent"
+            android:contentDescription="leave_button"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ui_home" />
+
+        <ImageButton
             android:id="@+id/music_toggle_button"
             android:layout_width="36dp"
             android:layout_height="36dp"
+            android:layout_marginTop="12dp"
             android:background="@android:color/transparent"
             android:contentDescription="toggle_music"
             android:src="@drawable/ic_music_on"
@@ -58,6 +69,8 @@
             android:src="@drawable/ic_sfx_on"
             android:scaleType="fitCenter"
             android:adjustViewBounds="true" />
+
+
     </LinearLayout>
 
     <TextView
