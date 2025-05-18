@@ -15,7 +15,7 @@
    limitations under the License.
 -->
 <resources>
-  <string translatable="false" name="app_name">HelloAR Kotlin</string>
+  <string translatable="false" name="app_name">OrbitVectorAR</string>
   <string translatable="false" name="depth_use_explanation">When Depth is enabled on supported devices, virtual objects adapt to the environment by blending in with the real world.</string>
   <string translatable="false" name="button_text_enable_depth">Enable</string>
   <string translatable="false" name="button_text_disable_depth">Disable</string>
@@ -33,5 +33,7 @@
 
   <string translatable="false" name="searching_planes">Searching for surfaces...</string>
   <string translatable="false" name="waiting_taps">Tap on a surface to place an object.</string>
-
+  <string name="waiting_for_anchor">Waiting for stable AR tracking to place level…</string>
+  <string name="level_cleared_message">Level %d Cleared!</string> <!-- Added for dynamic level number -->
+  <string name="game_over_message">Game Over! Tap to Retry.</string>
 </resources>
