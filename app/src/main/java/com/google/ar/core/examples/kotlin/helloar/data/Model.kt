@@ -32,3 +32,13 @@ data class PlayerRankResponse(
     val rank: Int,
     val totalPlayers: Int
 )
+
+data class Skin
+(
+    val id: Int,
+    val name: String,
+    val description: String,
+    val price: Int,
+    val isUnlocked: Boolean,
+    val isEquipped: Boolean
+)
