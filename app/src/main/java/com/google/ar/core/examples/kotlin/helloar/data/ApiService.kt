@@ -48,6 +48,15 @@ interface ApiService {
         @Query("uuid") uuid: String
     ): Response<PlayerRankResponse>
 
+    @GET("get_all_skins.php")
+    suspend fun getSkins(
+    ): Response<List<Skin>>
+
+    @GET("get_user_skins.php")
+    suspend fun getUserSkins(
+        @Query("uuid") uuid: String
+    ): Response<List<UserSkins>>
+
     companion object {
         const val BASE_URL = "https://chaelpixserver.ddns.net/apis/ovar/"
     }
