@@ -23,7 +23,7 @@ class UserPreferences(context: Context) {
         get() = prefs.getString(KEY_ARROW_USED, null)
         set(value) = prefs.edit().putString(KEY_ARROW_USED, value).apply()
 
-    var mooneUsed : String ?
+    var moonUsed : String ?
         get() = prefs.getString(KEY_MOON_USED, null)
         set(value) = prefs.edit().putString(KEY_MOON_USED, value).apply()
 
@@ -39,6 +39,6 @@ class UserPreferences(context: Context) {
         private const val KEY_USERNAME = "username"
         private const val KEY_PLANET_USED = "planetUsed"
         private const val KEY_ARROW_USED = "arrowUsed"
-        private const val KEY_MOON_USED = "mooneUsed"
+        private const val KEY_MOON_USED = "moonUsed"
     }
 }

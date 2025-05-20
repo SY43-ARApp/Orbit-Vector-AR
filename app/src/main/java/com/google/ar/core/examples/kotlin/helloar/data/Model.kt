@@ -8,6 +8,12 @@ data class GlobalScore(
         get() = score ?: 0
 }
 
+data class User(
+    val money :Int?,
+    val bestScore : Int?
+)
+
+
 data class UserScore(
     val score: Int? = 0,
     val time: String,
