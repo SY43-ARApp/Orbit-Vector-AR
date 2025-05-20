@@ -15,6 +15,18 @@ class UserPreferences(context: Context) {
         get() = prefs.getString(KEY_USERNAME, null)
         set(value) = prefs.edit().putString(KEY_USERNAME, value).apply()
 
+    var planetUsed : String?
+        get() = prefs.getString(KEY_PLANET_USED, null)
+        set(value) = prefs.edit().putString(KEY_PLANET_USED, value).apply()
+
+    var arrowUsed : String ?
+        get() = prefs.getString(KEY_ARROW_USED, null)
+        set(value) = prefs.edit().putString(KEY_ARROW_USED, value).apply()
+
+    var mooneUsed : String ?
+        get() = prefs.getString(KEY_MOON_USED, null)
+        set(value) = prefs.edit().putString(KEY_MOON_USED, value).apply()
+
     private fun createAndSaveUUID(): String {
         val newUUID = UUID.randomUUID().toString()
         uuid = newUUID
@@ -25,5 +37,8 @@ class UserPreferences(context: Context) {
         private const val PREFS_NAME = "UserPrefs"
         private const val KEY_UUID = "uuid"
         private const val KEY_USERNAME = "username"
+        private const val KEY_PLANET_USED = "planetUsed"
+        private const val KEY_ARROW_USED = "arrowUsed"
+        private const val KEY_MOON_USED = "mooneUsed"
     }
 }

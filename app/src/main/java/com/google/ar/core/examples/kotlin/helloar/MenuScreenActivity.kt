@@ -61,6 +61,10 @@ class MenuScreenActivity : ComponentActivity() {
                         onStats = {
                             AudioManager.playSfx("tap")
                             startActivity(Intent(this, StatsActivity::class.java))
+                        },
+                        onShop = {
+                            AudioManager.playSfx("tap")
+                            startActivity(Intent(this, ShopScreenActivity::class.java))
                         }
                     )
                 }
@@ -73,7 +77,8 @@ class MenuScreenActivity : ComponentActivity() {
 fun MenuScreen(
     onPlay: () -> Unit = { },
     onLeaderboard: () -> Unit = { AudioManager.playSfx("tap") },
-    onStats: () -> Unit = { AudioManager.playSfx("tap") }
+    onStats: () -> Unit = { AudioManager.playSfx("tap") },
+    onShop: () -> Unit = { AudioManager.playSfx("tap") }
 ) {
     // font
     val font = DisketFont
@@ -143,6 +148,7 @@ fun MenuScreen(
     val playButtonPress = remember { Animatable(1f) }
     val leaderboardPress = remember { Animatable(1f) }
     val statsPress = remember { Animatable(1f) }
+    val shopPress = remember { Animatable(1f) }
 
     // --- anim: button rotation ---
     val buttonRotation = remember { Animatable(0f) }
@@ -395,16 +401,16 @@ fun MenuScreen(
                     modifier = Modifier
                         .size(100.dp)
                         .graphicsLayer(
-                            scaleX = statsPress.value,
-                            scaleY = statsPress.value,
+                            scaleX = shopPress.value,
+                            scaleY = shopPress.value,
                             rotationZ = buttonRotation.value
                         )
                         .pointerInput(Unit) {
                             detectTapGestures(
                                 onPress = {
-                                    statsPress.animateTo(1.25f, animationSpec = tween(120))
+                                    shopPress.animateTo(1.25f, animationSpec = tween(120))
                                     tryAwaitRelease()
-                                    statsPress.animateTo(1f, animationSpec = tween(120))
+                                    shopPress.animateTo(1f, animationSpec = tween(120))
                                 },
                                 onTap = { onStats() }
                             )
@@ -416,6 +422,33 @@ fun MenuScreen(
                         modifier = Modifier.fillMaxSize()
                     )
                 }
+                // ---shop---
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .graphicsLayer(
+                            scaleX = statsPress.value,
+                            scaleY = statsPress.value,
+                            rotationZ = buttonRotation.value
+                        )
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onPress = {
+                                    statsPress.animateTo(1.25f, animationSpec = tween(120))
+                                    tryAwaitRelease()
+                                    statsPress.animateTo(1f, animationSpec = tween(120))
+                                },
+                                onTap = { onShop() }
+                            )
+                        }
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.ic_arrow),
+                        contentDescription = "Shop Button",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
             }
         }
 
