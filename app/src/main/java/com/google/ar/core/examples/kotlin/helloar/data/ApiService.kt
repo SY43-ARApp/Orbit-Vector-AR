@@ -57,6 +57,16 @@ interface ApiService {
         @Query("uuid") uuid: String
     ): Response<List<UserSkins>>
 
+    @GET("send_user_skin.php")
+    suspend fun sendUserSkins(
+        @Query("uuid") uuid: String,
+        @Query("skinId") skinId: Int
+    ): Response<String>
+
+
+
+
+
     companion object {
         const val BASE_URL = "https://chaelpixserver.ddns.net/apis/ovar/"
     }

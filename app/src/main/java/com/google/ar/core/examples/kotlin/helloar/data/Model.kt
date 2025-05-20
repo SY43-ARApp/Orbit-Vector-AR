@@ -37,7 +37,8 @@ data class Skin
 (
     val id: Int,
     val price: Int,
-    val minimalScore: Int
+    val minimalScore: Int,
+    val idType : Int
 )
 
 data class UserSkins(
