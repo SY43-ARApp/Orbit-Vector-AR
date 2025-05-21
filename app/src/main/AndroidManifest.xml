@@ -70,7 +70,7 @@
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:screenOrientation="locked" />
     <activity
-        android:name="com.sy43.orbitvectorar.kotlin.game.HelloArActivity"
+        android:name="com.sy43.orbitvectorar.kotlin.game.GameArActivity"
         android:configChanges="orientation|screenSize"
         android:exported="false"
         android:theme="@style/Theme.AppCompat.NoActionBar"

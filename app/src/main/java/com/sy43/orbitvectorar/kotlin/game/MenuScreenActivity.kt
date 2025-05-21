@@ -47,7 +47,7 @@ class MenuScreenActivity : ComponentActivity() {
                         onPlay = {
                             AudioManager.stopBackground()
                             AudioManager.playSfx("titletap")
-                            startActivity(Intent(this, HelloArActivity::class.java))
+                            startActivity(Intent(this, GameArActivity::class.java))
                             finish()
                         },
                         onLeaderboard = {
@@ -342,7 +342,7 @@ fun MenuScreen(
                                     delay(200)
                                     AudioManager.stopBackground()
                                     AudioManager.playSfx("titletap")
-                                    context.startActivity(Intent(context, HelloArActivity::class.java))
+                                    context.startActivity(Intent(context, GameArActivity::class.java))
                                     if (context is ComponentActivity) context.finish()
                                 }
                             }

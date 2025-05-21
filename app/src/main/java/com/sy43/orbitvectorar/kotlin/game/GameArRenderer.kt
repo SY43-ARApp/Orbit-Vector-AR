@@ -23,7 +23,6 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import com.google.ar.core.Camera
 import com.google.ar.core.Frame
-import com.google.ar.core.LightEstimate
 import com.google.ar.core.Session
 import com.google.ar.core.TrackingFailureReason
 import com.google.ar.core.TrackingState
@@ -41,16 +40,13 @@ import com.sy43.orbitvectorar.java.common.samplerender.arcore.SpecularCubemapFil
 import com.google.ar.core.exceptions.CameraNotAvailableException
 import com.google.ar.core.exceptions.NotYetAvailableException
 import com.sy43.orbitvectorar.kotlin.game.GameConstants.INITIAL_ARROWS_PER_LEVEL
-import com.sy43.orbitvectorar.kotlin.game.GameConstants.INITIAL_PLANET_COUNT
-import com.sy43.orbitvectorar.kotlin.game.GameConstants.LEVELS_PER_NEW_PLANET
-import com.sy43.orbitvectorar.kotlin.game.GameConstants.MAX_PLANETS_CAP
 import java.io.IOException
 import java.nio.ByteBuffer
 import com.sy43.orbitvectorar.R
-class HelloArRenderer(val activity: HelloArActivity) :
+class GameArRenderer(val activity: GameArActivity) :
     SampleRender.Renderer, DefaultLifecycleObserver {
     companion object {
-        val TAG: String = HelloArRenderer::class.java.simpleName
+        val TAG: String = GameArRenderer::class.java.simpleName
 
         private const val Z_NEAR = 0.1f
         private const val Z_FAR = 100f

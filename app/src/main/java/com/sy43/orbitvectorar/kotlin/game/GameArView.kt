@@ -18,7 +18,6 @@ import android.content.res.Resources
 import android.opengl.GLSurfaceView
 import android.view.View
 import android.widget.ImageButton
-import android.widget.PopupMenu
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -31,7 +30,7 @@ import android.view.ViewGroup
 import android.view.LayoutInflater
 import com.sy43.orbitvectorar.R
 /** Contains UI elements for Hello AR. */
-class HelloArView(val activity: HelloArActivity) : DefaultLifecycleObserver {
+class GameArView(val activity: GameArActivity) : DefaultLifecycleObserver {
     val root = View.inflate(activity, R.layout.activity_main, null)
     val surfaceView = root.findViewById<GLSurfaceView>(R.id.surfaceview)
 

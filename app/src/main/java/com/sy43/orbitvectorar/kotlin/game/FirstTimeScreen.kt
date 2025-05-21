@@ -50,7 +50,7 @@ class FirstTimeScreenActivity : ComponentActivity() {
                 ) {
                     FirstTimeScreen(
                         onRegistered = {
-                            startActivity(Intent(this, HelloArActivity::class.java))
+                            startActivity(Intent(this, GameArActivity::class.java))
                             finish()
                         }
                     )
