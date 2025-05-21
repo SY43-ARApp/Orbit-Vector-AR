@@ -15,8 +15,7 @@
    limitations under the License.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.google.ar.core.examples.kotlin.helloar">
+    xmlns:tools="http://schemas.android.com/tools">
 
   <uses-permission android:name="android.permission.CAMERA"/>
   <uses-permission android:name="android.permission.INTERNET"/>
@@ -41,7 +40,7 @@
       tools:ignore="GoogleAppIndexingWarning">
 
     <activity
-        android:name="com.google.ar.core.examples.kotlin.helloar.TitleScreenActivity"
+        android:name="com.sy43.orbitvectorar.kotlin.game.TitleScreenActivity"
         android:exported="true"
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:screenOrientation="locked">
@@ -51,33 +50,33 @@
         </intent-filter>
     </activity>
     <activity
-        android:name="com.google.ar.core.examples.kotlin.helloar.MenuScreenActivity"
+        android:name="com.sy43.orbitvectorar.kotlin.game.MenuScreenActivity"
         android:exported="false"
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:screenOrientation="locked" />
     <activity
-        android:name="com.google.ar.core.examples.kotlin.helloar.LeaderboardActivity"
+        android:name="com.sy43.orbitvectorar.kotlin.game.LeaderboardActivity"
         android:exported="false"
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:screenOrientation="locked" />
     <activity
-        android:name="com.google.ar.core.examples.kotlin.helloar.StatsActivity"
+        android:name="com.sy43.orbitvectorar.kotlin.game.StatsActivity"
         android:exported="false"
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:screenOrientation="locked" />
     <activity
-        android:name="com.google.ar.core.examples.kotlin.helloar.EndScreenActivity"
+        android:name="com.sy43.orbitvectorar.kotlin.game.EndScreenActivity"
         android:exported="false"
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:screenOrientation="locked" />
     <activity
-        android:name="com.google.ar.core.examples.kotlin.helloar.HelloArActivity"
+        android:name="com.sy43.orbitvectorar.kotlin.game.HelloArActivity"
         android:configChanges="orientation|screenSize"
         android:exported="false"
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:screenOrientation="locked" />
     <activity
-        android:name="com.google.ar.core.examples.kotlin.helloar.FirstTimeScreenActivity"
+        android:name="com.sy43.orbitvectorar.kotlin.game.FirstTimeScreenActivity"
         android:exported="false"
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:screenOrientation="locked" />
