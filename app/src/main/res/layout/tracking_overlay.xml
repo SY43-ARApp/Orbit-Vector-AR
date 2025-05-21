@@ -1,0 +1,38 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/tracking_overlay"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#66000000"
+    android:clickable="false"
+    android:focusable="false">
+
+    <LinearLayout
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="32dp"
+        android:background="@drawable/empty">
+
+        <ProgressBar
+            android:id="@+id/tracking_progress_bar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:max="100"
+            android:progress="0"
+            android:indeterminate="false"
+            android:progressDrawable="@android:drawable/progress_horizontal" />
+
+        <TextView
+            android:id="@+id/tracking_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Scanning environment..."
+            android:textColor="#FFF"
+            android:textSize="18sp"
+            android:layout_marginTop="16dp"
+            android:gravity="center"/>
+    </LinearLayout>
+</FrameLayout>
