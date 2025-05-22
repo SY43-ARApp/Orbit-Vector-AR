@@ -34,6 +34,19 @@ import androidx.compose.ui.zIndex
 import com.sy43.orbitvectorar.kotlin.game.data.ApiService
 import com.sy43.orbitvectorar.kotlin.game.data.UserPreferences
 import com.sy43.orbitvectorar.R
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.ui.text.AnnotatedString
+
 class MenuScreenActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -168,14 +181,16 @@ fun MenuScreen(
         label = "fadeAlpha"
     )
 
-    val scope = rememberCoroutineScope()
-
     // --- TEMP ---
     val playerPos = playerRank ?: 0
     val totalPlayersTemp = totalPlayers ?: 100
     val rankImageRes = remember(playerPos, totalPlayersTemp) {
         RankImageUtil.getRankImageRes(playerPos, totalPlayersTemp)
     }
+
+    val clipboardManager: ClipboardManager = LocalClipboardManager.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
@@ -195,28 +210,71 @@ fun MenuScreen(
         }
 
         // --- gamertag ---
-        Row(
+        Column(
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(start = 16.dp, top = 24.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(start = 16.dp, top = 24.dp)
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.ui_playerprofile),
-                contentDescription = "Gamertag Icon",
-                modifier = Modifier.size(36.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Column {
-                Text(
-                    text = username,
-                    style = TextStyle(fontFamily = font, fontSize = 20.sp),
-                    color = Color.White
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.ui_playerprofile),
+                    contentDescription = "Gamertag Icon",
+                    modifier = Modifier.size(36.dp)
                 )
-                Text(
-                    text = uuid,
-                    style = TextStyle(fontFamily = font, fontSize = 8.sp),
-                    color = Color.White.copy(alpha = 0.7f)
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text(
+                        text = username,
+                        style = TextStyle(fontFamily = font, fontSize = 20.sp),
+                        color = Color.White
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = uuid,
+                            style = TextStyle(fontFamily = font, fontSize = 8.sp),
+                            color = Color.White.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        IconButton(
+                            onClick = {
+                                clipboardManager.setText(AnnotatedString(uuid))
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Copied!")
+                            }
+                        },
+                            modifier = Modifier.size(18.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = "Copy UUID",
+                                tint = Color.White.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- snackbar ---
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .zIndex(100f)
+        ) {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 32.dp)
+            ) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = Color(0xFF222222),
+                    contentColor = Color.White
                 )
             }
         }
