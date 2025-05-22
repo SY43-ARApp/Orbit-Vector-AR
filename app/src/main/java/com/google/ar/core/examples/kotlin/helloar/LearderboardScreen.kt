@@ -4,33 +4,36 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.google.ar.core.examples.kotlin.helloar.ui.theme.OrbitVectorARTheme
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.google.ar.core.examples.kotlin.helloar.data.ApiService
 import com.google.ar.core.examples.kotlin.helloar.data.GlobalScore
 import com.google.ar.core.examples.kotlin.helloar.data.UserPreferences
 import com.google.ar.core.examples.kotlin.helloar.ui.theme.DisketFont
+import com.google.ar.core.examples.kotlin.helloar.ui.theme.OrbitVectorARTheme
 import kotlinx.coroutines.launch
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 
 @Composable
 fun LeaderboardScreen(onHome: () -> Unit = {}) {
@@ -73,145 +76,230 @@ fun LeaderboardScreen(onHome: () -> Unit = {}) {
             .background(Color(0xFF0B1A36))
     ) {
         ParallaxBackground()
-
-        // Top: Leaderboard title image
-        Image(
-            painter = painterResource(id = R.drawable.leaderboard_title),
-            contentDescription = "Leaderboard Title",
+        // Header with home button and title
+        Row(
             modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 32.dp)
-                .size(width = 380.dp, height = 80.dp)
-        )
-
-        // Panel background 
-        Box(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .padding(top = 100.dp, bottom = 90.dp)
-                .fillMaxWidth(0.96f)
-                .background(Color(0xFF101B3A), shape = RoundedCornerShape(28.dp))
-        )
-
-        // Leaderboard list
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .padding(top = 146.dp, bottom = 100.dp, start = 18.dp, end = 18.dp)
-                .fillMaxWidth(),
-            contentPadding = PaddingValues(vertical = 0.dp),
+                .fillMaxWidth()
+                .padding(top = 24.dp, start = 16.dp, end = 16.dp, bottom = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            itemsIndexed(leaderboard) { idx, entry ->
-                val isPlayer = entry.username == playerName
-                val isTop3 = idx < 3
-                val rowBgColor = when {
-                    isPlayer -> Color(0x33FFA726)
-                    idx % 2 == 0 -> Color(0x22000000)
-                    else -> Color.Transparent
-                }
-                val rowTextColor = when {
-                    isTop3 && idx == 0 -> Color(0xFFFFD700)
-                    isTop3 && idx == 1 -> Color(0xFFC0C0C0) 
-                    isTop3 && idx == 2 -> Color(0xFFCD7F32)
-                    isPlayer -> Color(0xFFFFA726)
-                    else -> Color.White
-                }
-                val scoreColor = rowTextColor
-                val usernameText = if (isPlayer) "YOU" else entry.username
-                val fontWeight = if (isPlayer || isTop3) FontWeight.Bold else FontWeight.Normal
+            // Home button
+            Image(
+                painter = painterResource(id = R.drawable.ui_home),
+                contentDescription = "Home Button",
+                modifier = Modifier
+                    .size(60.dp)
+                    .clickable { onHome() }
+            )
 
-                val baseFontSize = 20.sp
-                val minFontSize = 14.sp
-                val maxChars = 14
-                val adaptiveFontSize = if (usernameText.length > maxChars)
-                    (baseFontSize.value * (maxChars.toFloat() / usernameText.length.toFloat())).coerceAtLeast(minFontSize.value)
-                else baseFontSize.value
+            // Title
+            Box(
+                modifier = Modifier
+                    .weight(3f)
+                    .height(100.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                // Background title image
+                Image(
+                    painter = painterResource(id = R.drawable.page_title),
+                    contentDescription = "Leaderboard Title Background",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .offset(y = (13.dp))
+                )
 
-                Box(
+                // Title text
+                Text(
+                    text = "LEADERBOARD",
+                    style = TextStyle(
+                        fontFamily = font,
+                        fontSize = 36.sp,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(rowBgColor)
+                        .zIndex(1f)
+                )
+            }
+        }
+
+        // Leaderboard container
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 140.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)
+                .fillMaxWidth()
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(24.dp))
+                .background(Color(0xFF1E3B70))
+                .border(
+                    width = 2.dp,
+                    color = Color(0xFF4D76CF),
+                    shape = RoundedCornerShape(24.dp)
+                )
+        ) {
+            // Table section
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+
+            ) {
+                // Header for leaderboard
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0x331A237E))
+                        .padding(top = 12.dp, bottom = 10.dp, start = 8.dp, end = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 6.dp, horizontal = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Rank number
-                        Text(
-                            text = "#${idx + 1}",
-                            fontFamily = font,
-                            fontSize = 18.sp,
-                            color = rowTextColor,
-                            fontWeight = fontWeight,
-                            modifier = Modifier.weight(1.1f),
-                            maxLines = 1
-                        )
-                        // Username
-                        Text(
-                            text = usernameText,
-                            fontFamily = font,
-                            fontWeight = fontWeight,
-                            color = rowTextColor,
-                            fontSize = adaptiveFontSize.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier
-                                .weight(2.7f)
-                                .padding(start = 8.dp, end = 8.dp)
-                        )
-                        // Score
-                        Text(
-                            text = entry.actualScore.toString(),
-                            fontFamily = font,
-                            fontWeight = fontWeight,
-                            color = scoreColor,
-                            fontSize = 18.sp,
-                            maxLines = 1,
-                            modifier = Modifier
-                                .weight(1.2f)
-                                .padding(end = 8.dp),
-                            softWrap = false
-                        )
-                        // Badge
-                        Image(
-                            painter = painterResource(id = RankImageUtil.getRankImageRes(idx + 1, leaderboard.size)),
-                            contentDescription = "Rank Badge",
-                            modifier = Modifier
-                                .size(28.dp)
-                                .weight(0.8f)
-                                .padding(start = 4.dp)
-                        )
-                    }
-                    // Row separator
-                    if (idx < leaderboard.lastIndex) {
+                    Text(
+                        text = " RANK",
+                        fontFamily = font,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF90CAF9),
+                        fontSize = 14.sp,
+                        modifier = Modifier.weight(2.2f),
+                        maxLines = 1
+                    )
+                    Text(
+                        text = "USERNAME",
+                        fontFamily = font,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF90CAF9),
+                        fontSize = 14.sp,
+                        modifier = Modifier.weight(2.2f),
+                        maxLines = 1
+                    )
+                    Text(
+                        text = "SCORE",
+                        fontFamily = font,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF90CAF9),
+                        fontSize = 14.sp,
+                        modifier = Modifier.weight(2.2f),
+                        maxLines = 1
+                    )
+                }
+
+                // Leaderboard list
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    contentPadding = PaddingValues(vertical = 0.dp),
+                ) {
+                    itemsIndexed(leaderboard) { idx, entry ->
+                        val isPlayer = entry.username == playerName
+                        val isTop3 = idx < 3
+                        val rowBgColor = when {
+                            isPlayer -> Color(0x33FFA726)
+                            idx % 2 == 0 -> Color(0x22000000)
+                            else -> Color.Transparent
+                        }
+                        val rowTextColor = when {
+                            isTop3 && idx == 0 -> Color(0xFFFFD700)
+                            isTop3 && idx == 1 -> Color(0xFFC0C0C0)
+                            isTop3 && idx == 2 -> Color(0xFFCD7F32)
+                            isPlayer -> Color(0xFFFFA726)
+                            else -> Color.White
+                        }
+                        val scoreColor = rowTextColor
+                        val usernameText = if (isPlayer) "YOU" else entry.username
+                        val fontWeight =
+                            if (isPlayer || isTop3) FontWeight.Bold else FontWeight.Normal
+
+                        val baseFontSize = 20.sp
+                        val minFontSize = 14.sp
+                        val maxChars = 14
+                        val adaptiveFontSize = if (usernameText.length > maxChars)
+                            (baseFontSize.value * (maxChars.toFloat() / usernameText.length.toFloat())).coerceAtLeast(
+                                minFontSize.value
+                            )
+                        else baseFontSize.value
+
                         Box(
-                            Modifier
-                                .align(Alignment.BottomStart)
+                            modifier = Modifier
                                 .fillMaxWidth()
-                                .height(1.dp)
-                                .background(Color(0x22FFFFFF))
-                        )
+                                .clip(RoundedCornerShape(0.dp))
+                                .background(rowBgColor)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 6.dp, horizontal = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Rank number
+                                Text(
+                                    text = "#${idx + 1}",
+                                    fontFamily = font,
+                                    fontSize = 18.sp,
+                                    color = rowTextColor,
+                                    fontWeight = fontWeight,
+                                    modifier = Modifier.weight(1.1f),
+                                    maxLines = 1
+                                )
+                                // Username
+                                Text(
+                                    text = usernameText,
+                                    fontFamily = font,
+                                    fontWeight = fontWeight,
+                                    color = rowTextColor,
+                                    fontSize = adaptiveFontSize.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier
+                                        .weight(2.7f)
+                                        .padding(start = 8.dp, end = 8.dp)
+                                )
+                                // Score
+                                Text(
+                                    text = entry.actualScore.toString(),
+                                    fontFamily = font,
+                                    fontWeight = fontWeight,
+                                    color = scoreColor,
+                                    fontSize = 18.sp,
+                                    maxLines = 1,
+                                    modifier = Modifier
+                                        .weight(1.2f)
+                                        .padding(end = 8.dp),
+                                    softWrap = false
+                                )
+                                // Badge
+                                Image(
+                                    painter = painterResource(
+                                        id = RankImageUtil.getRankImageRes(
+                                            idx + 1,
+                                            leaderboard.size
+                                        )
+                                    ),
+                                    contentDescription = "Rank Badge",
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .weight(0.8f)
+                                        .padding(start = 4.dp)
+                                )
+                            }
+                            // Row separator
+                            if (idx < leaderboard.lastIndex) {
+                                Box(
+                                    Modifier
+                                        .align(Alignment.BottomStart)
+                                        .fillMaxWidth()
+                                        .height(1.dp)
+                                        .background(Color(0x22FFFFFF))
+                                )
+                            }
+                        }
                     }
                 }
             }
         }
-
-        // Home button
-        Image(
-            painter = painterResource(id = R.drawable.ui_home),
-            contentDescription = "Home Button",
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 24.dp)
-                .size(72.dp)
-                .clickable {
-                    onHome()
-                }
-        )
     }
 }
 
