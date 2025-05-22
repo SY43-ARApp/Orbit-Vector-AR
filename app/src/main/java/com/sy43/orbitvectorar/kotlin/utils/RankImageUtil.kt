@@ -1,4 +1,4 @@
-package com.sy43.orbitvectorar.kotlin.game
+package com.sy43.orbitvectorar.kotlin.utils
 
 import com.sy43.orbitvectorar.R
 

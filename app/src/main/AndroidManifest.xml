@@ -40,7 +40,7 @@
       tools:ignore="GoogleAppIndexingWarning">
 
     <activity
-        android:name="com.sy43.orbitvectorar.kotlin.game.TitleScreenActivity"
+        android:name="com.sy43.orbitvectorar.kotlin.screens.TitleScreenActivity"
         android:exported="true"
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:screenOrientation="locked">
@@ -50,22 +50,22 @@
         </intent-filter>
     </activity>
     <activity
-        android:name="com.sy43.orbitvectorar.kotlin.game.MenuScreenActivity"
+        android:name="com.sy43.orbitvectorar.kotlin.screens.MenuScreenActivity"
         android:exported="false"
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:screenOrientation="locked" />
     <activity
-        android:name="com.sy43.orbitvectorar.kotlin.game.LeaderboardActivity"
+        android:name="com.sy43.orbitvectorar.kotlin.screens.LeaderboardActivity"
         android:exported="false"
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:screenOrientation="locked" />
     <activity
-        android:name="com.sy43.orbitvectorar.kotlin.game.StatsActivity"
+        android:name="com.sy43.orbitvectorar.kotlin.screens.StatsActivity"
         android:exported="false"
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:screenOrientation="locked" />
     <activity
-        android:name="com.sy43.orbitvectorar.kotlin.game.EndScreenActivity"
+        android:name="com.sy43.orbitvectorar.kotlin.screens.EndScreenActivity"
         android:exported="false"
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:screenOrientation="locked" />
@@ -76,7 +76,7 @@
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:screenOrientation="locked" />
     <activity
-        android:name="com.sy43.orbitvectorar.kotlin.game.FirstTimeScreenActivity"
+        android:name="com.sy43.orbitvectorar.kotlin.screens.FirstTimeScreenActivity"
         android:exported="false"
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:screenOrientation="locked" />

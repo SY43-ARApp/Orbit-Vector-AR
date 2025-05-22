@@ -5,7 +5,7 @@ import com.sy43.orbitvectorar.java.common.samplerender.Mesh
 import com.sy43.orbitvectorar.java.common.samplerender.SampleRender
 import com.sy43.orbitvectorar.java.common.samplerender.Texture
 import java.io.IOException
-import com.sy43.orbitvectorar.R
+
 class AssetLoader {
     companion object {
         private const val TAG = "AssetLoader"

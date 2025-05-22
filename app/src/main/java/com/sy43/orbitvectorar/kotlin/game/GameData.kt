@@ -2,7 +2,7 @@ package com.sy43.orbitvectorar.kotlin.game
 
 import kotlin.math.cos
 import kotlin.math.sin
-import com.sy43.orbitvectorar.R
+
 // --- GAME STATE DATA CLASSES ---
 data class Planet(
     val worldPosition: FloatArray,

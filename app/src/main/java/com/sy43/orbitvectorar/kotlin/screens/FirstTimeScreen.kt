@@ -1,4 +1,4 @@
-package com.sy43.orbitvectorar.kotlin.game
+package com.sy43.orbitvectorar.kotlin.screens
 
 import android.content.Intent
 import android.net.Uri
@@ -11,12 +11,31 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -29,15 +48,19 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sy43.orbitvectorar.kotlin.game.data.UserPreferences
-import com.sy43.orbitvectorar.kotlin.game.ui.theme.DisketFont
-import com.sy43.orbitvectorar.kotlin.game.ui.theme.OrbitVectorARTheme
+import androidx.compose.ui.zIndex
+import com.sy43.orbitvectorar.R
+import com.sy43.orbitvectorar.kotlin.utils.AudioManager
+import com.sy43.orbitvectorar.kotlin.game.GameArActivity
+import com.sy43.orbitvectorar.kotlin.game.ParallaxBackground
+import com.sy43.orbitvectorar.kotlin.data.ApiService
+import com.sy43.orbitvectorar.kotlin.data.UserPreferences
+import com.sy43.orbitvectorar.kotlin.theme.DisketFont
+import com.sy43.orbitvectorar.kotlin.theme.OrbitVectorARTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
-import androidx.compose.ui.zIndex
-import com.sy43.orbitvectorar.kotlin.game.data.ApiService
-import com.sy43.orbitvectorar.R
+
 class FirstTimeScreenActivity : ComponentActivity() {
     @OptIn(ExperimentalComposeUiApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -278,7 +301,7 @@ fun FirstTimeScreen(onRegistered: () -> Unit) {
                     modifier = Modifier
                         .size(36.dp)
                         .clickable { 
-                            AudioManager.playSfx("tap") 
+                            AudioManager.playSfx("tap")
                             termsChecked = !termsChecked 
                         }
                 )
@@ -313,7 +336,7 @@ fun FirstTimeScreen(onRegistered: () -> Unit) {
                     modifier = Modifier
                         .size(36.dp)
                         .clickable { 
-                            AudioManager.playSfx("tap") 
+                            AudioManager.playSfx("tap")
                             AudioManager.playSfx("titletap")
                             policyChecked = !policyChecked 
                         }

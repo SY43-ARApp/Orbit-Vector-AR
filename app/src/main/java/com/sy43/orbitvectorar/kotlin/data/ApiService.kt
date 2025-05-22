@@ -1,4 +1,4 @@
-package com.sy43.orbitvectorar.kotlin.game.data
+package com.sy43.orbitvectorar.kotlin.data
 
 import retrofit2.Response
 import retrofit2.http.GET
