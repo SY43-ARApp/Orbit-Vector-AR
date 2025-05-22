@@ -30,11 +30,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.ui.platform.LocalContext
 import com.google.ar.core.examples.kotlin.helloar.data.UserPreferences
-import com.google.ar.core.examples.kotlin.helloar.ui.theme.DisketFont
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.mutableStateOf
@@ -42,7 +41,6 @@ import com.google.ar.core.examples.kotlin.helloar.data.Skin
 import com.google.ar.core.examples.kotlin.helloar.data.UserSkins
 import androidx.compose.runtime.*
 import kotlinx.coroutines.launch
-import androidx.compose.ui.tooling.preview.Preview
 import com.google.ar.core.examples.kotlin.helloar.data.ApiService
 import com.google.ar.core.examples.kotlin.helloar.ui.theme.OrbitVectorARTheme
 import com.squareup.moshi.Moshi
@@ -50,7 +48,6 @@ import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
-import kotlin.collections.set
 
 
 @Composable
@@ -58,18 +55,19 @@ fun ShopScreen(
     onMenu: () -> Unit = {} // Callback pour le bouton retour/menu
 ) {
     val context = LocalContext.current
-    val font = DisketFont // Police personnalisée
-    val prefs = remember { UserPreferences(context) } // Préférences utilisateur
-    val uuid = prefs.uuid // Identifiant utilisateur
+    val prefs = remember { UserPreferences(context) }
+    val uuid = prefs.uuid
     
-    // TODO: Récupération correcte des préférences de skins équipés
+    // Récupération correcte des préférences de skins équipés
     val arrowPref = prefs.arrowUsed
     val moonPref = prefs.moonUsed
     val planetPref = prefs.planetUsed
     
-    // État pour l'argent
-    var money by remember { mutableStateOf<Int?>(1000) }
+    var money by remember { mutableStateOf<Int?>(null) }
     var bestScore by remember { mutableStateOf<Int?>(0) }
+    
+    //état pour afficher un indicateur de chargement d'argent
+    var isLoadingMoney by remember { mutableStateOf(false) }
 
     // Variables d'état pour les items et les prix par catégorie
     val itemsByCategory = remember { mutableStateOf<List<List<Skin>>>(emptyList()) }
@@ -78,9 +76,6 @@ fun ShopScreen(
     
     // Remplacer la variable selectedItem unique par un tableau d'indices par catégorie
     var selectedItems by remember { mutableStateOf(listOf(-1, -1, -1)) }
-
-
-    var purchasedItems by remember { mutableStateOf(mutableListOf<String>()) }
 
     // État pour l'item équipé/sélectionné dans chaque catégorie
     var equippedItems by remember {
@@ -93,8 +88,7 @@ fun ShopScreen(
         )
     }
 
-    // TODO: Initialisation correcte de itemIsEquipped basée sur les préférences
-    var itemIsEquipped by remember { 
+    var itemIsEquipped by remember {
         mutableStateOf(
             listOf(
                 arrowPref != null && arrowPref.isNotEmpty(),
@@ -127,19 +121,30 @@ fun ShopScreen(
             .create(ApiService::class.java)
     }
 
-    fun getUser() {
-        //charger l'argent depuis l'api
+    //récupération des informations non stocké dans les préférences
+    fun getUserInfo() {
+
+        isLoadingMoney = true
+        
         coroutineScope.launch {
             try {
                 val response = api.getUser(uuid)
                 if (response.isSuccessful) {
-                    money = response.body()?.money
-                    bestScore = response.body()?.bestScore
+                    val userData = response.body()
+                    money = userData?.money
+                    bestScore = userData?.bestScore
+
                 } else {
                     errorMessage.value = "Erreur de chargement de l'argent: ${response.code()}"
+                    //Initialisation de secours en cas d'échec
+                    if (money == null) money = 0
                 }
             } catch (e: Exception) {
                 errorMessage.value = "Erreur de connexion: ${e.message}"
+                //Initialisation de secours en cas d'exception
+                if (money == null) money = 0
+            } finally {
+                isLoadingMoney = false // Indiquer que le chargement est terminé
             }
         }
     }
@@ -160,26 +165,21 @@ fun ShopScreen(
 
     // Fonction pour sauvegarder les préférences d'items équipés
     fun saveEquippedItem(categoryIndex: Int, itemIndex: Int) {
-        // TODO: Afficher des logs pour le débogage des préférences
-        println("Saving equipped item: Category $categoryIndex, Item $itemIndex")
-        
+
         when (categoryIndex) {
             0 -> {
                 prefs.arrowUsed = itemIndex.toString()
-                println("Arrow preference saved: ${prefs.arrowUsed}")
             }
             1 -> {
                 prefs.moonUsed = itemIndex.toString()
-                println("Moon preference saved: ${prefs.moonUsed}")
             }
             2 -> {
                 prefs.planetUsed = itemIndex.toString()
-                println("Planet preference saved: ${prefs.planetUsed}")
             }
         }
     }
 
-    // TODO: État pour le dialogue d'achat
+    //État pour le dialogue d'achat
     var showPurchaseDialog by remember { mutableStateOf(false) }
     var selectedSkinId by remember { mutableStateOf<Int?>(null) }
     var selectedSkinPrice by remember { mutableStateOf(0) }
@@ -191,7 +191,7 @@ fun ShopScreen(
         return true
     }
 
-    // Fonction pour l'achat d'un skin (version corrigée)
+    // Fonction pour l'achat d'un skin
     fun buySkin(skinId: Int) {
         val uuid = prefs.uuid
         val skinPrice = allSkins.value.find { it.id == skinId }?.price ?: 0
@@ -225,11 +225,8 @@ fun ShopScreen(
                     saveMoney()
 
                     AudioManager.playSfx("purchase")
-                    
-                    // Utiliser selectedItems[selectedCategory] au lieu de selectedItem
                     val currentSelectedItem = selectedItems[selectedCategory]
                     
-                    // TODO: Correction de la méthode getOrDefault qui n'existe pas pour les listes
                     // Équiper l'item si nécessaire (avec vérification)
                     val categoryEquipped = if (selectedCategory in itemIsEquipped.indices) 
                                              itemIsEquipped[selectedCategory] else false
@@ -263,7 +260,6 @@ fun ShopScreen(
                 errorMessage.value = "Erreur de connexion: ${e.message}"
                 AudioManager.playSfx("error")
             } finally {
-                // Toujours désactiver l'indicateur de chargement
                 isLoading.value = false
                 // Fermer le dialogue
                 showPurchaseDialog = false
@@ -272,7 +268,7 @@ fun ShopScreen(
     }
 
     // Fonction pour équiper un item
-    fun equipItem(categoryIndex: Int, itemIndex: Int, skinId: Int) {
+    fun equipItem(categoryIndex: Int, itemIndex: Int) {
         // Vérification des index
         if (isItemValid(categoryIndex, itemIndex)) {
             // Mettre à jour l'item équipé pour la catégorie
@@ -292,24 +288,8 @@ fun ShopScreen(
 
             // Sauvegarder l'item équipé dans les préférences utilisateur
             saveEquippedItem(categoryIndex, itemIndex)
-            
-            // TODO: Vérification de la persistance
-            when (categoryIndex) {
-                0 -> println("Après sauvegarde, Arrow preference: ${prefs.arrowUsed}")
-                1 -> println("Après sauvegarde, Moon preference: ${prefs.moonUsed}")
-                2 -> println("Après sauvegarde, Planet preference: ${prefs.planetUsed}")
-            }
 
-            // Mise à jour sur le serveur si nécessaire
-            coroutineScope.launch {
-                try {
-                    // Vous pouvez implémenter ici un appel API pour sauvegarder
-                    // l'équipement sur le serveur si nécessaire
-                    // api.updateEquippedItem(uuid, categoryIndex, skinId)
-                } catch (e: Exception) {
-                    errorMessage.value = "Erreur lors de la mise à jour: ${e.message}"
-                }
-            }
+
         }
     }
     
@@ -362,7 +342,7 @@ fun ShopScreen(
 
                 ) {
                     Text(
-                        text = "${skin.id}, ${skin.type}",
+                        text = "${skin.id}",
                         color = Color.White,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
@@ -387,7 +367,7 @@ fun ShopScreen(
                     // Bouton pour équiper l'item acheté
                     Button(
                         onClick = {
-                            equipItem(selectedCategory, itemIndex, skin.id)
+                            equipItem(selectedCategory, itemIndex)
                             AudioManager.playSfx("equip")
                         },
                         colors = ButtonDefaults.buttonColors(
@@ -398,12 +378,11 @@ fun ShopScreen(
                     ) {
                         Text(
                             text = "SÉLECTIONNER",
-                            fontSize = 10.sp, // Taille de texte réduite
+                            fontSize = 5.sp, // Taille de texte réduite
                             color = Color.White
                         )
                     }
                 }
-
                 // Score minimum requis
                 Text(
                     text = "Score minimum: ${skin.minimalScore}",
@@ -415,7 +394,7 @@ fun ShopScreen(
 
 
     }
-
+    //Affichage de la liste des skins par pairs
     @Composable
     fun ListSkins(skins: List<Skin>, userSkins: MutableState<List<UserSkins>>, selectedItem: Int) {
         LazyColumn(
@@ -486,7 +465,7 @@ fun ShopScreen(
 
     }
 
-    // TODO: Dialogue de confirmation d'achat
+    //Dialogue de confirmation d'achat
     @Composable
     fun PurchaseDialog() {
         if (showPurchaseDialog && selectedSkinId != null) {
@@ -559,15 +538,43 @@ fun ShopScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Solde: ${money} 💰",
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
+                //Afficher un indicateur de chargement ou le solde
+                if (isLoadingMoney) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        androidx.compose.material3.CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Chargement du solde...",
+                            color = Color.White,
+                            fontSize = 18.sp
+                        )
+                    }
+                } else {
+                    Text(
+                        text = "Solde: ${money ?: 0} 💰",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    //Bouton de rafraîchissement du solde (à laisser ?)
+                    Button(
+                        onClick = { getUserInfo() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF1C2B4F)
+                        ),
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Text("↻", fontSize = 16.sp)
+                    }
+                }
             }
         }
+        //Carte de sélection des catégories
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -590,7 +597,6 @@ fun ShopScreen(
                     Button(
                         onClick = {
                             selectedCategory = index
-                            // Ne pas réinitialiser la sélection quand on change de catégorie
                             AudioManager.playSfx("tap")
                         },
                         colors = ButtonDefaults.buttonColors(
@@ -614,7 +620,7 @@ fun ShopScreen(
             val skinsResponse = api.getSkins()
             if (skinsResponse.isSuccessful) {
                 try {
-                    // TODO: Protection contre les réponses null
+                    //Protection contre les réponses null
                     val body = skinsResponse.body()
                     if (body != null) {
                         allSkins.value = body
@@ -625,14 +631,12 @@ fun ShopScreen(
 
                     // Vérifier si les skins sont valides avant de les traiter
                     if (allSkins.value.isNotEmpty()) {
-                        // TODO: Utilisation de try-catch pour sécuriser le filtrage des items
                         try {
                             // Organiser les skins par catégorie (basée sur type)
                             val arrow = allSkins.value.filter { it.type == 0 }
                             val moon = allSkins.value.filter { it.type == 1 }
                             val planet = allSkins.value.filter { it.type == 2 }
 
-                            // S'assurer que chaque catégorie a au moins une liste vide
                             itemsByCategory.value = listOf(arrow, moon, planet)
 
                             pricesByCategory.value = listOf(
@@ -649,7 +653,6 @@ fun ShopScreen(
                 } catch (e: Exception) {
                     // Gérer les erreurs de parsing JSON
                     errorMessage.value = "Erreur de traitement des données: ${e.message}"
-                    // TODO: Initialisation de secours en cas d'erreur
                     itemsByCategory.value = listOf(emptyList(), emptyList(), emptyList())
                     pricesByCategory.value = listOf(emptyList(), emptyList(), emptyList())
                 }
@@ -663,7 +666,6 @@ fun ShopScreen(
     fun getUserSkin() {
         coroutineScope.launch {
             if (prefs.uuid != null) {
-                // TODO: Protection contre les exceptions lors de la récupération des skins utilisateur
                 try {
                     val userSkinsResponse = api.getUserSkins(prefs.uuid)
                     if (userSkinsResponse.isSuccessful) {
@@ -687,12 +689,15 @@ fun ShopScreen(
     LaunchedEffect(Unit) {
         isLoading.value = true
         try {
+            // Récupérer d'abord les données de l'utilisateur
+            val userJob = launch { getUserInfo() }
+            userJob.join() // Attendre que les données utilisateur soient chargées
+            
+            // Puis charger les autres données
             val skinjob = launch { getSkin() }
             val userSkinJob = launch { getUserSkin() }
-            val userJob = launch { getUser() }
             skinjob.join()
             userSkinJob.join()
-            userJob.join()
 
             // Vérification cruciale: s'assurer que les données sont valides
             if (itemsByCategory.value.isEmpty() || itemsByCategory.value.any { it.isEmpty() }) {
@@ -700,12 +705,6 @@ fun ShopScreen(
                 itemsByCategory.value = listOf(listOf(), listOf(), listOf())
                 pricesByCategory.value = listOf(listOf(), listOf(), listOf())
             }
-
-            // TODO: Vérification et log des préférences au démarrage
-            println("Préférences au démarrage:")
-            println("Arrow: ${prefs.arrowUsed}")
-            println("Moon: ${prefs.moonUsed}")
-            println("Planet: ${prefs.planetUsed}")
 
         } catch (e: Exception) {
             errorMessage.value = "Erreur de connexion: ${e.message}"
