@@ -61,9 +61,15 @@ fun ShopScreen(
     val font = DisketFont // Police personnalisée
     val prefs = remember { UserPreferences(context) } // Préférences utilisateur
     val uuid = prefs.uuid // Identifiant utilisateur
-    var moon = prefs.moonUsed // Lune utilisée
-    var arrow = prefs.arrowUsed // Flèche utilisée
-    var planet = prefs.planetUsed
+    
+    // TODO: Récupération correcte des préférences de skins équipés
+    val arrowPref = prefs.arrowUsed
+    val moonPref = prefs.moonUsed
+    val planetPref = prefs.planetUsed
+    
+    // État pour l'argent
+    var money by remember { mutableStateOf<Int?>(1000) }
+    var bestScore by remember { mutableStateOf<Int?>(0) }
 
     // Variables d'état pour les items et les prix par catégorie
     val itemsByCategory = remember { mutableStateOf<List<List<Skin>>>(emptyList()) }
@@ -71,11 +77,7 @@ fun ShopScreen(
     var selectedCategory by remember { mutableIntStateOf(0) } // Catégorie sélectionnée
     
     // Remplacer la variable selectedItem unique par un tableau d'indices par catégorie
-    var selectedItems by remember { mutableStateOf(listOf(0, 0, 0)) }
-    
-    // État pour l'argent
-    var money by remember { mutableStateOf<Int?>(1000) }
-    var bestScore by remember { mutableStateOf<Int?>(0) }
+    var selectedItems by remember { mutableStateOf(listOf(-1, -1, -1)) }
 
 
     var purchasedItems by remember { mutableStateOf(mutableListOf<String>()) }
@@ -84,15 +86,23 @@ fun ShopScreen(
     var equippedItems by remember {
         mutableStateOf(
             listOf(
-                arrow?.toInt()?.takeIf { it >= 0 } ?: 0,   // flèche
-                moon?.toIntOrNull()?.takeIf { it >= 0 } ?: 0,    // lune
-                planet?.toIntOrNull()?.takeIf { it >= 0 } ?: 0   // planète
+                arrowPref?.toIntOrNull()?.takeIf { it >= 0 } ?: 0,   // flèche
+                moonPref?.toIntOrNull()?.takeIf { it >= 0 } ?: 0,    // lune
+                planetPref?.toIntOrNull()?.takeIf { it >= 0 } ?: 0   // planète
             )
         )
     }
 
-    // TODO: Ajout d'un état pour suivre si les items sont équipés
-    var itemIsEquipped by remember { mutableStateOf(listOf(false, false, false)) }
+    // TODO: Initialisation correcte de itemIsEquipped basée sur les préférences
+    var itemIsEquipped by remember { 
+        mutableStateOf(
+            listOf(
+                arrowPref != null && arrowPref.isNotEmpty(),
+                moonPref != null && moonPref.isNotEmpty(),
+                planetPref != null && planetPref.isNotEmpty()
+            )
+        ) 
+    }
 
     // Variables d'état pour l'API
     val allSkins = remember { mutableStateOf<List<Skin>>(emptyList()) }
@@ -150,11 +160,22 @@ fun ShopScreen(
 
     // Fonction pour sauvegarder les préférences d'items équipés
     fun saveEquippedItem(categoryIndex: Int, itemIndex: Int) {
-        // Utilise la fonction de vérification
+        // TODO: Afficher des logs pour le débogage des préférences
+        println("Saving equipped item: Category $categoryIndex, Item $itemIndex")
+        
         when (categoryIndex) {
-            0 -> prefs.arrowUsed = itemIndex.toString()
-            1 -> prefs.moonUsed = itemIndex.toString()
-            2 -> prefs.planetUsed = itemIndex.toString()
+            0 -> {
+                prefs.arrowUsed = itemIndex.toString()
+                println("Arrow preference saved: ${prefs.arrowUsed}")
+            }
+            1 -> {
+                prefs.moonUsed = itemIndex.toString()
+                println("Moon preference saved: ${prefs.moonUsed}")
+            }
+            2 -> {
+                prefs.planetUsed = itemIndex.toString()
+                println("Planet preference saved: ${prefs.planetUsed}")
+            }
         }
     }
 
@@ -271,6 +292,13 @@ fun ShopScreen(
 
             // Sauvegarder l'item équipé dans les préférences utilisateur
             saveEquippedItem(categoryIndex, itemIndex)
+            
+            // TODO: Vérification de la persistance
+            when (categoryIndex) {
+                0 -> println("Après sauvegarde, Arrow preference: ${prefs.arrowUsed}")
+                1 -> println("Après sauvegarde, Moon preference: ${prefs.moonUsed}")
+                2 -> println("Après sauvegarde, Planet preference: ${prefs.planetUsed}")
+            }
 
             // Mise à jour sur le serveur si nécessaire
             coroutineScope.launch {
@@ -673,8 +701,11 @@ fun ShopScreen(
                 pricesByCategory.value = listOf(listOf(), listOf(), listOf())
             }
 
-            // Vérification des indices équipés avec la nouvelle fonction
-
+            // TODO: Vérification et log des préférences au démarrage
+            println("Préférences au démarrage:")
+            println("Arrow: ${prefs.arrowUsed}")
+            println("Moon: ${prefs.moonUsed}")
+            println("Planet: ${prefs.planetUsed}")
 
         } catch (e: Exception) {
             errorMessage.value = "Erreur de connexion: ${e.message}"
@@ -685,11 +716,7 @@ fun ShopScreen(
             isLoading.value = false
         }
     }
-    if (isLoading.value) {
 
-    } else {
-        //ShopView(allSkins.value, userSkins)
-    }
 }
 
 
