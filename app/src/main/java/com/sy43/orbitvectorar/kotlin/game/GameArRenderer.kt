@@ -107,7 +107,7 @@ class GameArRenderer(val activity: GameArActivity) :
     private lateinit var planeRenderer: com.sy43.orbitvectorar.java.common.samplerender.arcore.PlaneRenderer
 
     private var waitingForAnchorStartTime: Long? = null
-    private val fallbackAnchorDelayMillis = 3000L
+    private val fallbackAnchorDelayMillis = 8000L
 
     private var arrowsThrown: Int = 0
     private var objectsHit: Int = 0
@@ -258,12 +258,18 @@ class GameArRenderer(val activity: GameArActivity) :
             } else {
                 val elapsed = System.currentTimeMillis() - (waitingForAnchorStartTime ?: 0L)
                 if (elapsed > fallbackAnchorDelayMillis) {
-                    val fallbackPlaced = anchorManager.tryPlaceFallbackAnchor(localSession, camera)
-                    if (fallbackPlaced) {
-                        Log.i(TAG, "Fallback anchor placed after waiting. Resetting level.")
-                        activity.view.hideTrackingOverlay()
-                        waitingForAnchorStartTime = null
-                        resetLevel(localSession, camera)
+                    val cameraIsLevel = isCameraLevel(camera)
+                    if (cameraIsLevel) {
+                        // Use the manager's method for fallback anchor at safe height
+                        val fallbackPlaced = anchorManager.tryPlaceFallbackAnchorAtSafeHeight(localSession, camera, 1.2f)
+                        if (fallbackPlaced) {
+                            Log.i(TAG, "Fallback anchor placed after waiting. Resetting level.")
+                            activity.view.hideTrackingOverlay()
+                            waitingForAnchorStartTime = null
+                            resetLevel(localSession, camera)
+                        }
+                    } else {
+                        activity.view.showTrackingOverlay(0.1f, "Raise your phone and point at a surface to start the game.")
                     }
                 }
                 val trackingState = camera.trackingState
@@ -515,5 +521,19 @@ class GameArRenderer(val activity: GameArActivity) :
     private fun showError(errorMessage: String) {
         Log.e(TAG, "Error shown to user: $errorMessage")
         activity.view.snackbarHelper.showError(activity, errorMessage)
+    }
+
+    // 30 degrees
+    private fun isCameraLevel(camera: Camera): Boolean {
+        val pose = camera.displayOrientedPose
+        val zAxis = floatArrayOf(0f, 0f, -1f, 1f)
+        val worldForward = FloatArray(4)
+        pose.toMatrix(modelMatrix, 0)
+        Matrix.multiplyMV(worldForward, 0, modelMatrix, 0, zAxis, 0)
+        val up = floatArrayOf(0f, 1f, 0f)
+        val norm = Math.sqrt((worldForward[0]*worldForward[0] + worldForward[1]*worldForward[1] + worldForward[2]*worldForward[2]).toDouble()).toFloat()
+        if (norm < 1e-3) return false
+        val forwardY = worldForward[1] / norm
+        return forwardY > -0.5f
     }
 }

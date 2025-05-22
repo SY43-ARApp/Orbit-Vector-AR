@@ -152,6 +152,32 @@ class AnchorManager {
         return false
     }
 
+
+    fun tryPlaceFallbackAnchorAtSafeHeight(session: Session, camera: Camera, minHeight: Float = 1.2f): Boolean {
+        if (levelOriginAnchor != null && levelOriginAnchor!!.trackingState == TrackingState.TRACKING) {
+            return false
+        }
+        if (camera.trackingState == TrackingState.TRACKING) {
+            val pose = camera.displayOrientedPose
+            val forward = floatArrayOf(0f, 0f, -1f)
+            val worldForward = pose.rotateVector(forward)
+            val fallbackDistance = 2.5f
+            val translation = pose.translation
+            val anchorPos = floatArrayOf(
+                translation[0] + worldForward[0] * fallbackDistance,
+                maxOf(translation[1] + worldForward[1] * fallbackDistance, minHeight),
+                translation[2] + worldForward[2] * fallbackDistance
+            )
+            val anchorPose = com.google.ar.core.Pose(anchorPos, pose.rotationQuaternion)
+            levelOriginAnchor?.detach()
+            levelOriginAnchor = session.createAnchor(anchorPose)
+            Log.i(TAG, "Fallback anchor placed at safe height in front of camera.")
+            anchorWasLostFrames = 0
+            return true
+        }
+        return false
+    }
+
     // Returns a pose in front of the camera for spawning objects (not at anchor position)
     fun getSpawnPoseInFrontOfCamera(cameraPose: Pose, distance: Float = 2.5f): Pose {
         val forward = floatArrayOf(0f, 0f, -1f)
