@@ -26,6 +26,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sy43.orbitvectorar.kotlin.game.data.UserPreferences
 import com.sy43.orbitvectorar.kotlin.game.ui.theme.DisketFont
 import com.sy43.orbitvectorar.kotlin.game.ui.theme.OrbitVectorARTheme
 import com.sy43.orbitvectorar.R
@@ -35,11 +36,11 @@ class TitleScreenActivity : ComponentActivity() {
 
         AudioManager.init(this)
 
-        // first time user
-        val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
-        val isFirstTime = prefs.getBoolean("first_time", true)
-        if (isFirstTime) {
-            prefs.edit().putBoolean("first_time", false).apply()
+        // first time user or not registered
+        val prefs = UserPreferences(this)
+        val hasUsername = !prefs.username.isNullOrBlank()
+        val hasUuid = !prefs.uuid.isNullOrBlank()
+        if (!hasUsername || !hasUuid) {
             startActivity(Intent(this, FirstTimeScreenActivity::class.java))
             finish()
             return
