@@ -8,9 +8,11 @@ data class GlobalScore(
         get() = score ?: 0
 }
 
-data class User(
+data class UserMoney(
     val money :Int?,
-    val bestScore : Int?
+)
+data class UserBestScore(
+    val bestScore: Int?
 )
 
 

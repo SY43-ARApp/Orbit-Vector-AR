@@ -63,10 +63,16 @@ interface ApiService {
         @Query("skinId") skinId: Int
     ): Response<String>
 
-    @GET("get_user.php")
-    suspend fun getUser(
+    @GET("get_user_money.php")
+    suspend fun getMoney(
         @Query("uuid") uuid: String
-    ): Response<User>
+    ): Response<UserMoney>
+
+    //todo : faire une page pour récupérer le meilleur score du joueur ?
+    @GET("")
+    suspend fun getBestScores(
+        @Query("uuid") uuid : String
+    ): Response<UserBestScore>
 
     @GET("update_money.php")
     suspend fun updateMoney(

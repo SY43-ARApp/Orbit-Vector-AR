@@ -2,6 +2,7 @@ package com.google.ar.core.examples.kotlin.helloar
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
@@ -57,15 +58,15 @@ fun ShopScreen(
     val context = LocalContext.current
     val prefs = remember { UserPreferences(context) }
     val uuid = prefs.uuid
-    
+
     // Récupération correcte des préférences de skins équipés
     val arrowPref = prefs.arrowUsed
     val moonPref = prefs.moonUsed
     val planetPref = prefs.planetUsed
-    
-    var money by remember { mutableStateOf<Int?>(null) }
+
+    var money by remember { mutableStateOf<Int?>(0) }
     var bestScore by remember { mutableStateOf<Int?>(0) }
-    
+
     //état pour afficher un indicateur de chargement d'argent
     var isLoadingMoney by remember { mutableStateOf(false) }
 
@@ -73,7 +74,7 @@ fun ShopScreen(
     val itemsByCategory = remember { mutableStateOf<List<List<Skin>>>(emptyList()) }
     val pricesByCategory = remember { mutableStateOf<List<List<Int>>>(emptyList()) }
     var selectedCategory by remember { mutableIntStateOf(0) } // Catégorie sélectionnée
-    
+
     // Remplacer la variable selectedItem unique par un tableau d'indices par catégorie
     var selectedItems by remember { mutableStateOf(listOf(-1, -1, -1)) }
 
@@ -95,7 +96,7 @@ fun ShopScreen(
                 moonPref != null && moonPref.isNotEmpty(),
                 planetPref != null && planetPref.isNotEmpty()
             )
-        ) 
+        )
     }
 
     // Variables d'état pour l'API
@@ -123,40 +124,65 @@ fun ShopScreen(
 
     //récupération des informations non stocké dans les préférences
     fun getUserInfo() {
-
+        Log.e("moi", "getUserInfo enter")
         isLoadingMoney = true
-        
-        coroutineScope.launch {
-            try {
-                val response = api.getUser(uuid)
-                if (response.isSuccessful) {
-                    val userData = response.body()
-                    money = userData?.money
-                    bestScore = userData?.bestScore
 
+        coroutineScope.launch {
+            //recuperation de l'argent
+            try {
+                val responseMoney = api.getMoney(uuid)
+                if (responseMoney.isSuccessful) {
+                    val userData = responseMoney.body()
+                    // Validation et assignation sécurisée
+                    money = userData?.money.takeIf { it!! >= 0 } ?: 0
                 } else {
-                    errorMessage.value = "Erreur de chargement de l'argent: ${response.code()}"
-                    //Initialisation de secours en cas d'échec
-                    if (money == null) money = 0
+                    money = money ?: 0  // Conserver la valeur ou utiliser 0
+                    errorMessage.value = "Erreur serveur: ${responseMoney.code()}"
                 }
             } catch (e: Exception) {
-                errorMessage.value = "Erreur de connexion: ${e.message}"
-                //Initialisation de secours en cas d'exception
-                if (money == null) money = 0
+                money = money ?: 0
+                errorMessage.value = "Erreur réseau: ${e.message}"
             } finally {
-                isLoadingMoney = false // Indiquer que le chargement est terminé
+                isLoadingMoney = false
             }
+            //recuperation du meilleur score
+            try {
+                Log.e("moi", "getUserInfo score enter")
+                val responseScore = api.getBestScores(uuid)
+                Log.e("moi", "data : ${responseScore}")
+
+                if (responseScore.isSuccessful) {
+                    val userData = responseScore.body()
+                    bestScore = userData?.bestScore.takeIf { it!! >= 0 } ?: 0
+                    Log.e("moi", "Score mis à jour: $bestScore")
+                } else {
+                    bestScore = bestScore ?: 0
+                    Log.e("moi", "getUserScore echoue")
+                    errorMessage.value = "Erreur serveur: ${responseScore.code()}"
+                    Log.e("moi", "Erreur serveur: ${responseScore.code()}")
+                }
+            } catch (e: Exception) {
+                bestScore = bestScore ?: 0
+                errorMessage.value = "Erreur réseau: ${e.message}"
+                Log.e("moi", "Erreur réseau: ${e.message}")
+            }
+
         }
     }
 
     fun saveMoney() {
+        Log.e("moi", "saveMoney enter")
         //envoyer la nouvelle valeur d'argent à l'api
         coroutineScope.launch {
             try {
-                api.updateMoney(
+                val response =api.updateMoney(
                     uuid = uuid,
                     money = money
                 )
+                Log.e("moi", "Response: ${response}")
+                Log.e("moi", "Response code: ${response.code()}")
+                Log.e("moi", "Response body: ${response.body()}")
+                Log.e("moi", "Money updated: $money")
             } catch (_: Exception) {
             }
         }
@@ -170,9 +196,11 @@ fun ShopScreen(
             0 -> {
                 prefs.arrowUsed = itemIndex.toString()
             }
+
             1 -> {
                 prefs.moonUsed = itemIndex.toString()
             }
+
             2 -> {
                 prefs.planetUsed = itemIndex.toString()
             }
@@ -226,11 +254,11 @@ fun ShopScreen(
 
                     AudioManager.playSfx("purchase")
                     val currentSelectedItem = selectedItems[selectedCategory]
-                    
+
                     // Équiper l'item si nécessaire (avec vérification)
-                    val categoryEquipped = if (selectedCategory in itemIsEquipped.indices) 
-                                             itemIsEquipped[selectedCategory] else false
-                    
+                    val categoryEquipped = if (selectedCategory in itemIsEquipped.indices)
+                        itemIsEquipped[selectedCategory] else false
+
                     if (!categoryEquipped && isItemValid(selectedCategory, currentSelectedItem)) {
                         val newEquippedItems = equippedItems.toMutableList()
                         val newItemIsEquipped = itemIsEquipped.toMutableList()
@@ -292,16 +320,16 @@ fun ShopScreen(
 
         }
     }
-    
-    
+
+
     @Composable
     fun OneSkin(
         skin: Skin,
         isSelected: Boolean,
         isPurchased: Boolean,
         isEquipped: Boolean,
-        itemIndex :Int,
-        onClick : (Int) -> Unit
+        itemIndex: Int,
+        onClick: (Int) -> Unit
     ) {
         Card(
             modifier = Modifier
@@ -363,7 +391,7 @@ fun ShopScreen(
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    
+
                     // Bouton pour équiper l'item acheté
                     Button(
                         onClick = {
@@ -394,6 +422,7 @@ fun ShopScreen(
 
 
     }
+
     //Affichage de la liste des skins par pairs
     @Composable
     fun ListSkins(skins: List<Skin>, userSkins: MutableState<List<UserSkins>>, selectedItem: Int) {
@@ -418,7 +447,7 @@ fun ShopScreen(
                             isSelected = isSelected,
                             isPurchased = isPurchased,
                             isEquipped = equippedItems[selectedCategory] == firstIndex &&
-                                         itemIsEquipped[selectedCategory],
+                                    itemIsEquipped[selectedCategory],
                             onClick = { index ->
                                 // Mise à jour du tableau selectedItems au lieu de la variable unique
                                 val newSelectedItems = selectedItems.toMutableList()
@@ -431,7 +460,8 @@ fun ShopScreen(
                     // Deuxième élément de la paire
                     val secondIndex = firstIndex + 1
                     if (secondIndex < skins.size) {
-                        val isPurchased2 = userSkins.value.any { it.skinId == skins[secondIndex].id }
+                        val isPurchased2 =
+                            userSkins.value.any { it.skinId == skins[secondIndex].id }
                         val isSelected2 = selectedItem == secondIndex
 
                         Box(modifier = Modifier.weight(1f)) {
@@ -441,7 +471,7 @@ fun ShopScreen(
                                 isSelected = isSelected2,
                                 isPurchased = isPurchased2,
                                 isEquipped = equippedItems[selectedCategory] == secondIndex &&
-                                             itemIsEquipped[selectedCategory],
+                                        itemIsEquipped[selectedCategory],
                                 onClick = { index ->
                                     // Mise à jour du tableau selectedItems au lieu de la variable unique
                                     val newSelectedItems = selectedItems.toMutableList()
@@ -459,7 +489,12 @@ fun ShopScreen(
     }
 
     @Composable
-    fun ListSkinPerType(skins: List<Skin>, type: Int, userSkins: MutableState<List<UserSkins>>,selectedItem :Int ) {
+    fun ListSkinPerType(
+        skins: List<Skin>,
+        type: Int,
+        userSkins: MutableState<List<UserSkins>>,
+        selectedItem: Int
+    ) {
         var newListSkin = skins.filter { it.type == type }
         ListSkins(newListSkin, userSkins, selectedItem)
 
@@ -470,19 +505,19 @@ fun ShopScreen(
     fun PurchaseDialog() {
         if (showPurchaseDialog && selectedSkinId != null) {
             androidx.compose.material3.AlertDialog(
-                onDismissRequest = { 
-                    showPurchaseDialog = false 
+                onDismissRequest = {
+                    showPurchaseDialog = false
                 },
-                title = { 
-                    Text("Confirmer l'achat", color = Color.White) 
+                title = {
+                    Text("Confirmer l'achat", color = Color.White)
                 },
-                text = { 
+                text = {
                     Column {
                         Text(
                             "Voulez-vous acheter cet item pour $selectedSkinPrice 💰?",
                             color = Color.White
                         )
-                        
+
                         if ((money ?: 0) < selectedSkinPrice) {
                             Text(
                                 "Solde insuffisant!",
@@ -555,15 +590,17 @@ fun ShopScreen(
                     }
                 } else {
                     Text(
-                        text = "Solde: ${money ?: 0} 💰",
+                        text = "Solde: ${money} 💰",
                         color = Color.White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    
+
                     //Bouton de rafraîchissement du solde (à laisser ?)
                     Button(
-                        onClick = { getUserInfo() },
+                        onClick = {
+                            getUserInfo()
+                        },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF1C2B4F)
                         ),
@@ -609,7 +646,12 @@ fun ShopScreen(
                 }
             }
         }
-        ListSkinPerType(allSkins.value, selectedCategory, userSkins,selectedItems[selectedCategory])
+        ListSkinPerType(
+            allSkins.value,
+            selectedCategory,
+            userSkins,
+            selectedItems[selectedCategory]
+        )
 
         // Afficher le dialogue d'achat si nécessaire
         PurchaseDialog()
@@ -691,13 +733,15 @@ fun ShopScreen(
         try {
             // Récupérer d'abord les données de l'utilisateur
             val userJob = launch { getUserInfo() }
-            userJob.join() // Attendre que les données utilisateur soient chargées
-            
+
             // Puis charger les autres données
             val skinjob = launch { getSkin() }
             val userSkinJob = launch { getUserSkin() }
             skinjob.join()
             userSkinJob.join()
+            userJob.join()
+            Log.e("moi", "tout est finis")
+
 
             // Vérification cruciale: s'assurer que les données sont valides
             if (itemsByCategory.value.isEmpty() || itemsByCategory.value.any { it.isEmpty() }) {
@@ -717,7 +761,6 @@ fun ShopScreen(
     }
 
 }
-
 
 
 class ShopScreenActivity : ComponentActivity() {
