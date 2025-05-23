@@ -16,19 +16,22 @@ package com.sy43.orbitvectorar.kotlin.game
  */
 import android.content.res.Resources
 import android.opengl.GLSurfaceView
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageButton
+import android.widget.ProgressBar
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import com.google.ar.core.Config
+import com.sy43.orbitvectorar.R
 import com.sy43.orbitvectorar.java.common.helpers.SnackbarHelper
 import com.sy43.orbitvectorar.java.common.helpers.TapHelper
-import android.widget.ProgressBar
-import android.widget.TextView
-import android.view.ViewGroup
-import android.view.LayoutInflater
-import com.sy43.orbitvectorar.R
+import com.sy43.orbitvectorar.kotlin.screens.MenuScreenActivity
+import com.sy43.orbitvectorar.kotlin.utils.AudioManager
+
 /** Contains UI elements for Hello AR. */
 class GameArView(val activity: GameArActivity) : DefaultLifecycleObserver {
     val root = View.inflate(activity, R.layout.activity_main, null)

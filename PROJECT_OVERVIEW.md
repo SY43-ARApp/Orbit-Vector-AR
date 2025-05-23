@@ -67,35 +67,41 @@
 
 ## Directory Structure (Key Files)
 
-- `app/src/main/java/com/google/ar/core/examples/kotlin/helloar/`
-  - HelloArActivity.kt
-  - HelloArView.kt
-  - HelloArRenderer.kt
-  - GameObjectRenderer.kt
-  - LevelManager.kt
-  - PhysicsSimulator.kt
-  - LightManager.kt
-  - MathUtils.kt
-  - GameData.kt
-  - GameConstants.kt
-  - AssetLoader.kt
-  - AnchorManager.kt
-  - TitleScreenActivity.kt
-  - MenuScreenActivity.kt
-  - **LeaderboardScreen.kt** (LeaderboardScreen, LeaderboardActivity)
-  - **StatsScreen.kt / StatsActivity.kt** (User stats/history screen)
-  - FirstTimeScreenActivity.kt
-  - EndScreenActivity.kt
-  - data/ApiService.kt
-  - data/MainViewModel.kt
-  - data/UserPreference.kt
-  - data/Model.kt
-  - ui/theme/Type.kt
-  - ui/theme/OrbitVectorARTheme.kt
-- `app/src/main/res/layout/`
-- `app/src/main/res/values/`
-- `app/src/main/res/drawable/`
-- `app/src/main/assets/models/`
+📁 app\src\main\java\com\sy43\orbitvectorar\kotlin
+├── 📁 common
+│   ╰── 📁 helpers
+│       ╰── 📄 ARCoreSessionLifecycleHelper.kt
+├── 📁 data
+│   ├── 📄 ApiService.kt
+│   ├── 📄 Model.kt
+│   ╰── 📄 UserPreference.kt
+├── 📁 game
+│   ├── 📄 AnchorManager.kt
+│   ├── 📄 AssetLoader.kt
+│   ├── 📄 GameArActivity.kt
+│   ├── 📄 GameArRenderer.kt
+│   ├── 📄 GameArView.kt
+│   ├── 📄 GameConstants.kt
+│   ├── 📄 GameData.kt
+│   ├── 📄 GameObjectRenderer.kt
+│   ├── 📄 LevelManager.kt
+│   ├── 📄 LightManager.kt
+│   ├── 📄 MathUtils.kt
+│   ├── 📄 ParallaxBackground.kt
+│   ╰── 📄 PhysicsSimulator.kt
+├── 📁 screens
+│   ├── 📄 EndScreenActivity.kt
+│   ├── 📄 FirstTimeScreen.kt
+│   ├── 📄 LearderboardScreen.kt
+│   ├── 📄 MenuScreenActivity.kt
+│   ├── 📄 StatsScreenActivity.kt
+│   ╰── 📄 TitleScreenActivity.kt
+├── 📁 theme
+│   ├── 📄 OrbitVectorARTheme.kt
+│   ╰── 📄 Type.kt
+╰── 📁 utils
+    ├── 📄 AudioManager.kt
+    ╰── 📄 RankImageUtil.kt
 
 ---
 - **Build/Gradle**: Standard Android project structure with Gradle build files.

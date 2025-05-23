@@ -1,4 +1,4 @@
-package com.sy43.orbitvectorar.kotlin.game.ui.theme
+package com.sy43.orbitvectorar.kotlin.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme

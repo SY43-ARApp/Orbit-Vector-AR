@@ -22,17 +22,17 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.ar.core.Config
 import com.google.ar.core.Config.InstantPlacementMode
 import com.google.ar.core.Session
+import com.google.ar.core.exceptions.CameraNotAvailableException
+import com.google.ar.core.exceptions.UnavailableApkTooOldException
+import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
+import com.google.ar.core.exceptions.UnavailableSdkTooOldException
+import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
 import com.sy43.orbitvectorar.java.common.helpers.CameraPermissionHelper
 import com.sy43.orbitvectorar.java.common.helpers.DepthSettings
 import com.sy43.orbitvectorar.java.common.helpers.FullScreenHelper
 import com.sy43.orbitvectorar.java.common.helpers.InstantPlacementSettings
 import com.sy43.orbitvectorar.java.common.samplerender.SampleRender
 import com.sy43.orbitvectorar.kotlin.common.helpers.ARCoreSessionLifecycleHelper
-import com.google.ar.core.exceptions.CameraNotAvailableException
-import com.google.ar.core.exceptions.UnavailableApkTooOldException
-import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
-import com.google.ar.core.exceptions.UnavailableSdkTooOldException
-import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
 
 /**
  * This is a simple example that shows how to create an augmented reality (AR) application using the

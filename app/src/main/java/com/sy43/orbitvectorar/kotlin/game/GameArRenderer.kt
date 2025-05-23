@@ -26,6 +26,9 @@ import com.google.ar.core.Frame
 import com.google.ar.core.Session
 import com.google.ar.core.TrackingFailureReason
 import com.google.ar.core.TrackingState
+import com.google.ar.core.exceptions.CameraNotAvailableException
+import com.google.ar.core.exceptions.NotYetAvailableException
+import com.sy43.orbitvectorar.R
 import com.sy43.orbitvectorar.java.common.helpers.DisplayRotationHelper
 import com.sy43.orbitvectorar.java.common.helpers.TrackingStateHelper
 import com.sy43.orbitvectorar.java.common.samplerender.Framebuffer
@@ -37,12 +40,12 @@ import com.sy43.orbitvectorar.java.common.samplerender.Texture
 import com.sy43.orbitvectorar.java.common.samplerender.VertexBuffer
 import com.sy43.orbitvectorar.java.common.samplerender.arcore.BackgroundRenderer
 import com.sy43.orbitvectorar.java.common.samplerender.arcore.SpecularCubemapFilter
-import com.google.ar.core.exceptions.CameraNotAvailableException
-import com.google.ar.core.exceptions.NotYetAvailableException
 import com.sy43.orbitvectorar.kotlin.game.GameConstants.INITIAL_ARROWS_PER_LEVEL
+import com.sy43.orbitvectorar.kotlin.screens.EndScreenActivity
+import com.sy43.orbitvectorar.kotlin.utils.AudioManager
 import java.io.IOException
 import java.nio.ByteBuffer
-import com.sy43.orbitvectorar.R
+
 class GameArRenderer(val activity: GameArActivity) :
     SampleRender.Renderer, DefaultLifecycleObserver {
     companion object {

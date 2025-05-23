@@ -1,11 +1,11 @@
-package com.sy43.orbitvectorar.kotlin.game
+package com.sy43.orbitvectorar.kotlin.utils
 
-import com.sy43.orbitvectorar.R
 import android.content.Context
 import android.content.SharedPreferences
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.SoundPool
+import com.sy43.orbitvectorar.R
 
 object AudioManager {
     private var bgPlayer: MediaPlayer? = null
@@ -100,7 +100,7 @@ object AudioManager {
                     if (bgPlayer == mp) {
                         bgPlayer = null
                     }
-                    if (currentLoopingResId != null) { 
+                    if (currentLoopingResId != null) {
                         isContinuousLoopActive = false
                         currentLoopingResId = null
                     }
@@ -127,7 +127,7 @@ object AudioManager {
                 bgPlayer?.setNextMediaPlayer(nextBgPlayer)
                 bgPlayer?.setOnCompletionListener(backgroundMusicCompletionListener)
             } else {
-                bgPlayer?.isLooping = false 
+                bgPlayer?.isLooping = false
                 bgPlayer?.setOnCompletionListener { mp ->
                     mp.release()
                     if (bgPlayer == mp) {
@@ -140,7 +140,7 @@ object AudioManager {
             }
             bgPlayer?.start()
         } catch (e: Exception) {
-            stopBackgroundInternal(clearLoopState = true) 
+            stopBackgroundInternal(clearLoopState = true)
         }
     }
 

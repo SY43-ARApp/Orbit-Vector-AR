@@ -1,4 +1,4 @@
-package com.sy43.orbitvectorar.kotlin.game.data
+package com.sy43.orbitvectorar.kotlin.data
 
 import android.content.Context
 import android.content.SharedPreferences

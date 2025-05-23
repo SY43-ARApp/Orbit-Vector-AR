@@ -1,4 +1,4 @@
-package com.sy43.orbitvectorar.kotlin.game
+package com.sy43.orbitvectorar.kotlin.screens
 
 import android.content.Intent
 import android.os.Bundle
@@ -11,7 +11,13 @@ import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -26,9 +32,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sy43.orbitvectorar.kotlin.game.ui.theme.DisketFont
-import com.sy43.orbitvectorar.kotlin.game.ui.theme.OrbitVectorARTheme
 import com.sy43.orbitvectorar.R
+import com.sy43.orbitvectorar.kotlin.utils.AudioManager
+import com.sy43.orbitvectorar.kotlin.game.ParallaxBackground
+import com.sy43.orbitvectorar.kotlin.theme.DisketFont
+import com.sy43.orbitvectorar.kotlin.theme.OrbitVectorARTheme
+
 class TitleScreenActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
