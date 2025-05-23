@@ -32,9 +32,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.ui.platform.LocalContext
 import com.google.ar.core.examples.kotlin.helloar.data.UserPreferences
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -45,6 +52,12 @@ import androidx.compose.runtime.mutableStateOf
 import com.google.ar.core.examples.kotlin.helloar.data.Skin
 import com.google.ar.core.examples.kotlin.helloar.data.UserSkins
 import androidx.compose.runtime.*
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.zIndex
+import com.google.ar.core.examples.kotlin.helloar.ui.theme.DisketFont
 import kotlinx.coroutines.launch
 import com.google.ar.core.examples.kotlin.helloar.data.ApiService
 import com.google.ar.core.examples.kotlin.helloar.ui.theme.OrbitVectorARTheme
@@ -62,6 +75,7 @@ fun ShopScreen(
     val context = LocalContext.current
     val prefs = remember { UserPreferences(context) }
     val uuid = prefs.uuid
+    val font = DisketFont
 
     // Récupération correcte des préférences de skins équipés
     val arrowPref = prefs.arrowUsed
@@ -374,7 +388,7 @@ fun ShopScreen(
     ) {
         Card(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(8.dp)
                 .clickable {
                     onClick(itemIndex)
                     AudioManager.playSfx("tap")
@@ -393,13 +407,20 @@ fun ShopScreen(
                     else -> Color(0xFF1C2B4F)
                 }
             ),
-            border = if (isEquipped) BorderStroke(2.dp, Color.Yellow) else null
+            shape = RoundedCornerShape(16.dp),
+            border = if (isEquipped)
+                BorderStroke(2.dp, Color(0xFF90CAF9))
+            else
+                BorderStroke(1.dp, Color(0xFF4D76CF).copy(alpha = 0.5f)),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 4.dp
+            )
         ) {
 
             // Informations de l'item
             Column(
                 modifier = Modifier
-                    .padding(16.dp),
+                    .padding(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 //todo : remplacer cette box par l'image du skin
@@ -414,23 +435,29 @@ fun ShopScreen(
                         text = "${skin.id}",
                         color = Color.White,
                         fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = font
                     )
                 }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 // Afficher le prix ou le statut (acheté/équipé)
                 if (!isPurchased) {
                     Text(
                         text = "Prix: ${skin.price} 💰",
                         color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = font
                     )
                 } else {
                     Text(
                         text = if (isEquipped) "Équipé" else "Acheté",
-                        color = if (isEquipped) Color.Yellow else Color.Green,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                        color = if (isEquipped) Color(0xFF90CAF9) else Color(0xFF81C784),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = font
                     )
 
                     // Bouton pour équiper l'item acheté
@@ -443,25 +470,27 @@ fun ShopScreen(
                             containerColor = if (isEquipped) Color(0xFF4A8CFF) else Color(0xFF1C2B4F)
                         ),
                         modifier = Modifier.padding(top = 8.dp),
-                        enabled = !isEquipped // Désactiver si déjà équipé
+                        enabled = !isEquipped, // Désactiver si déjà équipé
+                        shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
                             text = "SÉLECTIONNER",
-                            fontSize = 5.sp, // Taille de texte réduite
+                            fontSize = 10.sp,
+                            fontFamily = font,
                             color = Color.White
                         )
                     }
                 }
+
                 // Score minimum requis
                 Text(
-                    text = "Score minimum: ${skin.minimalScore}",
+                    text = "Score min: ${skin.minimalScore}",
                     color = Color.LightGray,
-                    fontSize = 12.sp
+                    fontSize = 12.sp,
+                    fontFamily = font
                 )
             }
         }
-
-
     }
 
     //Affichage de la liste des skins par pairs
@@ -474,7 +503,7 @@ fun ShopScreen(
             items(skins.size / 2 + skins.size % 2) { rowIndex ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // Premier élément de la paire
                     val firstIndex = rowIndex * 2
@@ -545,25 +574,50 @@ fun ShopScreen(
     @Composable
     fun PurchaseDialog() {
         if (showPurchaseDialog && selectedSkinId != null) {
+            // Find the selected skin to get its minimal score requirement
+            val selectedSkin = allSkins.value.find { it.id == selectedSkinId }
+            val minimalScoreRequired = selectedSkin?.minimalScore ?: 0
+            val hasEnoughMoney = (money ?: 0) >= selectedSkinPrice
+            val hasEnoughScore = (bestScore ?: 0) >= minimalScoreRequired
+            val canPurchase = hasEnoughMoney && hasEnoughScore
+
             androidx.compose.material3.AlertDialog(
                 onDismissRequest = {
                     showPurchaseDialog = false
                 },
                 title = {
-                    Text("Confirmer l'achat", color = Color.White)
+                    Text(
+                        "Confirmer l'achat",
+                        color = Color.White,
+                        fontFamily = font,
+                        fontWeight = FontWeight.Bold
+                    )
                 },
                 text = {
                     Column {
                         Text(
                             "Voulez-vous acheter cet item pour $selectedSkinPrice 💰?",
-                            color = Color.White
+                            color = Color.White,
+                            fontFamily = font
                         )
-
-                        if ((money ?: 0) < selectedSkinPrice) {
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        if (!hasEnoughMoney) {
                             Text(
                                 "Solde insuffisant!",
                                 color = Color.Red,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = font
+                            )
+                        }
+                        
+                        if (!hasEnoughScore) {
+                            Text(
+                                "Score minimal requis: $minimalScoreRequired\nVotre meilleur score: ${bestScore ?: 0}",
+                                color = Color.Red,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = font
                             )
                         }
                     }
@@ -573,13 +627,14 @@ fun ShopScreen(
                         onClick = {
                             selectedSkinId?.let { buySkin(it) }
                         },
-                        enabled = (money ?: 0) >= selectedSkinPrice,
+                        enabled = canPurchase,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF4A8CFF),
                             disabledContainerColor = Color.Gray
-                        )
+                        ),
+                        shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text("Acheter")
+                        Text("Acheter", fontFamily = font)
                     }
                 },
                 dismissButton = {
@@ -587,134 +642,224 @@ fun ShopScreen(
                         onClick = { showPurchaseDialog = false },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF1C2B4F)
-                        )
+                        ),
+                        shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text("Annuler")
+                        Text("Annuler", fontFamily = font)
                     }
                 },
-                containerColor = Color(0xFF192542)
+                containerColor = Color(0xFF192542),
+                shape = RoundedCornerShape(16.dp)
             )
         }
     }
 
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFF1C2B4F)),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = { onMenu() }) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.White,
-                )
-            }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0B1A36))
+    ) {
+        // Add parallax background
+        ParallaxBackground()
 
-            Text(
-                text = "SHOP",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                modifier = Modifier.padding(16.dp)
-            )
-        }
-        //Carte de l'argent
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color(0xFF192542)
-            ),
+        // Content
+        Column(
+            modifier = Modifier.fillMaxSize()
         ) {
+            // Header with home button and title
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                    .padding(top = 24.dp, start = 16.dp, end = 16.dp, bottom = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                //Afficher un indicateur de chargement ou le solde
-                if (isLoadingMoney) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        androidx.compose.material3.CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            color = Color.White,
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Chargement du solde...",
-                            color = Color.White,
-                            fontSize = 18.sp
-                        )
-                    }
-                } else {
-                    Text(
-                        text = "Solde: ${money} 💰",
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
+                // Home button
+                Image(
+                    painter = painterResource(id = R.drawable.ui_home),
+                    contentDescription = "Menu Button",
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clickable { onMenu() }
+                )
+
+                // Title
+                Box(
+                    modifier = Modifier
+                        .weight(3f)
+                        .height(100.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Background title image
+                    Image(
+                        painter = painterResource(id = R.drawable.page_title),
+                        contentDescription = "Shop Title Background",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .offset(y = (13.dp))
                     )
 
-                    //Bouton de rafraîchissement du solde (à laisser ?)
-                    Button(
-                        onClick = {
-                            getUserInfo()
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF1C2B4F)
+                    // Title text
+                    Text(
+                        text = "SHOP",
+                        style = TextStyle(
+                            fontFamily = font,
+                            fontSize = 40.sp,
+                            fontWeight = FontWeight.Bold
                         ),
-                        modifier = Modifier.size(40.dp)
-                    ) {
-                        Text("↻", fontSize = 16.sp)
-                    }
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .zIndex(1f)
+                    )
                 }
             }
-        }
-        //Carte de sélection des catégories
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color(0xFF2A3A5F)
-            )
-        ) {
-            Row(
+
+            // Main content container
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                    .weight(1f)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Color(0xFF1E3B70))
+                    .border(
+                        width = 2.dp,
+                        color = Color(0xFF4D76CF),
+                        shape = RoundedCornerShape(24.dp)
+                    )
             ) {
-                listOf(
-                    "Flèches",
-                    "Lunes",
-                    "Planètes"
-                ).forEachIndexed { index, text ->
-                    Button(
-                        onClick = {
-                            selectedCategory = index
-                            AudioManager.playSfx("tap")
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (selectedCategory == index)
-                                Color(0xFF4A8CFF) else Color(0xFF1C2B4F)
-                        )
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                ) {
+                    // Money display card
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color(0xFF142C57))
+                            .border(
+                                width = 1.dp,
+                                color = Color(0xFFFFB74D).copy(alpha = 0.5f),
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                            .padding(16.dp)
                     ) {
-                        Text(text = text, color = Color.White)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            //Afficher un indicateur de chargement ou le solde
+                            if (isLoadingMoney) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    androidx.compose.material3.CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        color = Color.White,
+                                        strokeWidth = 2.dp
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Chargement du solde...",
+                                        color = Color.White,
+                                        fontSize = 18.sp,
+                                        fontFamily = font
+                                    )
+                                }
+                            } else {
+                                Column {
+                                    Text(
+                                        text = "SOLDE",
+                                        fontFamily = font,
+                                        fontSize = 16.sp,
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+
+                                Text(
+                                    text = "${money} 💰",
+                                    fontFamily = font,
+                                    fontSize = 20.sp,
+                                    color = Color(0xFFFFB74D),
+                                    fontWeight = FontWeight.ExtraBold
+                                )
+                            }
+                        }
+                    }
+
+                    // Category selection buttons
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        listOf(
+                            "FLÈCHES",
+                            "LUNES",
+                            "PLANÈTES"
+                        ).forEachIndexed { index, text ->
+                            Button(
+                                onClick = {
+                                    selectedCategory = index
+                                    AudioManager.playSfx("tap")
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (selectedCategory == index)
+                                        Color(0xFF4A8CFF) else Color(0xFF142C57)
+                                ),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f),
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 12.dp),
+                                border = BorderStroke(
+                                    width = 1.dp,
+                                    color = if (selectedCategory == index)
+                                        Color(0xFF90CAF9) else Color(0xFF4D76CF).copy(alpha = 0.5f)
+                                )
+                            ) {
+                                Text(
+                                    text = text,
+                                    color = Color.White,
+                                    fontFamily = font,
+                                    fontSize = 14.sp,
+                                    maxLines = 1
+                                )
+                            }
+
+                            if (index < 2) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                        }
+                    }
+
+                    // Skins grid
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color(0xFF142C57))
+                            .border(
+                                width = 1.dp,
+                                color = Color(0xFF4D76CF).copy(alpha = 0.5f),
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                            .padding(8.dp)
+                    ) {
+                        ListSkinPerType(
+                            allSkins.value,
+                            selectedCategory,
+                            userSkins,
+                            selectedItems[selectedCategory]
+                        )
                     }
                 }
             }
         }
-        ListSkinPerType(
-            allSkins.value,
-            selectedCategory,
-            userSkins,
-            selectedItems[selectedCategory]
-        )
 
         // Afficher le dialogue d'achat si nécessaire
         PurchaseDialog()
