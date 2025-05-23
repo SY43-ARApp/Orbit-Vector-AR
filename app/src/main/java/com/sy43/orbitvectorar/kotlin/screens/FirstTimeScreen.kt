@@ -92,7 +92,6 @@ fun FirstTimeScreen(onRegistered: () -> Unit) {
 
     var username by remember { mutableStateOf("") }
     var usernameError by remember { mutableStateOf<String?>(null) }
-    var usernameChecked by remember { mutableStateOf(false) }
     var policyChecked by remember { mutableStateOf(false) }
     var termsChecked by remember { mutableStateOf(false) }
     var appSetId by remember { mutableStateOf<String?>(null) }
@@ -130,39 +129,8 @@ fun FirstTimeScreen(onRegistered: () -> Unit) {
 
     val coroutineScope = rememberCoroutineScope()
 
-    fun checkUsernameAvailable(name: String) {
-        if (name.isBlank()) {
-            usernameError = null
-            usernameChecked = false
-            return
-        }
-        usernameError = null
-        usernameChecked = false
-        coroutineScope.launch {
-            try {
-                Log.d("FirstTimeScreen", "Checking username: $name (via checkUsername API)")
-                val resp = api.checkUsername(name)
-                Log.d("FirstTimeScreen", "API Response: code=${resp.code()} body=${resp.body()} errorBody=${resp.errorBody()?.string()}")
-                if (resp.isSuccessful && resp.body()?.available == true) {
-                    usernameError = null
-                    usernameChecked = true
-                } else if (resp.body()?.available == false) {
-                    usernameError = resp.body()?.message ?: "USERNAME ALREADY EXISTING"
-                    usernameChecked = false
-                } else {
-                    usernameError = "Error checking username"
-                    usernameChecked = false
-                }
-            } catch (e: Exception) {
-                Log.e("FirstTimeScreen", "Exception during username check", e)
-                usernameError = "Error checking username"
-                usernameChecked = false
-            }
-        }
-    }
-
     fun registerUser() {
-        if (appSetId.isNullOrBlank() || !usernameChecked || !policyChecked || !termsChecked) return
+        if (appSetId.isNullOrBlank() || !policyChecked || !termsChecked) return
         registering = true
         registrationError = null
         val prefs = UserPreferences(context)
@@ -172,6 +140,9 @@ fun FirstTimeScreen(onRegistered: () -> Unit) {
                 if (resp?.isSuccessful == true && resp.body()?.startsWith("REGISTERED:") == true) {
                     prefs.username = username
                     prefs.uuid = appSetId!!
+                    // Enregistrez aussi dans SharedPreferences pour éviter le retour à FirstTimeScreen
+                    context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
+                        .edit().putBoolean("first_time", false).apply()
                     onRegistered()
                 } else if (resp?.body()?.contains("USERNAME_EXISTS") == true) {
                     registrationError = "USERNAME ALREADY EXISTING"
@@ -251,7 +222,6 @@ fun FirstTimeScreen(onRegistered: () -> Unit) {
                         onValueChange = {
                             if (it.length <= 10) {
                                 username = it
-                                usernameChecked = false
                                 usernameError = null
                             }
                         },
@@ -262,7 +232,6 @@ fun FirstTimeScreen(onRegistered: () -> Unit) {
                         keyboardActions = KeyboardActions(
                             onDone = {
                                 focusManager.clearFocus()
-                                checkUsernameAvailable(username)
                             }
                         ),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -362,7 +331,7 @@ fun FirstTimeScreen(onRegistered: () -> Unit) {
             }
         }
 
-        if (usernameChecked && policyChecked && termsChecked) {
+        if (policyChecked && termsChecked) {
             val scope = coroutineScope 
             Box(
                 modifier = Modifier
