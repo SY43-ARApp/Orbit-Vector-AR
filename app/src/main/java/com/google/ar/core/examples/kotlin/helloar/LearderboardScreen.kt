@@ -161,7 +161,7 @@ fun LeaderboardScreen(onHome: () -> Unit = {}) {
                         fontFamily = font,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF90CAF9),
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         modifier = Modifier.weight(2.2f),
                         maxLines = 1
                     )
@@ -170,7 +170,7 @@ fun LeaderboardScreen(onHome: () -> Unit = {}) {
                         fontFamily = font,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF90CAF9),
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         modifier = Modifier.weight(2.2f),
                         maxLines = 1
                     )
@@ -179,7 +179,7 @@ fun LeaderboardScreen(onHome: () -> Unit = {}) {
                         fontFamily = font,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF90CAF9),
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         modifier = Modifier.weight(2.2f),
                         maxLines = 1
                     )
@@ -190,8 +190,7 @@ fun LeaderboardScreen(onHome: () -> Unit = {}) {
                     state = listState,
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(16.dp),
-                    contentPadding = PaddingValues(vertical = 0.dp),
+                        .padding(12.dp),
                 ) {
                     itemsIndexed(leaderboard) { idx, entry ->
                         val isPlayer = entry.username == playerName
@@ -215,7 +214,7 @@ fun LeaderboardScreen(onHome: () -> Unit = {}) {
 
                         val baseFontSize = 20.sp
                         val minFontSize = 14.sp
-                        val maxChars = 14
+                        val maxChars = 8
                         val adaptiveFontSize = if (usernameText.length > maxChars)
                             (baseFontSize.value * (maxChars.toFloat() / usernameText.length.toFloat())).coerceAtLeast(
                                 minFontSize.value
