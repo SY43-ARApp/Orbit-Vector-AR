@@ -15,7 +15,6 @@ data class UserBestScore(
     val bestScore: Int?
 )
 
-
 data class UserScore(
     val score: Int? = 0,
     val time: String,

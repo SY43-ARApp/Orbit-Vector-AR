@@ -443,7 +443,7 @@ fun MenuScreen(
                         }
                 ) {
                     Image(
-                        painter = painterResource(R.drawable.ic_arrow),
+                        painter = painterResource(R.drawable.ui_shop),
                         contentDescription = "Shop Button",
                         modifier = Modifier.fillMaxSize()
                     )
