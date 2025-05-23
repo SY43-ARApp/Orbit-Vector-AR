@@ -401,16 +401,16 @@ fun MenuScreen(
                     modifier = Modifier
                         .size(100.dp)
                         .graphicsLayer(
-                            scaleX = shopPress.value,
-                            scaleY = shopPress.value,
+                            scaleX = statsPress.value,
+                            scaleY = statsPress.value,
                             rotationZ = buttonRotation.value
                         )
                         .pointerInput(Unit) {
                             detectTapGestures(
                                 onPress = {
-                                    shopPress.animateTo(1.25f, animationSpec = tween(120))
+                                    statsPress.animateTo(1.25f, animationSpec = tween(120))
                                     tryAwaitRelease()
-                                    shopPress.animateTo(1f, animationSpec = tween(120))
+                                    statsPress.animateTo(1f, animationSpec = tween(120))
                                 },
                                 onTap = { onStats() }
                             )
@@ -427,16 +427,16 @@ fun MenuScreen(
                     modifier = Modifier
                         .size(100.dp)
                         .graphicsLayer(
-                            scaleX = statsPress.value,
-                            scaleY = statsPress.value,
+                            scaleX = shopPress.value,
+                            scaleY = shopPress.value,
                             rotationZ = buttonRotation.value
                         )
                         .pointerInput(Unit) {
                             detectTapGestures(
                                 onPress = {
-                                    statsPress.animateTo(1.25f, animationSpec = tween(120))
+                                    shopPress.animateTo(1.25f, animationSpec = tween(120))
                                     tryAwaitRelease()
-                                    statsPress.animateTo(1f, animationSpec = tween(120))
+                                    shopPress.animateTo(1f, animationSpec = tween(120))
                                 },
                                 onTap = { onShop() }
                             )
