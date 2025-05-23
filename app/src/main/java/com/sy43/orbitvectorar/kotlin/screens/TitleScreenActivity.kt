@@ -32,9 +32,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sy43.orbitvectorar.kotlin.game.data.UserPreferences
-import com.sy43.orbitvectorar.kotlin.game.ui.theme.DisketFont
-import com.sy43.orbitvectorar.kotlin.game.ui.theme.OrbitVectorARTheme
+import com.sy43.orbitvectorar.kotlin.data.UserPreferences
+import com.sy43.orbitvectorar.kotlin.theme.DisketFont
+import com.sy43.orbitvectorar.kotlin.theme.OrbitVectorARTheme
 import com.sy43.orbitvectorar.R
 import com.sy43.orbitvectorar.kotlin.utils.AudioManager
 import com.sy43.orbitvectorar.kotlin.game.ParallaxBackground
