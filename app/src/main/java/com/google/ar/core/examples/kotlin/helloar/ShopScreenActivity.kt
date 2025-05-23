@@ -35,8 +35,12 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.mutableStateOf
 import com.google.ar.core.examples.kotlin.helloar.data.Skin
 import com.google.ar.core.examples.kotlin.helloar.data.UserSkins
@@ -170,20 +174,72 @@ fun ShopScreen(
         }
     }
 
-    fun saveMoney() {
-        Log.e("moi", "saveMoney enter")
-        //envoyer la nouvelle valeur d'argent à l'api
+
+    fun getSkin() {
         coroutineScope.launch {
-            try {
-                val response =api.updateMoney(
-                    uuid = uuid,
-                    money = money
-                )
-                Log.e("moi", "Response: ${response}")
-                Log.e("moi", "Response code: ${response.code()}")
-                Log.e("moi", "Response body: ${response.body()}")
-                Log.e("moi", "Money updated: $money")
-            } catch (_: Exception) {
+            val skinsResponse = api.getSkins()
+            if (skinsResponse.isSuccessful) {
+                try {
+                    //Protection contre les réponses null
+                    val body = skinsResponse.body()
+                    if (body != null) {
+                        allSkins.value = body
+                    } else {
+                        allSkins.value = emptyList()
+                        errorMessage.value = "Réponse de l'API vide"
+                    }
+
+                    // Vérifier si les skins sont valides avant de les traiter
+                    if (allSkins.value.isNotEmpty()) {
+                        try {
+                            // Organiser les skins par catégorie (basée sur type)
+                            val arrow = allSkins.value.filter { it.type == 0 }
+                            val moon = allSkins.value.filter { it.type == 1 }
+                            val planet = allSkins.value.filter { it.type == 2 }
+
+                            itemsByCategory.value = listOf(arrow, moon, planet)
+
+                            pricesByCategory.value = listOf(
+                                arrow.map { it.price },
+                                moon.map { it.price },
+                                planet.map { it.price }
+                            )
+                        } catch (e: Exception) {
+                            // Initialiser avec des listes vides en cas d'erreur
+                            itemsByCategory.value = listOf(emptyList(), emptyList(), emptyList())
+                            pricesByCategory.value = listOf(emptyList(), emptyList(), emptyList())
+                        }
+                    }
+                } catch (e: Exception) {
+                    // Gérer les erreurs de parsing JSON
+                    errorMessage.value = "Erreur de traitement des données: ${e.message}"
+                    itemsByCategory.value = listOf(emptyList(), emptyList(), emptyList())
+                    pricesByCategory.value = listOf(emptyList(), emptyList(), emptyList())
+                }
+            } else {
+                errorMessage.value = "Erreur de chargement des skins: ${skinsResponse.code()}"
+            }
+        }
+
+    }
+
+    fun getUserSkin() {
+        coroutineScope.launch {
+            if (prefs.uuid != null) {
+                try {
+                    val userSkinsResponse = api.getUserSkins(prefs.uuid)
+                    if (userSkinsResponse.isSuccessful) {
+                        userSkins.value = userSkinsResponse.body() ?: emptyList()
+                    } else {
+                        errorMessage.value =
+                            "Erreur de chargement des skins utilisateur: ${userSkinsResponse.code()}"
+                        userSkins.value = emptyList()
+                    }
+                } catch (e: Exception) {
+                    errorMessage.value =
+                        "Erreur lors de la récupération des skins utilisateur: ${e.message}"
+                    userSkins.value = emptyList()
+                }
             }
         }
     }
@@ -222,15 +278,6 @@ fun ShopScreen(
     // Fonction pour l'achat d'un skin
     fun buySkin(skinId: Int) {
         val uuid = prefs.uuid
-        val skinPrice = allSkins.value.find { it.id == skinId }?.price ?: 0
-
-        // Vérifier si l'utilisateur a assez d'argent
-        money?.let {
-            if (it < skinPrice) {
-                AudioManager.playSfx("error")
-                return
-            }
-        }
 
         // Afficher un indicateur de chargement
         isLoading.value = true
@@ -238,19 +285,10 @@ fun ShopScreen(
         coroutineScope.launch {
             try {
                 // Appeler l'API et ATTENDRE sa réponse
-                val response = api.sendUserSkins(uuid, skinId)
+                val response = api.buySkin(uuid, skinId)
 
                 // Vérifier si l'API a bien répondu
                 if (response.isSuccessful) {
-                    // Mettre à jour les skins possédés par l'utilisateur
-                    val updatedUserSkins = userSkins.value.toMutableList()
-                    if (!userSkins.value.any { it.skinId == skinId }) {
-                        updatedUserSkins.add(UserSkins(skinId))
-                        userSkins.value = updatedUserSkins
-                    }
-
-                    money = money?.minus(skinPrice)
-                    saveMoney()
 
                     AudioManager.playSfx("purchase")
                     val currentSelectedItem = selectedItems[selectedCategory]
@@ -277,7 +315,10 @@ fun ShopScreen(
 
                         // Sauvegarde locale de l'item équipé
                         saveEquippedItem(selectedCategory, currentSelectedItem)
+
                     }
+                    getUserSkin()//update de la boutique
+                    getUserInfo()//update de l'argent
                 } else {
                     // Gérer l'échec de l'API
                     errorMessage.value = "Échec de l'achat: ${response.code()}"
@@ -557,6 +598,28 @@ fun ShopScreen(
     }
 
     Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFF1C2B4F)),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = { onMenu() }) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color.White,
+                )
+            }
+
+            Text(
+                text = "SHOP",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
         //Carte de l'argent
         Card(
             modifier = Modifier
@@ -655,75 +718,6 @@ fun ShopScreen(
 
         // Afficher le dialogue d'achat si nécessaire
         PurchaseDialog()
-    }
-
-    fun getSkin() {
-        coroutineScope.launch {
-            val skinsResponse = api.getSkins()
-            if (skinsResponse.isSuccessful) {
-                try {
-                    //Protection contre les réponses null
-                    val body = skinsResponse.body()
-                    if (body != null) {
-                        allSkins.value = body
-                    } else {
-                        allSkins.value = emptyList()
-                        errorMessage.value = "Réponse de l'API vide"
-                    }
-
-                    // Vérifier si les skins sont valides avant de les traiter
-                    if (allSkins.value.isNotEmpty()) {
-                        try {
-                            // Organiser les skins par catégorie (basée sur type)
-                            val arrow = allSkins.value.filter { it.type == 0 }
-                            val moon = allSkins.value.filter { it.type == 1 }
-                            val planet = allSkins.value.filter { it.type == 2 }
-
-                            itemsByCategory.value = listOf(arrow, moon, planet)
-
-                            pricesByCategory.value = listOf(
-                                arrow.map { it.price },
-                                moon.map { it.price },
-                                planet.map { it.price }
-                            )
-                        } catch (e: Exception) {
-                            // Initialiser avec des listes vides en cas d'erreur
-                            itemsByCategory.value = listOf(emptyList(), emptyList(), emptyList())
-                            pricesByCategory.value = listOf(emptyList(), emptyList(), emptyList())
-                        }
-                    }
-                } catch (e: Exception) {
-                    // Gérer les erreurs de parsing JSON
-                    errorMessage.value = "Erreur de traitement des données: ${e.message}"
-                    itemsByCategory.value = listOf(emptyList(), emptyList(), emptyList())
-                    pricesByCategory.value = listOf(emptyList(), emptyList(), emptyList())
-                }
-            } else {
-                errorMessage.value = "Erreur de chargement des skins: ${skinsResponse.code()}"
-            }
-        }
-
-    }
-
-    fun getUserSkin() {
-        coroutineScope.launch {
-            if (prefs.uuid != null) {
-                try {
-                    val userSkinsResponse = api.getUserSkins(prefs.uuid)
-                    if (userSkinsResponse.isSuccessful) {
-                        userSkins.value = userSkinsResponse.body() ?: emptyList()
-                    } else {
-                        errorMessage.value =
-                            "Erreur de chargement des skins utilisateur: ${userSkinsResponse.code()}"
-                        userSkins.value = emptyList()
-                    }
-                } catch (e: Exception) {
-                    errorMessage.value =
-                        "Erreur lors de la récupération des skins utilisateur: ${e.message}"
-                    userSkins.value = emptyList()
-                }
-            }
-        }
     }
 
 

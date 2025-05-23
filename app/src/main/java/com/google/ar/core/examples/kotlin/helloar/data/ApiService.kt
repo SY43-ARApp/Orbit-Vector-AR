@@ -74,10 +74,10 @@ interface ApiService {
         @Query("uuid") uuid : String
     ): Response<UserBestScore>
 
-    @GET("update_money.php")
-    suspend fun updateMoney(
+    @GET("buy_skin.php")
+    suspend fun buySkin(
         @Query("uuid") uuid: String,
-        @Query("money") money: Int?
+        @Query("skin_id") skinId: Int?
     ): Response<String>
 
     companion object {
