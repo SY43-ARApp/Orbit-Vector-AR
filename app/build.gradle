@@ -17,10 +17,10 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 android {
-    namespace "com.sy43.orbitvectorar"
+    namespace "com.google.ar.core.examples.kotlin.helloar"
     compileSdkVersion 35
     defaultConfig {
-        applicationId "com.sy43.orbitvectorar"
+        applicationId "com.google.ar.core.examples.kotlin.helloar"
 
         // AR Optional apps must declare minSdkVersion >= 14.
         // AR Required apps must declare minSdkVersion >= 24.
